@@ -1,0 +1,22 @@
+# Logs y temporales
+*.log
+
+# Compilados de Maven / Java
+target/
+*.class
+*.jar
+*.war
+
+# Frontend y dependencias externas
+node_modules/
+dist/
+
+# Entorno y variables
+.env
+.env.local
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.DS_Store
