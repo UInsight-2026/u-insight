@@ -2,6 +2,7 @@ package gt.edu.uinsight.analytics.individual.service;
 
 import gt.edu.uinsight.analytics.individual.dto.response.StudentSummaryResponse;
 import gt.edu.uinsight.analytics.individual.exception.StudentNotFoundException;
+import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,5 +24,20 @@ public class StudentAnalyticsService {
         BigDecimal difference = studentAverage.subtract(sectionAverage);
 
         return new StudentSummaryResponse(studentCode, studentAverage, sectionAverage, difference);
+    }
+
+    public StudentComparisonResponse getComparison(Long studentId) {
+
+        if (studentId == null || studentId <= 0) {
+            throw new StudentNotFoundException(studentId);
+        }
+
+        String studentCode = "EST-%04d".formatted(studentId);
+        BigDecimal studentAverage = new BigDecimal("58.0");
+        BigDecimal sectionAverage = new BigDecimal("72.0");
+        BigDecimal difference = studentAverage.subtract(sectionAverage);
+        Integer percentile = 20;
+
+        return new StudentComparisonResponse(studentCode, studentAverage, sectionAverage, difference, percentile);
     }
 }
