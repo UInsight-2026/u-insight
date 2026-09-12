@@ -1,0 +1,122 @@
+[
+  {
+    "periodo": "2026-S1",
+    "curso": "Programación II",
+    "docente": "Ing. Marta Solís",
+    "seccion": "A",
+    "estudiante": "Carlos Ramírez",
+    "carnet": "202145012",
+    "nota": 88,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S1",
+    "curso": "Programación II",
+    "docente": "Ing. Marta Solís",
+    "seccion": "A",
+    "estudiante": "Ana Lucía Pérez",
+    "carnet": "202145030",
+    "nota": 65,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S1",
+    "curso": "Programación II",
+    "docente": "Ing. Marta Solís",
+    "seccion": "B",
+    "estudiante": "Diego Morales",
+    "carnet": "202145041",
+    "nota": 55,
+    "estado": "Reprobado"
+  },
+  {
+    "periodo": "2026-S1",
+    "curso": "Cálculo II",
+    "docente": "Lic. Roberto Aguilar",
+    "seccion": "A",
+    "estudiante": "María José Castillo",
+    "carnet": "202245008",
+    "nota": 92,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S1",
+    "curso": "Cálculo II",
+    "docente": "Lic. Roberto Aguilar",
+    "seccion": "C",
+    "estudiante": "Luis Fernando Gómez",
+    "carnet": "202245019",
+    "nota": 48,
+    "estado": "Reprobado"
+  },
+  {
+    "periodo": "2026-S1",
+    "curso": "Física",
+    "docente": "Ing. Pablo Estrada",
+    "seccion": "A",
+    "estudiante": "Sofía Hernández",
+    "carnet": "202345002",
+    "nota": 75,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S1",
+    "curso": "Estadística",
+    "docente": "Licda. Carolina Reyes",
+    "seccion": "B",
+    "estudiante": "Jorge Andrés López",
+    "carnet": "202245055",
+    "nota": 80,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S2",
+    "curso": "Microeconomía",
+    "docente": "MSc. Fernando Girón",
+    "seccion": "A",
+    "estudiante": "Valeria Xiomara Tzul",
+    "carnet": "202345071",
+    "nota": 70,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S2",
+    "curso": "Programación II",
+    "docente": "Ing. Marta Solís",
+    "seccion": "C",
+    "estudiante": "Kevin Alexander Cux",
+    "carnet": "202145099",
+    "nota": 61,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S2",
+    "curso": "Cálculo II",
+    "docente": "Lic. Roberto Aguilar",
+    "seccion": "B",
+    "estudiante": "Andrea Beatriz Similox",
+    "carnet": "202245088",
+    "nota": 58,
+    "estado": "Reprobado"
+  },
+  {
+    "periodo": "2026-S2",
+    "curso": "Física",
+    "docente": "Ing. Pablo Estrada",
+    "seccion": "B",
+    "estudiante": "Óscar Danilo Quiej",
+    "carnet": "202345040",
+    "nota": 84,
+    "estado": "Aprobado"
+  },
+  {
+    "periodo": "2026-S2",
+    "curso": "Estadística",
+    "docente": "Licda. Carolina Reyes",
+    "seccion": "A",
+    "estudiante": "Paola Nicté Barrios",
+    "carnet": "202245102",
+    "nota": 90,
+    "estado": "Aprobado"
+  }
+]
