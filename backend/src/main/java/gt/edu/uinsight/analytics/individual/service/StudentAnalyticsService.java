@@ -3,6 +3,7 @@ package gt.edu.uinsight.analytics.individual.service;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentSummaryResponse;
 import gt.edu.uinsight.analytics.individual.exception.StudentNotFoundException;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
+import gt.edu.uinsight.analytics.individual.dto.response.StudentTrendResponse;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,4 +41,19 @@ public class StudentAnalyticsService {
 
         return new StudentComparisonResponse(studentCode, studentAverage, sectionAverage, difference, percentile);
     }
+
+
+     public StudentTrendResponse getTrend(Long studentId) {
+
+        if (studentId == null || studentId <= 0) {
+            throw new StudentNotFoundException(studentId);
+        }
+
+        String studentCode = "EST-%04d".formatted(studentId);
+        String trend = "NEGATIVE";
+        Double averageChange = -5.0;
+
+        return new StudentTrendResponse(studentCode, trend, averageChange);
+    }
+
 }
