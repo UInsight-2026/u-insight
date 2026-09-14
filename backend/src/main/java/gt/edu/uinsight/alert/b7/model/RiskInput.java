@@ -7,23 +7,23 @@ public class RiskInput {
     private double tendencia;
     private double percentil90;
 
-    public double media(){
+    public double getMedia(){
         return media;
     }
 
-    public double mediana(){
+    public double getMediana(){
         return mediana;
     }
 
-    public double desviacion(){
+    public double getDesviacion(){
         return desviacion;
     }
 
-    public double tendencia(){
+    public double getTendencia(){
         return tendencia;
     }
 
-    public double percentil90(){
+    public double getPercentil90(){
         return percentil90;
     }
 
