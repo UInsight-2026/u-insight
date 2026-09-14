@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 package gt.edu.uinsight.alert.b7.service; 
+=======
+package gt.edu.uinsight.alert.b7.service;
+>>>>>>> Stashed changes
 
 import org.springframework.stereotype.Service;
 import gt.edu.uinsight.alert.b7.model.RiskInput; 
