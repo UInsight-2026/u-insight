@@ -1,4 +1,4 @@
-package gt.edu.uinsight.analytics.trend.exception;
+package gt.edu.uinsight.exception;
 
 public class TrendCalculationException extends RuntimeException {
 
