@@ -1,3 +1,4 @@
+-- Celula C4 - Intervenciones y Seguimiento | Equipo: Diego Flores, Javier Iboy, Luis Sanchez, Leandro Perez, Wesley Tuy
 -- Script: seed_c4_test_data.sql
 -- Módulo: C4 - Intervenciones y Seguimiento
 -- Datos mínimos de prueba para ejercer los endpoints de intervención desde Postman

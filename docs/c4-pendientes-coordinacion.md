@@ -1,5 +1,7 @@
 # Pendientes de coordinación — Célula C4 (Intervenciones y Seguimiento)
 
+> Equipo: Diego Flores, Javier Iboy, Luis Sanchez, Leandro Perez, Wesley Tuy
+
 Generado durante la implementación de la Fase 2 (semana 2). Ninguno de estos
 cambios fue aplicado por mí a archivos compartidos; los dejo aquí para que el
 coordinador general los aplique.

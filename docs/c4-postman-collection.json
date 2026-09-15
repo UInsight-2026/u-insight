@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "U-Insight - C4 Intervenciones (semana 2)",
-    "description": "Pruebas de los 3 endpoints de intervenciones implementados en la Fase 2 de la célula C4 (registro y seguimiento). Requiere el backend corriendo en localhost:8080 y la base de datos sembrada con database/scripts/seed_c4_test_data.sql (alerta 10 = NEW, alerta 11 = RESOLVED).",
+    "description": "Pruebas de los 3 endpoints de intervenciones implementados en la Fase 2 de la célula C4 (registro y seguimiento). Requiere el backend corriendo en localhost:8080 y la base de datos sembrada con database/scripts/seed_c4_test_data.sql (alerta 10 = NEW, alerta 11 = RESOLVED). Equipo: Diego Flores, Javier Iboy, Luis Sanchez, Leandro Perez, Wesley Tuy.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

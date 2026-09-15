@@ -1,3 +1,4 @@
+-- Celula C4 - Intervenciones y Seguimiento | Equipo: Diego Flores, Javier Iboy, Luis Sanchez, Leandro Perez, Wesley Tuy
 -- Script: stub_alert_for_c4_testing.sql
 -- Carpeta: database/scripts/local-dev/  (NO va en database/scripts/, a proposito)
 --

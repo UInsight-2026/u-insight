@@ -1,3 +1,4 @@
+-- Celula C4 - Intervenciones y Seguimiento | Equipo: Diego Flores, Javier Iboy, Luis Sanchez, Leandro Perez, Wesley Tuy
 -- Script: 10_create_follow_up.sql
 -- Módulo: C4 - Intervenciones y Seguimiento
 -- Responsabilidad: crear la tabla follow_up.
