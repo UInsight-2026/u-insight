@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="src/styles/global.css" />
   <link rel="stylesheet" href="src/styles/layout.css" />
   <link rel="stylesheet" href="src/styles/components.css" />
+  <link rel="stylesheet" href="src/css/exploracion.css" />
 </head>
 <body>
   <header class="site-header">
@@ -26,6 +27,74 @@
   <main class="main-container">
     <h1>Exploración académica</h1>
     <p>Filtros por período, curso, docente y sección.</p>
+
+    <section class="panel-filtros">
+      <h2>Filtros</h2>
+
+      <p class="nota-mock">
+        Vista de mockup: los filtros aún no ejecutan la búsqueda real. Esa lógica se implementa en la Semana 3.
+      </p>
+
+      <div class="grid-filtros">
+        <div class="campo-filtro">
+          <label for="filtro-periodo">Período</label>
+          <select id="filtro-periodo" name="periodo">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-curso">Curso</label>
+          <select id="filtro-curso" name="curso">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-docente">Docente</label>
+          <select id="filtro-docente" name="docente">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-seccion">Sección</label>
+          <select id="filtro-seccion" name="seccion">
+            <option value="">Todas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="acciones-filtro">
+        <button type="button" class="boton boton-primario" id="btn-buscar">Buscar</button>
+        <button type="button" class="boton boton-secundario" id="btn-limpiar">Limpiar filtros</button>
+      </div>
+    </section>
+
+    <section class="panel-resultados">
+      <h2>Resultados</h2>
+      <p class="contador-resultados" id="contador-resultados">Cargando datos simulados...</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Curso</th>
+            <th>Docente</th>
+            <th>Sección</th>
+            <th>Estudiante</th>
+            <th>Carnet</th>
+            <th>Nota</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+          <tr>
+            <td colspan="8" class="mensaje-estado">Cargando...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
   </main>
 
   <script src="src/js/pages/exploracion.js"></script>
