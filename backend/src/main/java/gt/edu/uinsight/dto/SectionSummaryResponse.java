@@ -16,10 +16,30 @@ import java.util.Objects;
  * - centralTendency, position, dispersion y trend se dejan como Object
  *   porque B1-B4 todavia no exponen sus DTO de respuesta (sus paquetes
  *   solo tienen ".gitkeep"). En cuanto esas celulas publiquen sus
- *   clases, estos campos deben tiparse con esas clases concretas en lugar de Object.
+ *   clases (p. ej. CentralTendencyResponse, PositionResponse,
+ *   DispersionResponse, TrendResponse), estos campos deben tiparse con
+ *   esas clases concretas en lugar de Object.
  * - Si un componente no esta disponible (timeout/fallo) o hay datos
  *   insuficientes (regla de negocio 3), el campo correspondiente se
  *   deja en null y su nombre se agrega a unavailableComponents.
+ *
+ * IMPORTANTE - contrato real de B1-B4 (segun sus documentos de diseno,
+ * mas detallado que el ejemplo simplificado del documento de B6):
+ * - centralTendency (B1 / CentralTendencyResponse): sampleSize (int),
+ *   mean (Double), median (Double), mode (List<Double>).
+ * - position (B2 / PositionResponse): sectionId, sampleSize,
+ *   percentiles (Map<String, Double>), quartiles ({q1, q2, q3}).
+ * - dispersion (B3 / DispersionResponse): sectionId, min, max, range,
+ *   variance, standardDeviation, classification (LOW_DISPERSION /
+ *   MODERATE_DISPERSION / HIGH_DISPERSION). B3 puede responder 422
+ *   cuando no hay datos suficientes (no solo timeout/404).
+ * - trend (B4 / TrendResponse): scope, referenceId, classification
+ *   (POSITIVE/NEGATIVE/STABLE/INSUFFICIENT_DATA), averageChange
+ *   (BigDecimal, null si INSUFFICIENT_DATA), points (List<TrendPoint>
+ *   con evaluationId, label, evaluationDate, value, present) y
+ *   warnings (List<String>). classification = INSUFFICIENT_DATA es
+ *   una respuesta 200 valida, NO un fallo: no debe marcarse "trend"
+ *   en unavailableComponents solo por tener datos insuficientes.
  */
 public class SectionSummaryResponse {
 
