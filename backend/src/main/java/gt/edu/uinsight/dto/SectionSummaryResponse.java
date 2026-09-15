@@ -20,7 +20,7 @@ import java.util.Objects;
  *   DispersionResponse, TrendResponse), estos campos deben tiparse con
  *   esas clases concretas en lugar de Object.
  * - Si un componente no esta disponible (timeout/fallo) o hay datos
- *   insuficientes (regla de negocio 3), el campo correspondiente se
+ *   insuficientes, el campo correspondiente se
  *   deja en null y su nombre se agrega a unavailableComponents.
  *
  * IMPORTANTE - contrato real de B1-B4 (segun sus documentos de diseno,
