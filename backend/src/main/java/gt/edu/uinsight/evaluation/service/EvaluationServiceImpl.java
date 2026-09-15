@@ -6,9 +6,10 @@ import gt.edu.uinsight.evaluation.entity.Evaluation;
 import gt.edu.uinsight.evaluation.mapper.EvaluationMapper;
 import gt.edu.uinsight.evaluation.repository.EvaluationRepository;
 import java.util.List;
-
 import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class EvaluationServiceImpl implements EvaluationService {
@@ -36,8 +37,10 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     @Override
     public EvaluationResponse getEvaluationById(Long id) {
-        // (Punto 6), aquí lanzaremos un 404.
-        Evaluation entity = evaluationRepository.findById(id).orElse(null);
+        // Usamos la excepción nativa de Spring para no depender de otras células de momento
+        Evaluation entity = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró la evaluación con el ID: " + id));
+        
         return evaluationMapper.toResponse(entity);
     }
 }
