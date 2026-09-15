@@ -1,5 +1,9 @@
 package gt.edu.uinsight.analytics.trend.dto.response;
 
-public class TrendPoint {
+public record TrendPoint(
+    Long id,
+    String label,
+    int value
+) {
     
 }
