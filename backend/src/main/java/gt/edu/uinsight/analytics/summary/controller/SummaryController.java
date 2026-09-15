@@ -9,7 +9,7 @@ import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 
 @RestController
-@RequestMapping("/api/summary")
+@RequestMapping("/api/v1/summary")
 public class SummaryController {
 
     private final SummaryService summaryService;
