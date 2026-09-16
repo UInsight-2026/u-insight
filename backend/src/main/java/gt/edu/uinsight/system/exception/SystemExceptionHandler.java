@@ -9,9 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "gt.edu.uinsight.system")
 public class SystemExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -22,6 +23,17 @@ public class SystemExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "BAD_REQUEST",
                 exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException exception) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "BAD_REQUEST",
+                "Invalid value for parameter '" + exception.getName() + "'"
         );
     }
 
