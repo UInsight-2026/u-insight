@@ -1,1 +1,4 @@
 .env
+*.log
+target/
+node_modules/
