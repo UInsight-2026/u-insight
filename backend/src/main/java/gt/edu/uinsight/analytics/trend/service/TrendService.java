@@ -31,7 +31,7 @@ public class TrendService {
 
     private final EvaluationRepository evaluationRepository;
     private final SectionRepository sectionRepository;
-    private final GradeRepository trendRepository;
+    private final GradeRepository gradeRepository;
     private final TrendMapper trendMapper;
 
     // TODO(B4): estos valores deben venir de la célula C1
@@ -44,10 +44,10 @@ public class TrendService {
     @Value("${uinsight.trend.positive-threshold:3}")
     private BigDecimal positiveThreshold;
 
-    public TrendService(EvaluationRepository evaluationRepository, SectionRepository sectionRepository, GradeRepository trendRepository, TrendMapper trendMapper) {
+    public TrendService(EvaluationRepository evaluationRepository, SectionRepository sectionRepository, GradeRepository gradeRepository, TrendMapper trendMapper) {
         this.evaluationRepository = evaluationRepository;
         this.sectionRepository = sectionRepository;
-        this.trendRepository = trendRepository;
+        this.gradeRepository = gradeRepository;
         this.trendMapper = trendMapper;
     }
 
@@ -63,7 +63,7 @@ public class TrendService {
                 .toList();
 
         // Se obtiene todas las calificaciones de la sección
-        List<Grade> grades = trendRepository.findAll().stream()
+        List<Grade> grades = gradeRepository.findAll().stream()
                 .filter(grade -> evaluations.stream()
                         .anyMatch(evaluation -> evaluation.getId().equals(grade.getEvaluationId())))
                 .toList();
@@ -75,7 +75,7 @@ public class TrendService {
     }
 
     public TrendResponse getTrendByStudentId(Long studentId) {
-        List<Grade> grades = trendRepository
+        List<Grade> grades = gradeRepository
                 .findByStudentIdOrderByEvaluation_EvaluationDateAsc(studentId);
 
         List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
@@ -126,19 +126,34 @@ public class TrendService {
      * ordena la serie por la fecha real de la evaluación (no por id).
      */
     private List<TrendCalculator.ScorePoint> buildSectionAverageSeries(List<Grade> grades) {
-        Map<Long, List<Grade>> byEvaluationId = grades.stream()
-                .collect(Collectors.groupingBy(g -> g.getEvaluationId()));
+        Map<Long, List<Grade>> gradesByEvaluation = grades.stream()
+                .collect(Collectors.groupingBy(Grade::getEvaluationId));
 
-        return byEvaluationId.values().stream()
-                .sorted(Comparator.comparing(evaluationGrades -> trendRepository.findEvaluationById(evaluationGrades.get(0).getEvaluationId()).getEvaluationDate()))
-                .map(evaluationGrades -> {
-                    Evaluation evaluation = evaluationGrades.get(0).getEvaluation();
-                    BigDecimal average = evaluationGrades.stream()
-                            .map(this::normalize)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add)
-                            .divide(BigDecimal.valueOf(evaluationGrades.size()), 2, RoundingMode.HALF_UP);
-                    return new TrendCalculator.ScorePoint(evaluation.getName(), evaluation.getId(), average);
-                })
+        List<TrendCalculator.ScorePoint> points = new ArrayList<>();
+        for (Map.Entry<Long, List<Grade>> entry : gradesByEvaluation.entrySet()) {
+            Long evaluationId = entry.getKey();
+            List<Grade> evaluationGrades = entry.getValue();
+
+            BigDecimal averageNormalizedScore = evaluationGrades.stream()
+                    .map(this::normalize)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(evaluationGrades.size()), 4, RoundingMode.HALF_UP);
+
+            Evaluation evaluation = evaluationRepository.findById(evaluationId)
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Evaluación con ID " + evaluationId + " no encontrada."));
+
+            points.add(new TrendCalculator.ScorePoint(
+                    evaluation.getName(), evaluationId, averageNormalizedScore));
+        }
+
+        return points.stream()
+                .sorted(Comparator.comparing(p -> {
+                    Evaluation evaluation = evaluationRepository.findById(p.evaluationId())
+                            .orElseThrow(() -> new EntityNotFoundException(
+                                    "Evaluación con ID " + p.evaluationId() + " no encontrada."));
+                    return evaluation.getEvaluationDate();
+                }))
                 .toList();
     }
 }
