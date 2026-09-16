@@ -1,4 +1,5 @@
 package gt.edu.uinsight.analytics.centraltendency.calculator;//librerías de Java
+import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 
 import org.springframework.stereotype.Component;
 
@@ -18,13 +19,6 @@ import java.util.stream.Collectors;
  *
  * Internamente se usa BigDecimal para sumar/promediar para evitar errores
  * según el DERCAS que se subio.
- * Casos especiales 
- *   1. Sin datos                -> Result.empty()
- *   2. Un solo dato             -> media = mediana = moda = ese único valor
- *   3. Cantidad par de datos    -> la mediana promedia los dos valores centrales
- *   4. Sin moda representativa  -> todas las calificaciones tienen frecuencia 1
- *   5. Más de una moda          -> conjunto multimodal: se retornan todas las modas,
- *                                  ordenadas de menor a mayor
  */
 @Component
 public class CentralTendencyCalculator {
@@ -36,20 +30,13 @@ public class CentralTendencyCalculator {
      * Resultado interno del calculo, mientras CentralTendencyResponse no esta
      * disponible.
      */
-    public record Result(int sampleSize, Double mean, Double median, List<Double> mode) {
-
-        /** Caso "sin datos": sampleSize:0, mean/median:null, mode:[] (Regla de Negocio #2). */
-        public static Result empty() {
-            return new Result(0, null, null, Collections.emptyList());
-        }
-    }
 
     /**
      * Calcula media, mediana y moda a partir de las calificaciones recibidas.
      * La lista ya debe venir filtrada (solo notas válidas) por quien la obtuvo
      * de la célula A6; este componente no conoce el origen de los datos.
      */
-    public Result calculate(List<BigDecimal> calificacionesRecibidas) {
+  public CentralTendencyResponse calculate(List<BigDecimal> calificacionesRecibidas){
 
         List<BigDecimal> calificaciones =
                 (calificacionesRecibidas == null)
@@ -58,8 +45,8 @@ public class CentralTendencyCalculator {
 
         // Caso especial 1: sin datos (Regla de Negocio #2).
         if (calificaciones.isEmpty()) {
-            return Result.empty();
-        }
+        return CentralTendencyResponse.empty();   // antes: Result.empty()
+    }
 
         List<BigDecimal> calificacionesOrdenadas =
                 new ArrayList<>(calificaciones);
@@ -70,12 +57,12 @@ public class CentralTendencyCalculator {
         Double mediana = calculateMedian(calificacionesOrdenadas);
         List<Double> moda = calculateMode(calificacionesOrdenadas);
 
-        return new Result(
-                calificacionesOrdenadas.size(),
-                media,
-                mediana,
-                moda
-        );
+      return new CentralTendencyResponse(            // antes: new Result(cambios realizados)
+            calificacionesOrdenadas.size(),
+            media,
+            mediana,
+            moda
+    );
     }
 
     /**
@@ -180,7 +167,7 @@ public class CentralTendencyCalculator {
         long frecuenciaMaxima =
                 Collections.max(frecuenciaPorValor.values());
 
-        if (frecuenciaMaxima == 1) {//si la frecuencia máxima es 1, significa que todos los valores son unicos
+        if (frecuenciaMaxima == 1) {//si la frecuencia mxima es 1, significa que todos los valores son unicos
 
             // Ninguna nota se repite:
             // no existe una moda representativa.
