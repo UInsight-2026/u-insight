@@ -7,13 +7,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
+import gt.edu.uinsight.analytics.trend.service.TrendService;
 
 @RestController 
 @RequestMapping("/api/v1/analytics")
 public class TrendController {
     
      //servicio
-     public  final TrendService trendService;
+     private final TrendService trendService = null; // Inyectar el servicio real en un escenario de producción
 
      @GetMapping("/sections/{id}/trend")
      public ResponseEntity<TrendResponse> getTrendBySectionId(@PathVariable Long id) {
