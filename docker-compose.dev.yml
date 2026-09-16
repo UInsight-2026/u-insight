@@ -1,0 +1,38 @@
+# Entorno de desarrollo local: levanta unicamente MySQL.
+#
+# El docker-compose.yml de la seccion 12.4 del documento oficial esta reservado
+# para backend + frontend y excluye la base de datos a proposito (en produccion
+# vive en un servidor separado). Este archivo cubre la necesidad local de la
+# semana 2 sin invadir aquel.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+
+services:
+  database:
+    image: mysql:8.4
+    container_name: uinsight-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-uinsight}
+      MYSQL_USER: ${DB_USERNAME:-uinsight}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-uinsight}
+    ports:
+      # El host usa DB_PORT (3307 en .env.example) para no chocar con un
+      # MySQL ya instalado en la maquina; dentro del contenedor sigue siendo 3306.
+      - "${DB_PORT:-3307}:3306"
+    volumes:
+      - uinsight-mysql-data:/var/lib/mysql
+      # Los .sql de esta carpeta se ejecutan solos, pero SOLO la primera vez que
+      # se crea el volumen. Si se agregan scripts despues, hay que borrar el
+      # volumen para que vuelvan a correr.
+      - ./database/scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  uinsight-mysql-data:
