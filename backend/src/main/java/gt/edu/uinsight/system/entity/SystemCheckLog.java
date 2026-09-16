@@ -11,20 +11,26 @@ public class SystemCheckLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String component;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CheckStatus status;
+
     private String message;
+
+    @Column(nullable = false)
     private LocalDateTime checkedAt = LocalDateTime.now();
 
-    // Genera los Getters y Setters (o usa @Data si tienen Lombok configurado)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    
+
     public String getComponent() { return component; }
     public void setComponent(String component) { this.component = component; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public CheckStatus getStatus() { return status; }
+    public void setStatus(CheckStatus status) { this.status = status; }
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }

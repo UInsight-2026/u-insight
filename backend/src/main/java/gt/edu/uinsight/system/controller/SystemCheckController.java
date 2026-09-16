@@ -1,9 +1,12 @@
 package gt.edu.uinsight.system.controller;
 
-import gt.edu.uinsight.system.entity.SystemCheckLog;
+import gt.edu.uinsight.system.dto.request.CreateCheckRequest;
+import gt.edu.uinsight.system.dto.response.CheckResponse;
 import gt.edu.uinsight.system.service.SystemCheckService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -18,19 +21,26 @@ public class SystemCheckController {
     }
 
     @PostMapping
-    public ResponseEntity<SystemCheckLog> createCheck(@RequestBody SystemCheckLog log) {
-        return ResponseEntity.ok(service.saveCheck(log));
+    public ResponseEntity<CheckResponse> createCheck(
+            @Valid @RequestBody CreateCheckRequest request,
+            UriComponentsBuilder uriBuilder) {
+
+        CheckResponse created = service.createCheck(request);
+
+        return ResponseEntity
+                .created(uriBuilder.path("/api/v1/system/checks/{id}")
+                        .buildAndExpand(created.id())
+                        .toUri())
+                .body(created);
     }
 
     @GetMapping
-    public ResponseEntity<List<SystemCheckLog>> getAllChecks() {
+    public ResponseEntity<List<CheckResponse>> getAllChecks() {
         return ResponseEntity.ok(service.getAllChecks());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SystemCheckLog> getCheckById(@PathVariable Long id) {
-        return service.getCheckById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build()); // Esto devuelve el 404 que te piden
+    public CheckResponse getCheckById(@PathVariable Long id) {
+        return service.getCheckById(id);
     }
 }
