@@ -8,7 +8,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class SystemGlobalExceptionHandler {
 
     // Maneja el Error 400 - Petición incorrecta (ej. enviar texto en el ID en lugar de un número)
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
