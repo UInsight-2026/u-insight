@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
-@RestControllerAdvice
+// Restringe el manejador global ÚNICAMENTE a los paquetes de tu proyecto
+@RestControllerAdvice(basePackages = "com.uinsight.academic")
 public class GlobalExceptionHandler {
 
     // 400 Bad Request - Errores de Validación (@Valid)
