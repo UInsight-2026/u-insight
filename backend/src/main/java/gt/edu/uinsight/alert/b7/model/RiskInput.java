@@ -49,11 +49,11 @@ public class RiskInput {
 
     public static RiskInput pruebas(){
         RiskInput r = new RiskInput();
-        r.media = 12.5;
-        r.mediana = 10.0;
-        r.desviacion = 4.2;
-        r.tendencia = 1.8;
-        r.percentil90 = 22.0;
+        r.media = 0;
+        r.mediana = 0;
+        r.desviacion = 0;
+        r.tendencia = 0;
+        r.percentil90 = 0;
         return r;
     }
 }
