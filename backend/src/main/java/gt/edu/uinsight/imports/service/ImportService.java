@@ -50,9 +50,7 @@ public class ImportService {
         log.info("RESOURCE_CREATED tipo=Importacion id={} archivo={}",
                 importacion.getId(), nombre);
 
-        // El conteo real de registros válidos/inválidos se calcula a partir de
-        // la Semana 3, cuando se incorporen el parser de CSV y las reglas de
-        // negocio (tareas 17 y 18 del backlog).
+        
         return new ImportValidateResponse(
                 importacion.getId(),
                 importacion.getEstado(),

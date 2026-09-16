@@ -5,10 +5,7 @@ import java.time.LocalDateTime;
 import gt.edu.uinsight.imports.entity.EstadoImportacion;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * Respuesta de GET /api/v1/imports/{id} (tarea 13, primer endpoint funcional).
- * Contrato base ya documentado en la Semana 1 (sección 6, API 3).
- */
+
 @Schema(description = "Estado y resumen actual de una importación")
 public class ImportStatusResponse {
 

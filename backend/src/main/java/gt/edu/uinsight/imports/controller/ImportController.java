@@ -1,14 +1,5 @@
 package gt.edu.uinsight.imports.controller;
 
-import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
-import gt.edu.uinsight.imports.dto.response.ImportValidateResponse;
-import gt.edu.uinsight.imports.exception.ErrorResponse;
-import gt.edu.uinsight.imports.service.ImportService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +11,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Endpoints del módulo de importación de calificaciones (célula A7).
- * Semana 2: esqueleto de validate (tarea 14) + estado por id (tarea 13),
- * ambos visibles en Swagger/OpenAPI (tarea 16).
- *
- * confirm y el listado de errores por importación se agregan en las
- * Semanas 3 y 4, junto con el parser de CSV y las 6 reglas de negocio.
- */
+import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
+import gt.edu.uinsight.imports.dto.response.ImportValidateResponse;
+import gt.edu.uinsight.imports.exception.ErrorResponse;
+import gt.edu.uinsight.imports.service.ImportService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+
 @RestController
 @RequestMapping("/api/v1/imports")
 @Tag(name = "Importaciones",
