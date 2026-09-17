@@ -1,9 +1,11 @@
 package gt.edu.uinsight.evaluation.mapper;
 
+import org.springframework.stereotype.Component;
+
 import gt.edu.uinsight.evaluation.dto.request.CreateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.response.EvaluationResponse;
 import gt.edu.uinsight.evaluation.entity.Evaluation;
-
+@Component 
 public class EvaluationMapper {
     
     public Evaluation toEntity(CreateEvaluationRequest request) {
