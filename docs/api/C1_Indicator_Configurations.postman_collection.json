@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "U-Insight - C1 Indicator Configurations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080"}
+  ],
+  "item": [
+    {
+      "name": "Crear configuracion - 201",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"HIGH_RISK_PERCENTAGE\",\n  \"value\": \"50\",\n  \"description\": \"Porcentaje de estudiantes en riesgo que activa alerta de seccion\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/indicator-configurations"
+      }
+    },
+    {
+      "name": "Listar configuraciones - 200",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/indicator-configurations"
+      }
+    },
+    {
+      "name": "Consultar por clave - 200",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/indicator-configurations/HIGH_RISK_PERCENTAGE"
+      }
+    },
+    {
+      "name": "Consultar clave inexistente - 404",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/indicator-configurations/DOES_NOT_EXIST"
+      }
+    },
+    {
+      "name": "Crear duplicado - 409",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"HIGH_RISK_PERCENTAGE\",\n  \"value\": \"60\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/indicator-configurations"
+      }
+    },
+    {
+      "name": "Validacion clave invalida - 400",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"high risk percentage\",\n  \"value\": \"50\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/indicator-configurations"
+      }
+    },
+    {
+      "name": "Actualizar configuracion - 200",
+      "request": {
+        "method": "PUT",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"value\": \"55\",\n  \"description\": \"Actualizado despues de revision\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/indicator-configurations/HIGH_RISK_PERCENTAGE"
+      }
+    }
+  ]
+}
