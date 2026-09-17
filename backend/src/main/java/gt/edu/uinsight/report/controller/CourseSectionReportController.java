@@ -24,11 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Celula C5 - Reportes y consultas consolidadas.
- * Todos los endpoints son GET (solo lectura): C5 no crea, actualiza ni
- * elimina informacion.
- */
+
 @RestController
 @RequestMapping("/api/v1/reports")
 @Tag(name = "Reportes", description = "Consultas consolidadas para el dashboard de U-Insight (Celula C5)")
@@ -49,9 +45,7 @@ public class CourseSectionReportController {
         this.alertReportService = alertReportService;
     }
 
-    // ------------------------------------------------------------------
-    // Integrante 1 - Angel
-    // ------------------------------------------------------------------
+
     @GetMapping("/overview")
     @Operation(summary = "Reporte general del sistema",
             description = "Indicadores globales del dashboard: alertas activas, secciones en "
@@ -76,9 +70,7 @@ public class CourseSectionReportController {
         return ResponseEntity.ok(overviewService.getOverview(filter));
     }
 
-    // ------------------------------------------------------------------
-    // Integrante 2 - Adriana
-    // ------------------------------------------------------------------
+
     @GetMapping("/courses/{id}")
     @Operation(summary = "Reporte consolidado de un curso",
             description = "Desempeno general del curso, estudiantes en riesgo y alertas asociadas.")
@@ -127,9 +119,7 @@ public class CourseSectionReportController {
         return ResponseEntity.ok(sectionReportService.getSectionReport(id, filter));
     }
 
-    // ------------------------------------------------------------------
-    // Integrante 3 - Allan
-    // ------------------------------------------------------------------
+
     @GetMapping("/alerts")
     @Operation(summary = "Listado consolidado de alertas",
             description = "Alertas generadas en la plataforma, con soporte de filtros.")
