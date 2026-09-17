@@ -1,6 +1,6 @@
 package gt.edu.uinsight.report.service;
 
-import gt.edu.uinsight.common.exception.InvalidFilterException;
+import gt.edu.uinsight.report.exception.InvalidFilterException;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
 import org.springframework.stereotype.Component;
 
