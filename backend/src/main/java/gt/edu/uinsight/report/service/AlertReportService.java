@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Reporte consolidado de alertas (GET /reports/alerts).
- * Integrante 3 - Allan (Alertas + filtros).
- */
+
 @Service
 public class AlertReportService {
 

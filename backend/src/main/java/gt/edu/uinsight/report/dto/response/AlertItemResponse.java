@@ -1,9 +1,5 @@
 package gt.edu.uinsight.report.dto.response;
 
-/**
- * Representa una alerta dentro del listado de GET /api/v1/reports/alerts.
- * (Integrante 3 - Allan).
- */
 public class AlertItemResponse {
 
     private final Long id;
