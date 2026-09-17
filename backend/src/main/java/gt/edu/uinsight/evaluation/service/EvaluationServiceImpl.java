@@ -1,6 +1,7 @@
 package gt.edu.uinsight.evaluation.service;
 
 import gt.edu.uinsight.evaluation.dto.request.CreateEvaluationRequest;
+import gt.edu.uinsight.evaluation.dto.request.UpdateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.response.EvaluationResponse;
 import gt.edu.uinsight.evaluation.entity.Evaluation;
 import gt.edu.uinsight.evaluation.mapper.EvaluationMapper;
@@ -42,5 +43,17 @@ public class EvaluationServiceImpl implements EvaluationService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró la evaluación con el ID: " + id));
         
         return evaluationMapper.toResponse(entity);
+    }
+
+    @Override
+    public List<EvaluationResponse> getEvaluationsBySectionId(Long sectionId) {
+        // TODO: Implementar lógica de la HU2 (Buscar en el repository por sección)
+        return null;
+    }
+
+    @Override
+    public EvaluationResponse updateEvaluation(Long id, UpdateEvaluationRequest request) {
+        // TODO: Implementar lógica de actualización
+        return null;
     }
 }

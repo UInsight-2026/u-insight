@@ -21,7 +21,7 @@ import java.util.List;
 
 @Tag(name = "Evaluations", description = "Gestión del ciclo de vida de las evaluaciones académicas (célula A5)")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/evaluations")
 public class EvaluationController {
 
     private static final Logger log = LoggerFactory.getLogger(EvaluationController.class);
@@ -40,7 +40,7 @@ public class EvaluationController {
             @ApiResponse(responseCode = "400", description = "Error de validación de campos"),
             @ApiResponse(responseCode = "422", description = "Sección no activa o límite de ponderación excedido")
     })
-    @PostMapping("/evaluations")
+    @PostMapping()
     public ResponseEntity<EvaluationResponse> createEvaluation(@Valid @RequestBody CreateEvaluationRequest request) {
         log.info("Petición recibida para crear evaluación en la sección ID: {}", request.getSectionId());
         EvaluationResponse response = evaluationService.createEvaluation(request);
@@ -50,7 +50,7 @@ public class EvaluationController {
 
     @Operation(summary = "Listar todas las evaluaciones")
     @ApiResponse(responseCode = "200", description = "Listado de evaluaciones")
-    @GetMapping("/evaluations")
+    @GetMapping()
     public List<EvaluationResponse> getAllEvaluations() {
         log.info("Petición recibida para listar todas las evaluaciones");
         return evaluationService.getAllEvaluations();
@@ -62,7 +62,7 @@ public class EvaluationController {
                     content = @Content(schema = @Schema(implementation = EvaluationResponse.class))),
             @ApiResponse(responseCode = "404", description = "No existe una evaluación con ese id")
     })
-    @GetMapping("/evaluations/{id}")
+    @GetMapping("/{id}")
     public EvaluationResponse getEvaluationById(
             @Parameter(description = "Identificador de la evaluación", example = "1") @PathVariable Long id) {
         log.info("Petición recibida para consultar evaluación con ID: {}", id);

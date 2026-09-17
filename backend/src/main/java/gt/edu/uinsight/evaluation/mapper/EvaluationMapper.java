@@ -11,7 +11,7 @@ public class EvaluationMapper {
             return null;
         }
         
-        // El estado "DRAFT" se asigna por defecto al crear, tal como dicta la HU1
+        // El estado "DRAFT" se asigna por defecto al crear
         return new Evaluation(
             request.getSectionId(),
             request.getName(),
