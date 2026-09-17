@@ -1,4 +1,4 @@
-package gt.edu.uinsight.common.exception;
+package gt.edu.uinsight.report.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-@RestControllerAdvice
+/**
+ * Manejador de excepciones de la Celula C5.
+ *
+ * Se limita al paquete de C5 con basePackages para no alterar las
+ * respuestas de error de las demas celulas, y NO se llama
+ * GlobalExceptionHandler porque B5 ya tiene una clase con ese nombre
+ * (Spring no admite dos componentes con el mismo nombre simple).
+ */
+@RestControllerAdvice(basePackages = "gt.edu.uinsight.report")
 public class ReportExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ReportExceptionHandler.class);
@@ -55,19 +63,6 @@ public class ReportExceptionHandler {
                 List.of(message),
                 traceId);
         return ResponseEntity.badRequest().body(error);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
-        String traceId = newTraceId();
-        log.error("UNEXPECTED_ERROR traceId={}", traceId, ex);
-        ApiError error = new ApiError(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "INTERNAL_SERVER_ERROR",
-                "Ocurrio un error inesperado. Intente nuevamente mas tarde.",
-                Collections.emptyList(),
-                traceId);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
     private String newTraceId() {

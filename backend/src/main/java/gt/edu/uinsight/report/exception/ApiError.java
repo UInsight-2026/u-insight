@@ -1,4 +1,4 @@
-package gt.edu.uinsight.common.exception;
+package gt.edu.uinsight.report.exception;
 
 import java.time.LocalDateTime;
 import java.util.List;
