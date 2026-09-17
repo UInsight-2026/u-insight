@@ -5,63 +5,51 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "evaluations")
+@Table(name = "evaluation")
 public class Evaluation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
- 
-    @Column(nullable = false, length = 100)
-    private String name;
-
-    @Column(length = 255)
-    private String description;
-
-    @Column(name = "course_id", nullable = false)
-    private Long courseId;
 
     @Column(name = "section_id", nullable = false)
     private Long sectionId;
 
-    @Column(name = "max_score", nullable = false, precision = 5, scale = 2)
-    private BigDecimal maxScore;
+    @Column(nullable = false, length = 100)
+    private String name;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false, length = 30)
+    private String type; // EXAM, QUIZ, PROJECT, LAB, ASSIGNMENT, OTHER
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "evaluation_date", nullable = false)
+    private LocalDate evaluationDate;
+
+    @Column(name = "maximum_score", nullable = false, precision = 5, scale = 2)
+    private BigDecimal maximumScore;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal weight;
+
+    @Column(nullable = false, length = 20)
+    private String status; // DRAFT, ACTIVE, CLOSED, CANCELLED
 
     public Evaluation() {
     }
 
-    public Evaluation(String name, String description, Long courseId, Long sectionId, BigDecimal maxScore) {
-        this.name = name;
-        this.description = description;
-        this.courseId = courseId;
+    public Evaluation(Long sectionId, String name, String type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight, String status) {
         this.sectionId = sectionId;
-        this.maxScore = maxScore;
+        this.name = name;
+        this.type = type;
+        this.evaluationDate = evaluationDate;
+        this.maximumScore = maximumScore;
+        this.weight = weight;
+        this.status = status;
     }
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    // Getters y Setters
 
     public Long getId() {
         return id;
@@ -69,30 +57,6 @@ public class Evaluation {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Long getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
     }
 
     public Long getSectionId() {
@@ -103,19 +67,51 @@ public class Evaluation {
         this.sectionId = sectionId;
     }
 
-    public BigDecimal getMaxScore() {
-        return maxScore;
+    public String getName() {
+        return name;
     }
 
-    public void setMaxScore(BigDecimal maxScore) {
-        this.maxScore = maxScore;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getType() {
+        return type;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public LocalDate getEvaluationDate() {
+        return evaluationDate;
+    }
+
+    public void setEvaluationDate(LocalDate evaluationDate) {
+        this.evaluationDate = evaluationDate;
+    }
+
+    public BigDecimal getMaximumScore() {
+        return maximumScore;
+    }
+
+    public void setMaximumScore(BigDecimal maximumScore) {
+        this.maximumScore = maximumScore;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public void setWeight(BigDecimal weight) {
+        this.weight = weight;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

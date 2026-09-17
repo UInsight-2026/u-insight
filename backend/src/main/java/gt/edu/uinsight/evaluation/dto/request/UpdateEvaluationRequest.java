@@ -7,18 +7,11 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class CreateEvaluationRequest {
-
-    @NotNull(message = "El ID de la sección es obligatorio")
-    private Long sectionId;
+public class UpdateEvaluationRequest {
 
     @NotBlank(message = "El nombre de la evaluación es obligatorio")
     @Size(max = 100, message = "El nombre no puede exceder 100 caracteres")
     private String name;
-
-    @NotBlank(message = "El tipo de evaluación es obligatorio")
-    @Size(max = 30, message = "El tipo no puede exceder 30 caracteres")
-    private String type;
 
     @NotNull(message = "La fecha de la evaluación es obligatoria")
     private LocalDate evaluationDate;
@@ -31,40 +24,16 @@ public class CreateEvaluationRequest {
     @DecimalMin(value = "0.01", message = "La ponderación debe ser mayor a 0")
     private BigDecimal weight;
 
-    public CreateEvaluationRequest() {
+    public UpdateEvaluationRequest() {
     }
 
-    public CreateEvaluationRequest(Long sectionId, String name, String type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight) {
-        this.sectionId = sectionId;
-        this.name = name;
-        this.type = type;
-        this.evaluationDate = evaluationDate;
-        this.maximumScore = maximumScore;
-        this.weight = weight;
-    }
-
-    public Long getSectionId() {
-        return sectionId;
-    }
-
-    public void setSectionId(Long sectionId) {
-        this.sectionId = sectionId;
-    }
-
+    // Getters y Setters
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public LocalDate getEvaluationDate() {

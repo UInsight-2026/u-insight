@@ -1,28 +1,31 @@
 package gt.edu.uinsight.evaluation.dto.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class EvaluationResponse {
+    
     private Long id;
-    private String name;
-    private String description;
-    private Long courseId;
     private Long sectionId;
-    private BigDecimal maxScore;
-    private LocalDateTime createdAt;
+    private String name;
+    private String type;
+    private LocalDate evaluationDate;
+    private BigDecimal maximumScore;
+    private BigDecimal weight;
+    private String status;
 
     public EvaluationResponse() {
     }
 
-    public EvaluationResponse(Long id, String name, String description, Long courseId, Long sectionId, BigDecimal maxScore, LocalDateTime createdAt) {
+    public EvaluationResponse(Long id, Long sectionId, String name, String type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight, String status) {
         this.id = id;
-        this.name = name;
-        this.description = description;
-        this.courseId = courseId;
         this.sectionId = sectionId;
-        this.maxScore = maxScore;
-        this.createdAt = createdAt;
+        this.name = name;
+        this.type = type;
+        this.evaluationDate = evaluationDate;
+        this.maximumScore = maximumScore;
+        this.weight = weight;
+        this.status = status;
     }
 
     public Long getId() {
@@ -33,30 +36,6 @@ public class EvaluationResponse {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Long getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
-
     public Long getSectionId() {
         return sectionId;
     }
@@ -65,19 +44,51 @@ public class EvaluationResponse {
         this.sectionId = sectionId;
     }
 
-    public BigDecimal getMaxScore() {
-        return maxScore;
+    public String getName() {
+        return name;
     }
 
-    public void setMaxScore(BigDecimal maxScore) {
-        this.maxScore = maxScore;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getType() {
+        return type;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public LocalDate getEvaluationDate() {
+        return evaluationDate;
+    }
+
+    public void setEvaluationDate(LocalDate evaluationDate) {
+        this.evaluationDate = evaluationDate;
+    }
+
+    public BigDecimal getMaximumScore() {
+        return maximumScore;
+    }
+
+    public void setMaximumScore(BigDecimal maximumScore) {
+        this.maximumScore = maximumScore;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public void setWeight(BigDecimal weight) {
+        this.weight = weight;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
