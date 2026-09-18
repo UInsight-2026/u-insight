@@ -12,14 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Manejador de excepciones de la Celula C5.
- *
- * Se limita al paquete de C5 con basePackages para no alterar las
- * respuestas de error de las demas celulas, y NO se llama
- * GlobalExceptionHandler porque B5 ya tiene una clase con ese nombre
- * (Spring no admite dos componentes con el mismo nombre simple).
- */
+
 @RestControllerAdvice(basePackages = "gt.edu.uinsight.report")
 public class ReportExceptionHandler {
 
