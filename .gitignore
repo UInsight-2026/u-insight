@@ -2,3 +2,5 @@
 *.log
 target/
 node_modules/
+### VS Code ###
+.vscode/

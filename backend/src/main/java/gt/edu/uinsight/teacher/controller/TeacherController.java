@@ -33,4 +33,13 @@ public class TeacherController {
         List<Teacher> teachers = teacherRepository.findAll();
         return ResponseEntity.ok(teachers);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<Teacher> getTeacherById(@PathVariable Long id) {
+        Teacher teacher = teacherRepository.findById(id).orElse(null);
+        if (teacher != null) {
+    return ResponseEntity.ok(teacher);
+    } else {
+    return ResponseEntity.notFound().build();
+  }
+ }
 }
