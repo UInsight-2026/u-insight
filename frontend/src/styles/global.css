@@ -1,0 +1,67 @@
+/* Estilos generales: reset, tipografía y variables de color compartidas por las 6 vistas */
+
+:root {
+  --color-bg: #f5f6fa;
+  --color-surface: #ffffff;
+  --color-text: #1f2430;
+  --color-text-muted: #5a6270;
+  --color-primary: #2453ff;
+  --color-primary-dark: #1a3fcc;
+  --color-border: #e1e4ea;
+
+  --color-severidad-alta: #d64545;
+  --color-severidad-media: #d69b1f;
+  --color-severidad-baja: #2f9e56;
+
+  --font-family-base: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin-top: 0;
+  line-height: 1.25;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+}
