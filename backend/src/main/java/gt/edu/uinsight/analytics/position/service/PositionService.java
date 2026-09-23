@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,12 +18,14 @@ import java.util.Map;
 @Service
 public class PositionService {
 
-    // Inicializar el Logger
     private static final Logger log = LoggerFactory.getLogger(PositionService.class);
+    
+    // Inyección de la dependencia (Integración con A6)
+    private final GradeIntegrationService gradeIntegrationService;
 
-    // Dato simulado temporalmente, mientras A6 (calificaciones) no tiene su API lista.
-    private static final List<Double> MOCK_GRADES =
-            Arrays.asList(60.0, 72.0, 85.0, 90.0, 55.0, 78.0, 88.0, 92.0, 67.0, 74.0);
+    public PositionService(GradeIntegrationService gradeIntegrationService) {
+        this.gradeIntegrationService = gradeIntegrationService;
+    }
 
     public SectionPositionResponse getSectionPosition(Long sectionId, List<Integer> requestedPercentiles) {
         log.info("Iniciando calculo de posiciones para la seccion ID: {}", sectionId);
@@ -34,7 +35,9 @@ public class PositionService {
             throw new PositionNotFoundException("No se encontro la seccion con id: " + sectionId);
         }
 
-        List<Double> ordenados = new ArrayList<>(MOCK_GRADES);
+        // AQUI ESTA LA INTEGRACION: Pedimos los datos al servicio externo en lugar de usar datos estaticos
+        List<Double> notasReales = gradeIntegrationService.getGradesBySection(sectionId);
+        List<Double> ordenados = new ArrayList<>(notasReales);
         Collections.sort(ordenados);
 
         Map<String, Double> quartiles = new LinkedHashMap<>();
@@ -62,7 +65,9 @@ public class PositionService {
             throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
         }
 
-        List<Double> ordenados = new ArrayList<>(MOCK_GRADES);
+        // AQUI ESTA LA INTEGRACION: Usamos el servicio externo para obtener las notas
+        List<Double> notasReales = gradeIntegrationService.getGradesByStudent(studentId);
+        List<Double> ordenados = new ArrayList<>(notasReales);
         Collections.sort(ordenados);
 
         String studentCode = "EST-%04d".formatted(studentId);
