@@ -30,6 +30,18 @@ public class SystemExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidStatusTransition(
+            InvalidStatusTransitionException exception) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "CONFLICT",
+                exception.getMessage(),
+                List.of()
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(
             MethodArgumentNotValidException exception) {
