@@ -1,10 +1,11 @@
 package gt.edu.uinsight.analytics.summary.mapper;
 
-import gt.edu.uinsight.analytics.centraltendency.dto.CentralTendencyResponse;
+
 import gt.edu.uinsight.analytics.position.dto.PositionResponse;
-import gt.edu.uinsight.analytics.dispersion.dto.DispersionResponse;
-import gt.edu.uinsight.analytics.trend.dto.TrendResponse;
+import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.summary.dto.response.SectionSummaryResponse;
+import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 
 import org.springframework.stereotype.Component;
 
