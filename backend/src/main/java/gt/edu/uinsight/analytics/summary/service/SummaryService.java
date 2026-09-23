@@ -1,5 +1,8 @@
 package gt.edu.uinsight.analytics.summary.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
@@ -16,35 +19,64 @@ public class SummaryService {
 
     public SectionSummary getSummary(Long sectionId) {
 
-        SectionSummary summary = new SectionSummary();
+        if (sectionId == null || sectionId <= 0) {
+            throw new IllegalArgumentException("El sectionId debe ser válido");
+        }
 
+        SectionSummary summary = new SectionSummary();
         summary.setSectionId(sectionId);
 
+        List<String> unavailableComponents = new ArrayList<>();
 
-        summary.setCentralTendencyData(
-            analyticsClientRepository.getCentralTendency(sectionId)
-        );
+        // Tendencia central
+        try {
+            summary.setCentralTendencyData(
+                analyticsClientRepository.getCentralTendency(sectionId)
+            );
+        } catch (Exception e) {
+            unavailableComponents.add("centralTendency");
+        }
 
-    
-        summary.setPositionData(
-            analyticsClientRepository.getPosition(sectionId)
-        );
+        // Posición
+        try {
+            summary.setPositionData(
+                analyticsClientRepository.getPosition(sectionId)
+            );
+        } catch (Exception e) {
+            unavailableComponents.add("position");
+        }
 
-       
-        summary.setDispersionData(
-            analyticsClientRepository.getDispersion(sectionId)
-        );
+        // Dispersión
+        try {
+            summary.setDispersionData(
+                analyticsClientRepository.getDispersion(sectionId)
+            );
+        } catch (Exception e) {
+            unavailableComponents.add("dispersion");
+        }
 
-   
-        summary.setTrendData(
-            analyticsClientRepository.getTrend(sectionId)
-        );
+        // Tendencia
+        try {
+            summary.setTrendData(
+                analyticsClientRepository.getTrend(sectionId)
+            );
+        } catch (Exception e) {
+            unavailableComponents.add("trend");
+        }
 
-     
-        summary.setStudentComparisonData(
-            analyticsClientRepository.getStudentComparison(sectionId)
-        );
+        // Comparación de estudiante
+        try {
+            summary.setStudentComparisonData(
+                analyticsClientRepository.getStudentComparison(sectionId)
+            );
+        } catch (Exception e) {
+            unavailableComponents.add("studentComparison");
+        }
+
+        summary.setUnavailableComponents(unavailableComponents);
 
         return summary;
     }
 }
+
+
