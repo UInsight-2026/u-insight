@@ -26,49 +26,64 @@ public class SummaryService {
         SectionSummary summary = new SectionSummary();
         summary.setSectionId(sectionId);
 
-        List<String> unavailableComponents = new ArrayList<>();
+        List unavailableComponents = new ArrayList<>();
 
-        // Tendencia central
+        // 1. Tendencia central (Manejo de fallo parcial / datos nulos)
         try {
-            summary.setCentralTendencyData(
-                analyticsClientRepository.getCentralTendency(sectionId)
-            );
+            var data = analyticsClientRepository.getCentralTendency(sectionId);
+            if (data == null) {
+                unavailableComponents.add("centralTendency");
+            } else {
+                summary.setCentralTendencyData(data);
+            }
         } catch (Exception e) {
             unavailableComponents.add("centralTendency");
         }
 
-        // Posición
+        // 2. Posición
         try {
-            summary.setPositionData(
-                analyticsClientRepository.getPosition(sectionId)
-            );
+            var data = analyticsClientRepository.getPosition(sectionId);
+            if (data == null) {
+                unavailableComponents.add("position");
+            } else {
+                summary.setPositionData(data);
+            }
         } catch (Exception e) {
             unavailableComponents.add("position");
         }
 
-        // Dispersión
+        // 3. Dispersión
         try {
-            summary.setDispersionData(
-                analyticsClientRepository.getDispersion(sectionId)
-            );
+            var data = analyticsClientRepository.getDispersion(sectionId);
+            if (data == null) {
+                unavailableComponents.add("dispersion");
+            } else {
+                summary.setDispersionData(data);
+            }
         } catch (Exception e) {
             unavailableComponents.add("dispersion");
         }
 
-        // Tendencia
+        // 4. Tendencia
         try {
-            summary.setTrendData(
-                analyticsClientRepository.getTrend(sectionId)
-            );
+            var data = analyticsClientRepository.getTrend(sectionId);
+            if (data == null) {
+                unavailableComponents.add("trend");
+            } else {
+                summary.setTrendData(data);
+            }
         } catch (Exception e) {
             unavailableComponents.add("trend");
         }
 
-        // Comparación de estudiante
+        // 5. Comparación de estudiante
         try {
-            summary.setStudentComparisonData(
-                analyticsClientRepository.getStudentComparison(sectionId)
-            );
+            var data = analyticsClientRepository.getStudentComparison(sectionId);
+            if (data == null) {
+                unavailableComponents.add("studentComparison");
+            } else {
+                summary.setStudentComparisonData(data);
+            }
         } catch (Exception e) {
             unavailableComponents.add("studentComparison");
         }
@@ -78,5 +93,3 @@ public class SummaryService {
         return summary;
     }
 }
-
-
