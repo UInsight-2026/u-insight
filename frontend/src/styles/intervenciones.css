@@ -1,8 +1,3 @@
-/* Estilos específicos de la vista Intervenciones.
-   Archivo separado a propósito: el proyecto pide avisar en el chat del
-   equipo antes de tocar global.css, layout.css o components.css por
-   riesgo de conflictos de merge, así que las reglas de formulario y
-   tabla de esta vista viven aquí en vez de agregarse a esos 3 archivos. */
 
 .mensaje-estado {
   padding: var(--spacing-md);
@@ -135,7 +130,6 @@
   font-weight: 600;
 }
 
-/* Insignias de tipo y estado de intervención, y de resultado de seguimiento */
 .tipo-tutoria,
 .tipo-meeting { background: var(--secondary, #2996cd); color: #fff; }
 .tipo-parent_contact,

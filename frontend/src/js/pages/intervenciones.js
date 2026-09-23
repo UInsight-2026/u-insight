@@ -1,25 +1,3 @@
-// Lógica de la vista Intervenciones
-//
-// Consume intervenciones.mock.json (y alertas.mock.json, solo para poblar
-// el selector de "alerta asociada" con alertas activas y mostrar su
-// curso/sección). Reutiliza los componentes ya existentes de
-// src/js/components/ (crearTarjeta de tarjeta.js, crearTablaResultados de
-// tabla.js) sin modificarlos.
-//
-// Reglas de negocio replicadas del backend (célula C4) a nivel de UI, ya
-// que en esta etapa la vista trabaja solo contra los JSON mock, sin
-// llamar a la API real:
-//   - Tipo:     InterventionType   (TUTORING, MEETING, PARENT_CONTACT,
-//                                   ACADEMIC_PLAN, REFERRAL, OTHER)
-//   - Estado:   InterventionStatus (PLANNED, IN_PROGRESS, COMPLETED,
-//                                   CANCELLED) — RN-4: solo se avanza,
-//                                   nunca se retrocede ni se saltan pasos.
-//   - Resultado de seguimiento: FollowUpResult (IMPROVED, NO_CHANGE,
-//                                   WORSENED, PENDING), campo opcional.
-//   - Solo se puede asociar una intervención a una alerta activa (no
-//     RESOLVED ni DISMISSED), igual que valida AlertValidationPort en el
-//     backend.
-
 const TIPO_ETIQUETA = {
   TUTORING: "Tutoría",
   MEETING: "Reunión",
@@ -129,8 +107,6 @@ function calcularSiguienteIdSeguimiento(listaIntervenciones) {
   return maximo + 1;
 }
 
-// ---- Resumen -------------------------------------------------------------
-
 function renderizarResumen() {
   const conteos = Object.keys(ESTADO_INTERVENCION_ETIQUETA).reduce((acumulado, estado) => {
     acumulado[estado] = intervenciones.filter((intervencion) => intervencion.status === estado).length;
@@ -141,8 +117,6 @@ function renderizarResumen() {
     .map(([estado, etiqueta]) => crearTarjeta(etiqueta, conteos[estado] ?? 0))
     .join("");
 }
-
-// ---- Selector de alertas (solo activas) -----------------------------------
 
 function poblarSelectorAlertas() {
   const alertasActivas = alertas.filter((alerta) => !ESTADOS_ALERTA_INACTIVA.includes(alerta.status));
@@ -161,8 +135,6 @@ function poblarSelectorAlertas() {
       )
       .join("");
 }
-
-// ---- Historial -------------------------------------------------------------
 
 function renderizarHistorial() {
   const estadoSeleccionado = elementos.filtroEstado.value;
@@ -211,8 +183,6 @@ function renderizarHistorial() {
 function filtrarHistorial() {
   renderizarHistorial();
 }
-
-// ---- Crear intervención -----------------------------------------------------
 
 function validarNuevaIntervencion(payload) {
   const errores = [];
@@ -282,8 +252,6 @@ function manejarEnvioIntervencion(evento) {
   renderizarHistorial();
 }
 
-// ---- Selector de intervenciones para seguimiento ----------------------------
-
 function poblarSelectorIntervenciones() {
   const disponibles = intervenciones.filter(
     (intervencion) => !ESTADOS_INTERVENCION_SIN_SEGUIMIENTO.includes(intervencion.status)
@@ -332,8 +300,6 @@ function mostrarSeguimientosDeIntervencionSeleccionada() {
     <ul class="lista-seguimientos">${items}</ul>
   `;
 }
-
-// ---- Registrar seguimiento --------------------------------------------------
 
 function validarNuevoSeguimiento(payload, intervencion) {
   const errores = [];
@@ -389,8 +355,6 @@ function manejarEnvioSeguimiento(evento) {
   intervencion.followUps = intervencion.followUps || [];
   intervencion.followUps.push(nuevoSeguimiento);
 
-  // RN-4 (replicada a nivel de UI): una intervención planificada pasa a
-  // "en progreso" en cuanto recibe su primer seguimiento.
   if (intervencion.status === "PLANNED") {
     intervencion.status = "IN_PROGRESS";
   }
@@ -406,8 +370,6 @@ function manejarEnvioSeguimiento(evento) {
   elementos.detalleSeguimientos.innerHTML = "";
 }
 
-// ---- Utilidades de UI --------------------------------------------------------
-
 function mostrarMensajeForm(elemento, texto, esExito) {
   elemento.textContent = texto;
   elemento.hidden = false;
@@ -418,8 +380,6 @@ function mostrarMensajeForm(elemento, texto, esExito) {
 function actualizarContadorDescripcion() {
   elementos.contadorDescripcion.textContent = `${elementos.campoDescripcion.value.length} / 500`;
 }
-
-// ---- Listeners ----------------------------------------------------------------
 
 elementos.filtroEstado.addEventListener("change", filtrarHistorial);
 elementos.formIntervencion.addEventListener("submit", manejarEnvioIntervencion);
