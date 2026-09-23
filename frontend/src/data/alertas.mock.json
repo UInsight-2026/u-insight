@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "sectionId": 10,
+    "sectionCode": "A",
+    "courseName": "Programación II",
+    "type": "HIGH_RISK",
+    "severity": "HIGH",
+    "status": "NEW",
+    "message": "Promedio bajo con tendencia negativa: riesgo alto en la sección.",
+    "createdAt": "2026-09-05T08:30:00",
+    "updatedAt": "2026-09-05T08:30:00"
+  },
+  {
+    "id": 2,
+    "sectionId": 15,
+    "sectionCode": "B",
+    "courseName": "Cálculo II",
+    "type": "VARIABILITY",
+    "severity": "MEDIUM",
+    "status": "UNDER_REVIEW",
+    "message": "Alta dispersión detectada entre los resultados de la sección.",
+    "createdAt": "2026-09-06T10:15:00",
+    "updatedAt": "2026-09-08T09:00:00"
+  },
+  {
+    "id": 3,
+    "sectionId": 22,
+    "sectionCode": "A",
+    "courseName": "Estadística",
+    "type": "SECTION_THRESHOLD",
+    "severity": "LOW",
+    "status": "IN_PROGRESS",
+    "message": "Porcentaje de estudiantes bajo el umbral configurado.",
+    "createdAt": "2026-09-01T14:20:00",
+    "updatedAt": "2026-09-10T11:45:00"
+  },
+  {
+    "id": 4,
+    "sectionId": 10,
+    "sectionCode": "A",
+    "courseName": "Programación II",
+    "type": "HIGH_RISK",
+    "severity": "HIGH",
+    "status": "RESOLVED",
+    "message": "Riesgo alto detectado en evaluación anterior, resuelto tras intervención.",
+    "createdAt": "2026-08-20T09:00:00",
+    "updatedAt": "2026-09-02T16:30:00"
+  },
+  {
+    "id": 5,
+    "sectionId": 18,
+    "sectionCode": "A",
+    "courseName": "Física",
+    "type": "VARIABILITY",
+    "severity": "MEDIUM",
+    "status": "DISMISSED",
+    "message": "Variabilidad dentro de un rango aceptable tras revisión manual.",
+    "createdAt": "2026-08-15T13:00:00",
+    "updatedAt": "2026-08-16T09:10:00"
+  },
+  {
+    "id": 6,
+    "sectionId": 15,
+    "sectionCode": "B",
+    "courseName": "Cálculo II",
+    "type": "HIGH_RISK",
+    "severity": "HIGH",
+    "status": "NEW",
+    "message": "Promedio bajo con tendencia negativa: riesgo alto en la sección.",
+    "createdAt": "2026-09-12T07:45:00",
+    "updatedAt": "2026-09-12T07:45:00"
+  }
+]
