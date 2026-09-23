@@ -1,0 +1,104 @@
+:root {
+    --prymary: #194775;
+    --secondary: #2996cd;
+    --tertiary: #c22f3c;
+    --neutral: #F5F7F8;
+    --background: #f9f2e8;
+    --cards: #fdfdfd;
+    --titles: #003366;
+    --primaryText: #317eb3;
+    --secondaryText: #fff;
+}
+
+
+.card-container{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.card{
+    background: var(--secondary);
+    border-radius: 20px;
+    box-sizing: border-box;
+    padding: 20px;
+    color: var(--secondaryText);
+    border: 1.5px solid var(--prymary);
+    transition: 0.3s ease;
+}
+
+.card:hover{
+    background: var(--prymary);
+    transform: translateY(-3px);
+}
+
+/* Tarjeta de alerta (componente reutilizable) */
+.card-alerta__encabezado{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.badge{
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--neutral);
+    color: var(--titles);
+}
+
+.severidad-high{ background: var(--tertiary); color: var(--secondaryText); }
+.severidad-medium{ background: #e8a33d; color: var(--secondaryText); }
+.severidad-low{ background: var(--secondary); color: var(--secondaryText); }
+
+.estado-alerta-new{ background: var(--prymary); color: var(--secondaryText); }
+.estado-alerta-under_review{ background: #e8a33d; color: var(--secondaryText); }
+.estado-alerta-in_progress{ background: var(--secondary); color: var(--secondaryText); }
+.estado-alerta-resolved{ background: #2e7d32; color: var(--secondaryText); }
+.estado-alerta-dismissed{ background: #9e9e9e; color: var(--secondaryText); }
+
+/* Gráfico de barras simple (componente reutilizable) */
+.grafico-contenedor{
+    margin-top: 20px;
+}
+
+.grafico-barras{
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 180px;
+    padding: 10px;
+    border: 1px solid var(--neutral);
+    border-radius: 12px;
+    background: var(--cards);
+}
+
+.grafico-barra{
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+}
+
+.grafico-barra__relleno{
+    width: 60%;
+    min-height: 2px;
+    background: var(--secondary);
+    border-radius: 4px 4px 0 0;
+    transition: 0.3s ease;
+}
+
+.grafico-barra__valor{
+    font-size: 0.75rem;
+    color: var(--titles);
+    margin-top: 4px;
+}
+
+.grafico-barra__etiqueta{
+    font-size: 0.75rem;
+    color: var(--primaryText);
+}
