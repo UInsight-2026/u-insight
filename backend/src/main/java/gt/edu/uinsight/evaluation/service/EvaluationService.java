@@ -11,4 +11,5 @@ public interface EvaluationService {
     EvaluationResponse getEvaluationById(Long id);
     EvaluationResponse updateEvaluation(Long id, UpdateEvaluationRequest request);
     List<EvaluationResponse> getEvaluationsBySectionId(Long sectionId);
+    EvaluationResponse changeStatus(Long id, String newStatus);
 }

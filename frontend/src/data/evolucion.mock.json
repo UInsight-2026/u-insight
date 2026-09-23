@@ -1,0 +1,49 @@
+[
+  {
+    "sectionId": 10,
+    "sectionCode": "A",
+    "courseName": "Programación II",
+    "classification": "NEGATIVE",
+    "averageChange": -5,
+    "points": [
+      { "label": "E1", "value": 78 },
+      { "label": "E2", "value": 72 },
+      { "label": "E3", "value": 68 }
+    ]
+  },
+  {
+    "sectionId": 15,
+    "sectionCode": "B",
+    "courseName": "Cálculo II",
+    "classification": "POSITIVE",
+    "averageChange": 4,
+    "points": [
+      { "label": "E1", "value": 60 },
+      { "label": "E2", "value": 65 },
+      { "label": "E3", "value": 69 }
+    ]
+  },
+  {
+    "sectionId": 18,
+    "sectionCode": "A",
+    "courseName": "Física",
+    "classification": "STABLE",
+    "averageChange": 0,
+    "points": [
+      { "label": "E1", "value": 75 },
+      { "label": "E2", "value": 76 },
+      { "label": "E3", "value": 75 },
+      { "label": "E4", "value": 74 }
+    ]
+  },
+  {
+    "sectionId": 22,
+    "sectionCode": "A",
+    "courseName": "Estadística",
+    "classification": "INSUFFICIENT_DATA",
+    "averageChange": null,
+    "points": [
+      { "label": "E1", "value": 81 }
+    ]
+  }
+]

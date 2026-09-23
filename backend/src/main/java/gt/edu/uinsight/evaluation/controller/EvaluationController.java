@@ -1,6 +1,8 @@
 package gt.edu.uinsight.evaluation.controller;
 
+import gt.edu.uinsight.evaluation.dto.request.ChangeStatusRequest;
 import gt.edu.uinsight.evaluation.dto.request.CreateEvaluationRequest;
+import gt.edu.uinsight.evaluation.dto.request.UpdateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.response.EvaluationResponse;
 import gt.edu.uinsight.evaluation.service.EvaluationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,4 +70,42 @@ public class EvaluationController {
         log.info("Petición recibida para consultar evaluación con ID: {}", id);
         return evaluationService.getEvaluationById(id);
     }
-} 
+
+    @Operation(summary = "Actualizar evaluación",
+            description = "Actualiza nombre, fecha, nota máxima y ponderación (HU3). No permite modificar evaluaciones en estado CLOSED (RN5).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Evaluación actualizada",
+                    content = @Content(schema = @Schema(implementation = EvaluationResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Error de validación de campos"),
+            @ApiResponse(responseCode = "404", description = "No existe una evaluación con ese id"),
+            @ApiResponse(responseCode = "409", description = "La evaluación está en estado CLOSED y no puede modificarse")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<EvaluationResponse> updateEvaluation(
+            @Parameter(description = "Identificador de la evaluación", example = "1") @PathVariable Long id,
+            @Valid @RequestBody UpdateEvaluationRequest request) {
+        log.info("Petición recibida para actualizar evaluación con ID: {}", id);
+        EvaluationResponse response = evaluationService.updateEvaluation(id, request);
+        log.info("RESOURCE_UPDATED: Evaluación actualizada con ID: {}", id);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Cambiar estado de la evaluación",
+            description = "Aplica una transición de estado válida (HU4). Solo permite DRAFT->ACTIVE, ACTIVE->CLOSED, o DRAFT/ACTIVE->CANCELLED (RN6).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado actualizado",
+                    content = @Content(schema = @Schema(implementation = EvaluationResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Estado inválido"),
+            @ApiResponse(responseCode = "404", description = "No existe una evaluación con ese id"),
+            @ApiResponse(responseCode = "409", description = "Transición de estado no permitida")
+    })
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<EvaluationResponse> changeStatus(
+            @Parameter(description = "Identificador de la evaluación", example = "1") @PathVariable Long id,
+            @Valid @RequestBody ChangeStatusRequest request) {
+        log.info("Petición recibida para cambiar estado de evaluación ID: {} a {}", id, request.getStatus());
+        EvaluationResponse response = evaluationService.changeStatus(id, request.getStatus());
+        log.info("RESOURCE_UPDATED: Estado de evaluación ID: {} cambiado a {}", id, request.getStatus());
+        return ResponseEntity.ok(response);
+    }
+}
