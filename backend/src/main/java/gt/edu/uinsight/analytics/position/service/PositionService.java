@@ -5,6 +5,10 @@ import gt.edu.uinsight.analytics.position.dto.response.StudentPositionResponse;
 import gt.edu.uinsight.analytics.position.exception.PositionNotFoundException;
 import org.springframework.stereotype.Service;
 
+// Importaciones nuevas para los logs
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,13 +19,18 @@ import java.util.Map;
 @Service
 public class PositionService {
 
+    // Inicializar el Logger
+    private static final Logger log = LoggerFactory.getLogger(PositionService.class);
+
     // Dato simulado temporalmente, mientras A6 (calificaciones) no tiene su API lista.
-    // Cuando exista, aqui se reemplazara por la consulta real de notas de la seccion.
     private static final List<Double> MOCK_GRADES =
             Arrays.asList(60.0, 72.0, 85.0, 90.0, 55.0, 78.0, 88.0, 92.0, 67.0, 74.0);
 
     public SectionPositionResponse getSectionPosition(Long sectionId, List<Integer> requestedPercentiles) {
+        log.info("Iniciando calculo de posiciones para la seccion ID: {}", sectionId);
+
         if (sectionId == null || sectionId <= 0) {
+            log.error("Regla de negocio rechazada: El ID de la seccion {} es invalido", sectionId);
             throw new PositionNotFoundException("No se encontro la seccion con id: " + sectionId);
         }
 
@@ -41,11 +50,15 @@ public class PositionService {
             }
         }
 
+        log.info("Calculo exitoso de medidas de posicion para la seccion ID: {}", sectionId);
         return new SectionPositionResponse(sectionId, ordenados.size(), quartiles, percentiles);
     }
 
     public StudentPositionResponse getStudentPosition(Long studentId) {
+        log.info("Iniciando calculo de posicion individual para el estudiante ID: {}", studentId);
+
         if (studentId == null || studentId <= 0) {
+            log.error("Regla de negocio rechazada: El ID del estudiante {} es invalido", studentId);
             throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
         }
 
@@ -57,19 +70,12 @@ public class PositionService {
 
         int percentile = calcularPercentilDeValor(ordenados, studentAverage);
 
+        log.info("Calculo exitoso de percentil para el estudiante ID: {}", studentId);
         return new StudentPositionResponse(studentCode, studentAverage, percentile);
     }
 
     /**
      * Calcula una medida de posicion (cuartil, decil o percentil) para datos NO agrupados.
-     *
-     * Formula:  posicion = (j * n) / k + 1/2
-     * Si la posicion resultante no es un numero entero, se interpola entre
-     * el dato en la posicion inferior (Pn) y el dato en la posicion superior (Pn+1):
-     *
-     *   I = Pn + Fp * (Pn+1 - Pn)
-     *
-     * donde Fp es la parte decimal de la posicion.
      */
     private double calcularFractila(List<Double> ordenados, int k, int j) {
         int n = ordenados.size();
@@ -101,8 +107,7 @@ public class PositionService {
     }
 
     /**
-     * Calcula el percentil (0-100) que ocupa un valor dado dentro de un conjunto ordenado,
-     * como el porcentaje de datos que son menores o iguales a ese valor.
+     * Calcula el percentil (0-100) que ocupa un valor dado dentro de un conjunto ordenado.
      */
     private int calcularPercentilDeValor(List<Double> ordenados, double valor) {
         long cantidadMenoresOIguales = ordenados.stream().filter(v -> v <= valor).count();
