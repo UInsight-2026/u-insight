@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EvaluationRepository extends JpaRepository<Evaluation, Long> {
 
-    // Usado por GET /api/v1/sections/{id}/evaluations (HU2)
+    // HU2: GET /api/v1/sections/{id}/evaluations
     List<Evaluation> findBySectionId(Long sectionId);
 }

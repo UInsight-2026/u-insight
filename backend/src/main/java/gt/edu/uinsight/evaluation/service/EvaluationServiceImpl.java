@@ -1,117 +1,186 @@
+// Celula A5 - Gestión de evaluaciones
 package gt.edu.uinsight.evaluation.service;
-
+ 
+import gt.edu.uinsight.evaluation.dto.request.ChangeEvaluationStatusRequest;
 import gt.edu.uinsight.evaluation.dto.request.CreateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.request.UpdateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.response.EvaluationResponse;
 import gt.edu.uinsight.evaluation.entity.Evaluation;
+import gt.edu.uinsight.evaluation.exception.EvaluationNotEditableException;
+import gt.edu.uinsight.evaluation.exception.EvaluationNotFoundException;
+import gt.edu.uinsight.evaluation.exception.InvalidStatusTransitionException;
+import gt.edu.uinsight.evaluation.exception.SectionNotActiveException;
+import gt.edu.uinsight.evaluation.exception.SectionNotFoundException;
+import gt.edu.uinsight.evaluation.exception.WeightLimitExceededException;
 import gt.edu.uinsight.evaluation.mapper.EvaluationMapper;
 import gt.edu.uinsight.evaluation.repository.EvaluationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+ 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+ 
 
 @Service
 public class EvaluationServiceImpl implements EvaluationService {
-
-    // Estados válidos del sistema (mientras no se use un Enum en la Entity)
-    private static final Set<String> VALID_STATUSES = Set.of("DRAFT", "ACTIVE", "CLOSED", "CANCELLED");
-
-    // RN6: transiciones válidas. DRAFT -> ACTIVE -> CLOSED, o DRAFT/ACTIVE -> CANCELLED.
-    // No se permiten transiciones inversas ni salir de CLOSED/CANCELLED (RN5 también aplica aquí).
-    private static final Map<String, Set<String>> ALLOWED_TRANSITIONS = Map.of(
-            "DRAFT", Set.of("ACTIVE", "CANCELLED"),
-            "ACTIVE", Set.of("CLOSED", "CANCELLED"),
-            "CLOSED", Set.of(),
-            "CANCELLED", Set.of()
-    );
-
+ 
+    private static final Logger log = LoggerFactory.getLogger(EvaluationServiceImpl.class);
+ 
+    private static final BigDecimal WEIGHT_LIMIT = new BigDecimal("100.00");
+    private static final String DRAFT = "DRAFT";
+    private static final String ACTIVE = "ACTIVE";
+    private static final String CLOSED = "CLOSED";
+    private static final String CANCELLED = "CANCELLED";
+ 
+    // RN6: transiciones de estado permitidas
+    private static final Map<String, Set<String>> ALLOWED_TRANSITIONS = buildTransitions();
+ 
+    private static Map<String, Set<String>> buildTransitions() {
+        Map<String, Set<String>> transitions = new java.util.HashMap<>();
+        transitions.put(DRAFT, Set.of(ACTIVE, CANCELLED));
+        transitions.put(ACTIVE, Set.of(CLOSED, CANCELLED));
+        transitions.put(CLOSED, Set.of());
+        transitions.put(CANCELLED, Set.of());
+        return transitions;
+    }
+ 
     private final EvaluationRepository evaluationRepository;
     private final EvaluationMapper evaluationMapper;
-
-    public EvaluationServiceImpl(EvaluationRepository evaluationRepository, EvaluationMapper evaluationMapper) {
+    private final SectionValidationPort sectionValidationPort;
+ 
+    public EvaluationServiceImpl(EvaluationRepository evaluationRepository, EvaluationMapper evaluationMapper,
+                                  SectionValidationPort sectionValidationPort) {
         this.evaluationRepository = evaluationRepository;
         this.evaluationMapper = evaluationMapper;
+        this.sectionValidationPort = sectionValidationPort;
     }
-
+ 
     @Override
+    @Transactional
     public EvaluationResponse createEvaluation(CreateEvaluationRequest request) {
+        assertSectionActive(request.getSectionId()); // RN1
+        assertWeightWithinLimit(request.getSectionId(), request.getWeight(), null); // RN4
+ 
         Evaluation entity = evaluationMapper.toEntity(request);
-        Evaluation savedEntity = evaluationRepository.save(entity);
-        return evaluationMapper.toResponse(savedEntity);
+        Evaluation saved = evaluationRepository.save(entity);
+ 
+        log.info("EVALUATION_CREATED evaluationId={} sectionId={} type={} weight={}",
+                saved.getId(), saved.getSectionId(), saved.getType(), saved.getWeight());
+ 
+        return evaluationMapper.toResponse(saved);
     }
-
+ 
     @Override
+    @Transactional(readOnly = true)
     public List<EvaluationResponse> getAllEvaluations() {
         return evaluationRepository.findAll().stream()
                 .map(evaluationMapper::toResponse)
                 .collect(Collectors.toList());
     }
-
+ 
     @Override
+    @Transactional(readOnly = true)
     public EvaluationResponse getEvaluationById(Long id) {
-        Evaluation entity = findEvaluationOrThrow(id);
-        return evaluationMapper.toResponse(entity);
+        return evaluationMapper.toResponse(findEntityOrThrow(id));
     }
-
+ 
     @Override
+    @Transactional(readOnly = true)
     public List<EvaluationResponse> getEvaluationsBySectionId(Long sectionId) {
         // HU2 — GET /api/v1/sections/{id}/evaluations
-        // No se valida aquí que la sección exista (eso depende de la célula A4);
-        // si no hay evaluaciones, el contrato espera 200 + lista vacía, no 404.
+        // Si no hay evaluaciones, el contrato espera 200 + lista vacía, no 404.
         return evaluationRepository.findBySectionId(sectionId).stream()
                 .map(evaluationMapper::toResponse)
                 .collect(Collectors.toList());
     }
-
+ 
     @Override
+    @Transactional
     public EvaluationResponse updateEvaluation(Long id, UpdateEvaluationRequest request) {
-        Evaluation entity = findEvaluationOrThrow(id);
-
-        // RN5 — una evaluación CLOSED no debe modificarse
-        if ("CLOSED".equals(entity.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "No se puede modificar una evaluación en estado CLOSED");
+        Evaluation entity = findEntityOrThrow(id);
+ 
+        if (CLOSED.equals(entity.getStatus())) {
+            log.warn("EVALUATION_NOT_EDITABLE evaluationId={} status={}", id, entity.getStatus());
+            throw new EvaluationNotEditableException(id); // RN5
         }
-
+ 
+        assertWeightWithinLimit(entity.getSectionId(), request.getWeight(), id); // RN4
+ 
         entity.setName(request.getName());
         entity.setEvaluationDate(request.getEvaluationDate());
         entity.setMaximumScore(request.getMaximumScore());
         entity.setWeight(request.getWeight());
-
-        Evaluation updated = evaluationRepository.save(entity);
-        return evaluationMapper.toResponse(updated);
+        Evaluation saved = evaluationRepository.save(entity);
+ 
+        log.info("EVALUATION_UPDATED evaluationId={} weight={}", saved.getId(), saved.getWeight());
+ 
+        return evaluationMapper.toResponse(saved);
     }
-
+ 
     @Override
-    public EvaluationResponse changeStatus(Long id, String newStatus) {
-        Evaluation entity = findEvaluationOrThrow(id);
-
-        if (!VALID_STATUSES.contains(newStatus)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Estado inválido: " + newStatus + ". Valores permitidos: " + VALID_STATUSES);
-        }
-
+    @Transactional
+    public EvaluationResponse changeStatus(Long id, ChangeEvaluationStatusRequest request) {
+        Evaluation entity = findEntityOrThrow(id);
         String currentStatus = entity.getStatus();
-        Set<String> allowedNextStates = ALLOWED_TRANSITIONS.getOrDefault(currentStatus, Set.of());
-
-        // RN6 — transición inválida (incluye intentar salir de CLOSED/CANCELLED, cubriendo también RN5)
-        if (!allowedNextStates.contains(newStatus)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Transición de estado no permitida: " + currentStatus + " -> " + newStatus);
+        String newStatus = request.getStatus() == null ? null : request.getStatus().toUpperCase(java.util.Locale.ROOT);
+ 
+        Set<String> allowed = ALLOWED_TRANSITIONS.get(currentStatus);
+        if (newStatus == null || allowed == null || !allowed.contains(newStatus)) {
+            log.warn("INVALID_STATUS_TRANSITION evaluationId={} from={} to={}", id, currentStatus, request.getStatus());
+            throw new InvalidStatusTransitionException(
+                    "Transición de " + currentStatus + " a " + request.getStatus() + " no permitida"); // RN6
         }
-
+ 
         entity.setStatus(newStatus);
-        Evaluation updated = evaluationRepository.save(entity);
-        return evaluationMapper.toResponse(updated);
+        Evaluation saved = evaluationRepository.save(entity);
+ 
+        log.info("EVALUATION_STATUS_CHANGED evaluationId={} from={} to={}", id, currentStatus, newStatus);
+ 
+        return evaluationMapper.toResponse(saved);
     }
-
-    private Evaluation findEvaluationOrThrow(Long id) {
+ 
+    private Evaluation findEntityOrThrow(Long id) {
         return evaluationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "No se encontró la evaluación con el ID: " + id));
+                .orElseThrow(() -> {
+                    log.warn("EVALUATION_NOT_FOUND evaluationId={}", id);
+                    return new EvaluationNotFoundException(id);
+                });
+    }
+ 
+    private void assertSectionActive(Long sectionId) {
+        if (!sectionValidationPort.exists(sectionId)) {
+            log.warn("SECTION_NOT_FOUND sectionId={}", sectionId);
+            throw new SectionNotFoundException(sectionId);
+        }
+        if (!sectionValidationPort.isActive(sectionId)) {
+            log.warn("SECTION_NOT_ACTIVE sectionId={}", sectionId);
+            throw new SectionNotActiveException(sectionId);
+        }
+    }
+ 
+    /**
+     * RN4. Al actualizar (excludeEvaluationId != null) se excluye la propia
+     * evaluación del total actual, para no contarla dos veces.
+     */
+    private void assertWeightWithinLimit(Long sectionId, BigDecimal newWeight, Long excludeEvaluationId) {
+        BigDecimal weightToAdd = newWeight == null ? BigDecimal.ZERO : newWeight;
+ 
+        BigDecimal currentTotal = evaluationRepository.findBySectionId(sectionId).stream()
+                .filter(e -> !CANCELLED.equals(e.getStatus()))
+                .filter(e -> excludeEvaluationId == null || !e.getId().equals(excludeEvaluationId))
+                .map(Evaluation::getWeight)
+                .filter(w -> w != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+ 
+        if (currentTotal.add(weightToAdd).compareTo(WEIGHT_LIMIT) > 0) {
+            log.warn("WEIGHT_LIMIT_EXCEEDED sectionId={} currentTotal={} attemptedWeight={}",
+                    sectionId, currentTotal, newWeight);
+            throw new WeightLimitExceededException(sectionId, currentTotal, WEIGHT_LIMIT);
+        }
     }
 }
