@@ -1,0 +1,84 @@
+[
+  {
+    "id": 1,
+    "alertId": 2,
+    "type": "TUTORING",
+    "description": "Tutoría de refuerzo en Cálculo II para estudiantes con notas por debajo del promedio.",
+    "responsible": "Lic. Roberto Aguilar",
+    "startDate": "2026-09-09",
+    "status": "IN_PROGRESS",
+    "createdAt": "2026-09-08T09:30:00",
+    "followUps": [
+      {
+        "id": 1,
+        "interventionId": 1,
+        "followUpDate": "2026-09-11",
+        "observation": "Primera sesión de tutoría realizada, asistieron 8 de 10 estudiantes convocados.",
+        "result": "NO_CHANGE"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "alertId": 3,
+    "type": "ACADEMIC_PLAN",
+    "description": "Plan de nivelación para la sección A de Estadística.",
+    "responsible": "Licda. Carolina Reyes",
+    "startDate": "2026-09-02",
+    "status": "IN_PROGRESS",
+    "createdAt": "2026-09-01T15:00:00",
+    "followUps": [
+      {
+        "id": 2,
+        "interventionId": 2,
+        "followUpDate": "2026-09-05",
+        "observation": "Se entregó guía de ejercicios adicionales.",
+        "result": "IMPROVED"
+      },
+      {
+        "id": 3,
+        "interventionId": 2,
+        "followUpDate": "2026-09-10",
+        "observation": "Segunda evaluación muestra leve mejora en el promedio.",
+        "result": "IMPROVED"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "alertId": 4,
+    "type": "PARENT_MEETING",
+    "description": "Reunión con encargados de estudiantes en riesgo alto de la sección A de Programación II.",
+    "responsible": "Ing. Marta Solís",
+    "startDate": "2026-08-22",
+    "status": "COMPLETED",
+    "createdAt": "2026-08-20T09:15:00",
+    "followUps": [
+      {
+        "id": 4,
+        "interventionId": 3,
+        "followUpDate": "2026-08-29",
+        "observation": "Encargados comprometidos a dar seguimiento en casa.",
+        "result": "IMPROVED"
+      },
+      {
+        "id": 5,
+        "interventionId": 3,
+        "followUpDate": "2026-09-02",
+        "observation": "Alerta resuelta: el promedio de la sección volvió a rango aceptable.",
+        "result": "IMPROVED"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "alertId": 1,
+    "type": "TUTORING",
+    "description": "Tutoría de refuerzo en Programación II para estudiantes con riesgo alto.",
+    "responsible": "Ing. Marta Solís",
+    "startDate": "2026-09-20",
+    "status": "PLANNED",
+    "createdAt": "2026-09-14T10:15:30",
+    "followUps": []
+  }
+]
