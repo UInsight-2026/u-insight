@@ -1,5 +1,6 @@
 package gt.edu.uinsight.teacher.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -33,6 +34,7 @@ public class Teacher {
         this.status = status != null ? status : TeacherStatus.ACTIVE;
     }
 
+    @JsonIgnore
     public boolean isActive() {
         return TeacherStatus.ACTIVE.equals(this.status);
     }

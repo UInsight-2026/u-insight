@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Traduce las excepciones del modulo a respuestas HTTP consistentes. */
+/**
+ * Traduce las excepciones de los modulos de docentes y secciones a respuestas HTTP
+ * consistentes. Convive con los manejadores de otros modulos del proyecto.
+ */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class ApiExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) {

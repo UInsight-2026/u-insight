@@ -75,6 +75,9 @@ Apoyo para las asignaciones (modulo de secciones):
 | No eliminar fisicamente docentes con historial | `TeacherService.delete` (si ya tiene secciones, la baja debe ser logica con PATCH `/status`) | 409 Conflict |
 | El correo debe ser valido si se utiliza | `@Email` en `TeacherRequest`; el campo es opcional y una cadena vacia se guarda como `null` | 400 Bad Request |
 
+La documentacion interactiva del API (Swagger UI) queda disponible en
+`http://localhost:8080/swagger-ui.html` y el contrato OpenAPI en `/v3/api-docs`.
+
 ## Formato de error
 
 ```json
@@ -88,6 +91,8 @@ Apoyo para las asignaciones (modulo de secciones):
 ```
 
 En los errores de validacion (400) el campo `fields` incluye el detalle por atributo.
+Lo construye `gt.edu.uinsight.common.exception.ApiExceptionHandler`, que convive con el
+manejador del modulo de analitica individual.
 
 ## Pruebas
 
