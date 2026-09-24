@@ -17,6 +17,8 @@ import gt.edu.uinsight.imports.repository.RegistroImportacionRepository;
 import gt.edu.uinsight.imports.util.ImportLogEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -230,5 +232,15 @@ public class ImportService {
                 importacion.getRegistrosInvalidos(),
                 importacion.getFechaCarga()
         );
+    }
+
+    public Page<ImportErrorDetail> consultarErrores(Long importId, Pageable pageable) {
+        if (!importacionRepository.existsById(importId)) {
+            throw new ImportNotFoundException(importId);
+        }
+
+        return registroImportacionRepository
+                .findByImportacionIdAndEstadoValidacion(importId, EstadoValidacion.INVALIDO, pageable)
+                .map(r -> new ImportErrorDetail(r.getNumeroFila(), r.getCampoError(), r.getMotivoError()));
     }
 }

@@ -1,5 +1,6 @@
 package gt.edu.uinsight.imports.controller;
 
+import gt.edu.uinsight.imports.dto.response.ImportErrorDetail;
 import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
 import gt.edu.uinsight.imports.dto.response.ImportValidateResponse;
 import gt.edu.uinsight.imports.exception.ErrorResponse;
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -70,6 +73,20 @@ public class ImportController {
     @PostMapping("/grades/confirm")
     public ResponseEntity<ImportStatusResponse> confirmar(@RequestParam("importId") Long importId) {
         ImportStatusResponse response = importService.confirmar(importId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "Listar los errores de una importación",
+            description = "Devuelve, paginado, el detalle (fila, campo, motivo) de las filas rechazadas de una Importacion.")
+    @ApiResponse(responseCode = "200", description = "Página de errores de la importación")
+    @ApiResponse(responseCode = "404", description = "No existe una importación con ese id",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @GetMapping("/{id}/errors")
+    public ResponseEntity<Page<ImportErrorDetail>> consultarErrores(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<ImportErrorDetail> response = importService.consultarErrores(id, PageRequest.of(page, size));
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
