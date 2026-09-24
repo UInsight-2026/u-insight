@@ -17,6 +17,11 @@ public class Section {
     String sectionCode;
     String status;
 
+    // Constructor sin argumentos agregado por C7: Hibernate lo necesita para instanciar
+    // la entidad y sin el el contexto de Spring no arranca.
+    protected Section() {
+    }
+
     public Section(Long periodId, Long courseId, Long teacherId, String sectionCode, String status) {
         this.periodId = periodId;
         this.courseId = courseId;
