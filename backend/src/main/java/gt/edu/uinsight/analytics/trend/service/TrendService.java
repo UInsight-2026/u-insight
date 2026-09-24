@@ -74,14 +74,14 @@ public class TrendService {
         return trendMapper.toTrendResponse(result, points);        
     }
 
-    public TrendResponse getTrendByStudentId(Long studentId) {
-        List<Grade> grades = gradeRepository
-                .findByStudentIdOrderByEvaluation_EvaluationDateAsc(studentId);
+//     public TrendResponse getTrendByStudentId(Long studentId) {
+//         List<Grade> grades = gradeRepository
+//                 .findByStudentIdOrderByEvaluation_EvaluationDateAsc(studentId);
 
-        List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
-        TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
-        return trendMapper.toTrendResponse(result, points);
-    }
+//         List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
+//         TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
+//         return trendMapper.toTrendResponse(result, points);
+//     }
 
     /**
      * Regla de negocio 3: normaliza cada nota a escala 0-100

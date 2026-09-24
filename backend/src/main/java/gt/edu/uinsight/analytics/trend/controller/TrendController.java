@@ -1,5 +1,8 @@
 package gt.edu.uinsight.analytics.trend.controller;
 
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,17 +20,26 @@ public class TrendController {
      private final TrendService trendService = null; // Inyectar el servicio real en un escenario de producción
 
      @GetMapping("/sections/{id}/trend")
-     public ResponseEntity<TrendResponse> getTrendBySectionId(@PathVariable Long id) {
+     public ResponseEntity<?> getTrendBySectionId(@PathVariable Long id) {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);
+         if(trendResponse == null){
+            //error aca si algo fallo y la seccion no existe
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of(
+                    "mensaje","La seccion con id"+id+" no existe",
+                    "codigo",404
+                )
+            );
+         }
          return ResponseEntity.ok(trendResponse);
      }
 
     @GetMapping("/students/{id}/trend")
     public ResponseEntity<TrendResponse> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
-        TrendResponse trendResponse = trendService.getTrendByStudentId(id);
-        return ResponseEntity.ok(trendResponse);
+        //TrendResponse trendResponse = trendService.getTrendByStudentId(id);
+        return ResponseEntity.ok(null);
     }
 
 }
