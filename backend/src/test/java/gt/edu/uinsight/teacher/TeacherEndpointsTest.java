@@ -1,7 +1,8 @@
 package gt.edu.uinsight.teacher;
 
 import com.jayway.jsonpath.JsonPath;
-import gt.edu.uinsight.section.repository.SectionRepository;
+import gt.edu.uinsight.analytics.trend.entity.Section;
+import gt.edu.uinsight.teacher.repository.TeacherSectionRepository;
 import gt.edu.uinsight.teacher.model.Teacher;
 import gt.edu.uinsight.teacher.model.TeacherStatus;
 import gt.edu.uinsight.teacher.repository.TeacherRepository;
@@ -29,7 +30,7 @@ class TeacherEndpointsTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private TeacherRepository teacherRepository;
-    @Autowired private SectionRepository sectionRepository;
+    @Autowired private TeacherSectionRepository sectionRepository;
 
     @BeforeEach
     void cleanDatabase() {
@@ -52,14 +53,10 @@ class TeacherEndpointsTest {
         return ((Number) JsonPath.read(response, "$.id")).longValue();
     }
 
-    private void createSection(String sectionCode, Long teacherId) throws Exception {
-        mockMvc.perform(post("/api/v1/sections")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"sectionCode": "%s", "courseName": "Programacion I",
-                                 "academicTerm": "2026-1", "teacherId": %d}
-                                """.formatted(sectionCode, teacherId)))
-                .andExpect(status().isCreated());
+    /** La creacion de secciones pertenece a otro modulo, aqui se inserta el dato directamente. */
+    private Long createSection(String sectionCode, Long teacherId) {
+        Section section = new Section(1L, 1L, teacherId, sectionCode, "ACTIVE");
+        return sectionRepository.save(section).getId();
     }
 
     // --- Regla: codigo unico ---
@@ -173,18 +170,25 @@ class TeacherEndpointsTest {
     @Test
     void inactiveTeacherCannotBeAssignedToNewSection() throws Exception {
         Long id = createTeacher("DOC-050", "Ana Lopez", "ana.lopez@uinsight.edu.gt");
+        Long sectionId = createSection("SEC-050", null);
+
         mockMvc.perform(patch("/api/v1/teachers/" + id + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\": \"INACTIVE\"}"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/api/v1/sections")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"sectionCode": "SEC-050", "courseName": "Programacion I",
-                                 "academicTerm": "2026-1", "teacherId": %d}
-                                """.formatted(id)))
+        mockMvc.perform(put("/api/v1/teachers/" + id + "/sections/" + sectionId))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void activeTeacherCanBeAssignedToSection() throws Exception {
+        Long id = createTeacher("DOC-051", "Ana Lopez", "ana.lopez@uinsight.edu.gt");
+        Long sectionId = createSection("SEC-051", null);
+
+        mockMvc.perform(put("/api/v1/teachers/" + id + "/sections/" + sectionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teacherId").value(id));
     }
 
     // --- Regla: no eliminar fisicamente docentes con historial ---

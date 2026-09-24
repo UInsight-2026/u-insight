@@ -1,14 +1,15 @@
 package gt.edu.uinsight.teacher.service;
 
+import gt.edu.uinsight.analytics.trend.entity.Section;
 import gt.edu.uinsight.common.exception.BusinessRuleException;
 import gt.edu.uinsight.common.exception.DuplicateResourceException;
 import gt.edu.uinsight.common.exception.ResourceNotFoundException;
-import gt.edu.uinsight.section.dto.SectionResponse;
-import gt.edu.uinsight.section.repository.SectionRepository;
 import gt.edu.uinsight.teacher.dto.TeacherRequest;
+import gt.edu.uinsight.teacher.dto.TeacherSectionResponse;
 import gt.edu.uinsight.teacher.model.Teacher;
 import gt.edu.uinsight.teacher.model.TeacherStatus;
 import gt.edu.uinsight.teacher.repository.TeacherRepository;
+import gt.edu.uinsight.teacher.repository.TeacherSectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +19,16 @@ import java.util.List;
  * Reglas de negocio del modulo de docentes:
  * - El codigo del docente es unico.
  * - El correo, cuando se utiliza, debe tener formato valido.
+ * - Un docente inactivo no puede asignarse a nuevas secciones.
  * - Un docente con historial de secciones no se elimina fisicamente, solo se inactiva.
  */
 @Service
 public class TeacherService {
 
     private final TeacherRepository teacherRepository;
-    private final SectionRepository sectionRepository;
+    private final TeacherSectionRepository sectionRepository;
 
-    public TeacherService(TeacherRepository teacherRepository, SectionRepository sectionRepository) {
+    public TeacherService(TeacherRepository teacherRepository, TeacherSectionRepository sectionRepository) {
         this.teacherRepository = teacherRepository;
         this.sectionRepository = sectionRepository;
     }
@@ -85,13 +87,28 @@ public class TeacherService {
     }
 
     @Transactional(readOnly = true)
-    public List<SectionResponse> findSectionsByTeacher(Long id) {
+    public List<TeacherSectionResponse> findSectionsByTeacher(Long id) {
         Teacher teacher = findById(id);
-        return sectionRepository
-                .findByTeacherIdOrderByAcademicTermDescSectionCodeAsc(teacher.getId())
+        return sectionRepository.findByTeacherIdOrderBySectionCodeAsc(teacher.getId())
                 .stream()
-                .map(SectionResponse::from)
+                .map(TeacherSectionResponse::from)
                 .toList();
+    }
+
+    /** Asigna el docente a una seccion existente. Un docente inactivo no puede recibir secciones. */
+    @Transactional
+    public TeacherSectionResponse assignToSection(Long teacherId, Long sectionId) {
+        Teacher teacher = findById(teacherId);
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe la seccion con id " + sectionId));
+
+        if (!teacher.isActive()) {
+            throw new BusinessRuleException("El docente " + teacher.getTeacherCode()
+                    + " esta INACTIVE y no puede asignarse a nuevas secciones");
+        }
+
+        section.setTeacherId(teacher.getId());
+        return TeacherSectionResponse.from(sectionRepository.save(section));
     }
 
     /**

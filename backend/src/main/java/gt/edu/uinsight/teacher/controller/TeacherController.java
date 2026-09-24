@@ -1,7 +1,7 @@
 package gt.edu.uinsight.teacher.controller;
 
-import gt.edu.uinsight.section.dto.SectionResponse;
 import gt.edu.uinsight.teacher.dto.TeacherRequest;
+import gt.edu.uinsight.teacher.dto.TeacherSectionResponse;
 import gt.edu.uinsight.teacher.dto.TeacherStatusRequest;
 import gt.edu.uinsight.teacher.model.Teacher;
 import gt.edu.uinsight.teacher.service.TeacherService;
@@ -51,8 +51,14 @@ public class TeacherController {
     }
 
     @GetMapping("/{id}/sections")
-    public ResponseEntity<List<SectionResponse>> getTeacherSections(@PathVariable Long id) {
+    public ResponseEntity<List<TeacherSectionResponse>> getTeacherSections(@PathVariable Long id) {
         return ResponseEntity.ok(teacherService.findSectionsByTeacher(id));
+    }
+
+    @PutMapping("/{id}/sections/{sectionId}")
+    public ResponseEntity<TeacherSectionResponse> assignSection(@PathVariable Long id,
+                                                                @PathVariable Long sectionId) {
+        return ResponseEntity.ok(teacherService.assignToSection(id, sectionId));
     }
 
     @DeleteMapping("/{id}")

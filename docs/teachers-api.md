@@ -10,14 +10,12 @@ Base: `/api/v1/teachers`
 | PUT | `/api/v1/teachers/{id}` | Actualiza los datos del docente | 200, 400, 404, 409 |
 | PATCH | `/api/v1/teachers/{id}/status` | Cambia el estado (ACTIVE / INACTIVE) | 200, 400, 404 |
 | GET | `/api/v1/teachers/{id}/sections` | Lista las secciones asignadas al docente | 200, 404 |
+| PUT | `/api/v1/teachers/{id}/sections/{sectionId}` | Asigna el docente a una seccion existente | 200, 404, 409 |
 | DELETE | `/api/v1/teachers/{id}` | Elimina al docente solo si no tiene historial | 204, 404, 409 |
 
-Apoyo para las asignaciones (modulo de secciones):
-
-| Metodo | Ruta | Descripcion | Respuestas |
-|---|---|---|---|
-| POST | `/api/v1/sections` | Registra una seccion y le asigna un docente | 201, 400, 404, 409 |
-| GET | `/api/v1/sections` | Lista todas las secciones | 200 |
+Las secciones se leen de la tabla `section`, que pertenece a otro modulo. Este
+modulo no las crea: solo consulta la carga academica del docente y valida las
+reglas de asignacion y de baja.
 
 ## Ejemplos
 
@@ -47,36 +45,30 @@ Apoyo para las asignaciones (modulo de secciones):
   {
     "id": 1,
     "sectionCode": "SEC-040",
-    "courseName": "Programacion I",
-    "academicTerm": "2026-1",
-    "teacherId": 1,
-    "teacherName": "Ana Maria Lopez"
+    "status": "ACTIVE",
+    "periodId": 1,
+    "courseId": 1,
+    "teacherId": 1
   }
 ]
 ```
 
-### POST /api/v1/sections
+### PUT /api/v1/teachers/{id}/sections/{sectionId}
 
-```json
-{
-  "sectionCode": "SEC-040",
-  "courseName": "Programacion I",
-  "academicTerm": "2026-1",
-  "teacherId": 1
-}
-```
+No lleva cuerpo. Devuelve la seccion ya con el docente asignado, o 409 si el
+docente esta INACTIVE.
+
+La documentacion interactiva del API (Swagger UI) queda disponible en
+`http://localhost:8080/swagger-ui.html` y el contrato OpenAPI en `/v3/api-docs`.
 
 ## Reglas de negocio
 
 | Regla | Donde se aplica | Resultado si se incumple |
 |---|---|---|
 | Codigo unico de docente | `TeacherService.create` / `TeacherService.update` (comparacion sin distinguir mayusculas) y restriccion `unique` en la tabla `teachers` | 409 Conflict |
-| No asignar docentes inactivos a nuevas secciones | `SectionService.create` | 409 Conflict |
+| No asignar docentes inactivos a nuevas secciones | `TeacherService.assignToSection` | 409 Conflict |
 | No eliminar fisicamente docentes con historial | `TeacherService.delete` (si ya tiene secciones, la baja debe ser logica con PATCH `/status`) | 409 Conflict |
 | El correo debe ser valido si se utiliza | `@Email` en `TeacherRequest`; el campo es opcional y una cadena vacia se guarda como `null` | 400 Bad Request |
-
-La documentacion interactiva del API (Swagger UI) queda disponible en
-`http://localhost:8080/swagger-ui.html` y el contrato OpenAPI en `/v3/api-docs`.
 
 ## Formato de error
 
@@ -97,7 +89,9 @@ manejador del modulo de analitica individual.
 ## Pruebas
 
 `backend/src/test/java/gt/edu/uinsight/teacher/TeacherEndpointsTest.java` cubre los endpoints
-nuevos y las cuatro reglas de negocio.
+y las cuatro reglas de negocio. Corren contra H2 en memoria, configurado en
+`backend/src/test/resources/application.properties`, para no depender de una instancia
+MySQL local.
 
 ```bash
 cd backend
