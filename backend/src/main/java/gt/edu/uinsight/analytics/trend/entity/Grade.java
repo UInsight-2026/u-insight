@@ -1,67 +1,64 @@
 package gt.edu.uinsight.analytics.trend.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-@Entity 
+/** Vista de solo lectura de una calificación para el cálculo de tendencias. */
+@Entity(name = "TrendGrade")
 @Table(name = "grade")
 public class Grade {
-    
-    @Id 
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private Long id;
-    
-    private Long evaluationId;
-    private Long studentId;
-    private Double score;
-    private String registeredAt;
-    private String status;
 
-    public Grade(Long evaluationId, Long studentId, Double score, String registeredAt, String status) {
-        this.evaluationId = evaluationId;
-        this.studentId = studentId;
-        this.score = score;
-        this.registeredAt = registeredAt;
-        this.status = status;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "evaluation_id", nullable = false)
+    private Long evaluationId;
+
+    @Column(name = "student_id", nullable = false)
+    private Long studentId;
+
+    @Column(nullable = false, precision = 5, scale = 2)
+    private BigDecimal score;
+
+    @Column(name = "registered_at")
+    private LocalDateTime registeredAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    protected Grade() {
+        // Requerido por JPA.
     }
 
     public Long getId() {
         return id;
     }
 
-    public Long getStudentId() {
-        return studentId;
-    }
-
     public Long getEvaluationId() {
         return evaluationId;
     }
 
-    public Double getScore() {
-        return score;
-    }
-    public String getRegisteredAt() {
-        return registeredAt;
-    }
-    public String getStatus() {
-        return status;
-    }
-    public void setScore(Double score) {
-        this.score = score;
-    }
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    public void setRegisteredAt(String registeredAt) {
-        this.registeredAt = registeredAt;
-    }
-    public void setEvaluationId(Long evaluationId) {
-        this.evaluationId = evaluationId;
-    }
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
+    public Long getStudentId() {
+        return studentId;
     }
 
+    public BigDecimal getScore() {
+        return score;
+    }
+
+    public LocalDateTime getRegisteredAt() {
+        return registeredAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }
