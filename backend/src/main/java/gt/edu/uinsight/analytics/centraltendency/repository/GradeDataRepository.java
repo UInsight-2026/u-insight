@@ -5,6 +5,6 @@ import java.util.List;
 import gt.edu.uinsight.analytics.centraltendency.model.GradeData;
 
 public interface GradeDataRepository {
-    List<GradeData> findBySectionId(Long sectionId);
-    List<GradeData> findByCourseId(Long courseId);
+    List<GradeData> findBySectionId(Long sectionId, Long evaluationId);
+    List<GradeData> findByCourseId(Long courseId, Long periodId);
 }
