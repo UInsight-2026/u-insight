@@ -11,18 +11,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * Asigna un traceId a cada peticion del modulo system y registra el inicio y el
- * cierre de la operacion (requisito 4 de la semana 3: log de inicio, de exito y
- * de error).
- *
- * El mismo traceId viaja al cuerpo de la respuesta de error que arma
- * SystemExceptionHandler, de modo que la respuesta y la linea de consola se
- * pueden emparejar.
- *
- * Solo actua sobre /api/v1/system: los endpoints de las demas celulas no se
- * tocan ni se ensucia su salida de consola.
- */
 @Component
 public class RequestTraceFilter extends OncePerRequestFilter {
 

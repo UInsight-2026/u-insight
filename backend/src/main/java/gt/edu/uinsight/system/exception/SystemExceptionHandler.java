@@ -84,10 +84,6 @@ public class SystemExceptionHandler {
         );
     }
 
-    /**
-     * La capa de servicio lanza IllegalArgumentException cuando rechaza una regla
-     * de negocio, por eso el evento es BUSINESS_RULE_REJECTED y no un error tecnico.
-     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(
             IllegalArgumentException exception) {
@@ -140,11 +136,6 @@ public class SystemExceptionHandler {
         );
     }
 
-    /**
-     * Arma el cuerpo de error de la seccion 10.1 y registra el evento de log de la
-     * seccion 10.2 con el mismo traceId, para que la respuesta y la linea de consola
-     * se puedan emparejar.
-     */
     private ResponseEntity<Map<String, Object>> buildError(
             HttpStatus status,
             String error,

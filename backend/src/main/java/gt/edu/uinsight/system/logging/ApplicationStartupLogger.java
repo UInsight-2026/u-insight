@@ -6,10 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
-/**
- * Registra el evento APPLICATION_STARTED (seccion 10.2) en cuanto la aplicacion
- * queda lista para atender peticiones. El durationMs es el tiempo real de arranque.
- */
 @Component
 public class ApplicationStartupLogger implements ApplicationListener<ApplicationReadyEvent> {
 

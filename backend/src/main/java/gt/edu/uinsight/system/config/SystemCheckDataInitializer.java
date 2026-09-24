@@ -7,12 +7,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Datos semilla del modulo system. La base es H2 en memoria, asi que sin ellos
- * el listado arranca vacio y no hay nada que filtrar ni paginar.
- * Vive en el paquete del modulo, no en el config compartido, para no chocar con
- * los inicializadores de las demas celulas.
- */
 @Configuration
 public class SystemCheckDataInitializer {
 

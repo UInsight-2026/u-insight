@@ -1,10 +1,12 @@
 package gt.edu.uinsight.system.service;
 
+import gt.edu.uinsight.system.dto.request.CreateCheckRequest;
 import gt.edu.uinsight.system.dto.request.UpdateCheckStatusRequest;
 import gt.edu.uinsight.system.dto.response.CheckResponse;
 import gt.edu.uinsight.system.entity.CheckStatus;
 import gt.edu.uinsight.system.entity.SystemCheckLog;
 import gt.edu.uinsight.system.exception.InvalidStatusTransitionException;
+import gt.edu.uinsight.system.logging.SystemEventLogger;
 import gt.edu.uinsight.system.repository.SystemCheckLogRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,23 +36,35 @@ class SystemCheckServiceTest {
     @Mock
     private SystemCheckLogRepository repository;
 
+    @Mock
+    private SystemEventLogger eventLogger;
+
     @InjectMocks
     private SystemCheckService service;
 
     @Test
-    void getChecks_shouldReturnFilteredPage() {
-        // Arrange (Preparar datos)
+    void createCheckShouldLogResourceCreated() {
+        SystemCheckLog saved = buildCheck(7L, "database", CheckStatus.UP);
+        when(repository.save(any(SystemCheckLog.class))).thenReturn(saved);
+
+        CheckResponse response = service.createCheck(
+                new CreateCheckRequest("database", CheckStatus.UP, "Connection verified"));
+
+        assertEquals(7L, response.id());
+        verify(eventLogger).info("RESOURCE_CREATED", 201, "System check created with id 7");
+    }
+
+    @Test
+    void getChecksShouldReturnFilteredPage() {
         SystemCheckLog log = buildCheck(1L, "database", CheckStatus.UP);
-        Page<SystemCheckLog> mockPage = new PageImpl<>(List.of(log));
+        Page<SystemCheckLog> page = new PageImpl<>(List.of(log));
         Pageable pageable = PageRequest.of(0, 10);
 
         when(repository.findByFilters(eq("database"), eq(CheckStatus.UP), eq(pageable)))
-                .thenReturn(mockPage);
+                .thenReturn(page);
 
-        // Act (Ejecutar el metodo)
         Page<CheckResponse> result = service.getChecks("database", CheckStatus.UP, pageable);
 
-        // Assert (Verificar el resultado)
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         assertEquals("database", result.getContent().get(0).component());
@@ -58,18 +72,15 @@ class SystemCheckServiceTest {
     }
 
     @Test
-    void updateStatus_shouldRejectTransitionFromDownToUp() {
-        // Arrange
+    void updateStatusShouldRejectTransitionFromDownToUp() {
         SystemCheckLog log = buildCheck(1L, "redis", CheckStatus.DOWN);
         when(repository.findById(1L)).thenReturn(Optional.of(log));
 
         UpdateCheckStatusRequest request = new UpdateCheckStatusRequest(CheckStatus.UP);
 
-        // Act & Assert
         assertThrows(InvalidStatusTransitionException.class,
                 () -> service.updateStatus(1L, request));
 
-        // La regla debe cortar antes de persistir
         verify(repository, never()).save(any(SystemCheckLog.class));
         assertEquals(CheckStatus.DOWN, log.getStatus());
     }

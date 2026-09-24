@@ -7,6 +7,7 @@ import gt.edu.uinsight.system.entity.CheckStatus;
 import gt.edu.uinsight.system.entity.SystemCheckLog;
 import gt.edu.uinsight.system.exception.CheckNotFoundException;
 import gt.edu.uinsight.system.exception.InvalidStatusTransitionException;
+import gt.edu.uinsight.system.logging.SystemEventLogger;
 import gt.edu.uinsight.system.repository.SystemCheckLogRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,9 +20,11 @@ import java.util.List;
 public class SystemCheckService {
 
     private final SystemCheckLogRepository repository;
+    private final SystemEventLogger eventLogger;
 
-    public SystemCheckService(SystemCheckLogRepository repository) {
+    public SystemCheckService(SystemCheckLogRepository repository, SystemEventLogger eventLogger) {
         this.repository = repository;
+        this.eventLogger = eventLogger;
     }
 
     @Transactional
@@ -31,7 +34,11 @@ public class SystemCheckService {
         log.setStatus(request.status());
         log.setMessage(request.message());
 
-        return toResponse(repository.save(log));
+        SystemCheckLog saved = repository.save(log);
+
+        eventLogger.info("RESOURCE_CREATED", 201, "System check created with id " + saved.getId());
+
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -42,10 +49,6 @@ public class SystemCheckService {
                 .toList();
     }
 
-    /**
-     * Listado con filtros opcionales por componente y estado, paginado.
-     * Los dos filtros son combinables; un filtro ausente no restringe.
-     */
     @Transactional(readOnly = true)
     public Page<CheckResponse> getChecks(String component, CheckStatus status, Pageable pageable) {
         String componentFilter = (component == null || component.isBlank()) ? null : component.trim();
@@ -61,10 +64,6 @@ public class SystemCheckService {
                 .orElseThrow(() -> new CheckNotFoundException(id));
     }
 
-    /**
-     * Cambio de estado de una comprobacion. Regla de negocio: una comprobacion
-     * en DOWN no puede pasar directamente a UP sin pasar antes por DEGRADED.
-     */
     @Transactional
     public CheckResponse updateStatus(Long id, UpdateCheckStatusRequest request) {
         SystemCheckLog log = repository.findById(id)

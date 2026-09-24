@@ -12,10 +12,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SystemCheckLogRepository extends JpaRepository<SystemCheckLog, Long> {
 
-    /**
-     * Listado con filtros opcionales y paginacion. Un filtro nulo no restringe:
-     * asi los dos parametros son combinables sin necesidad de consultas separadas.
-     */
     @Query("""
             select log from SystemCheckLog log
             where (:component is null or lower(log.component) like lower(concat('%', :component, '%')))

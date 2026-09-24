@@ -14,10 +14,6 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Comprueba que cada evento sale como una sola linea JSON con los campos que
- * exige la seccion 10.2 del documento del proyecto.
- */
 class SystemEventLoggerTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -42,7 +38,7 @@ class SystemEventLoggerTest {
     }
 
     @Test
-    void registraTodosLosCamposDeLaSeccion10_2() throws Exception {
+    void shouldWriteEveryRequiredField() throws Exception {
         eventLogger.event("INFO", "APPLICATION_STARTED", null, 3400L,
                 "U-Insight application is ready to accept requests", null);
 
@@ -56,7 +52,7 @@ class SystemEventLoggerTest {
         for (String field : new String[] {
                 "timestamp", "level", "service", "module", "operation",
                 "method", "path", "status", "durationMs", "traceId", "message" }) {
-            assertTrue(event.has(field), "falta el campo " + field);
+            assertTrue(event.has(field), "missing field " + field);
         }
 
         assertEquals("u-insight", event.get("service").asText());
@@ -66,7 +62,7 @@ class SystemEventLoggerTest {
     }
 
     @Test
-    void unaReglaDeNegocioRechazadaSeRegistraComoWarn() throws Exception {
+    void shouldWriteRejectedBusinessRuleAsWarn() throws Exception {
         eventLogger.warn("BUSINESS_RULE_REJECTED", 409,
                 "A check in DOWN cannot move directly to UP");
 
