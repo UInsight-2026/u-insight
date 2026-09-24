@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +18,9 @@ import gt.edu.uinsight.analytics.trend.entity.Grade;
 import gt.edu.uinsight.analytics.trend.exception.TrendCalculationException;
 import gt.edu.uinsight.analytics.trend.mapper.TrendMapper;
 import gt.edu.uinsight.analytics.trend.repository.EvaluationRepository;
-import gt.edu.uinsight.analytics.trend.repository.GradeRepository;
 import gt.edu.uinsight.analytics.trend.repository.SectionRepository;
+import gt.edu.uinsight.analytics.trend.repository.StudentRepository;
+import gt.edu.uinsight.analytics.trend.repository.TrendRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 /**
@@ -35,7 +35,8 @@ public class TrendService {
 
     private final EvaluationRepository evaluationRepository;
     private final SectionRepository sectionRepository;
-    private final GradeRepository gradeRepository;
+    private final StudentRepository studentRepository;
+    private final TrendRepository trendRepository;
     private final TrendMapper trendMapper;
 
     // TODO(B4): estos valores deben venir de la célula C1
@@ -48,34 +49,25 @@ public class TrendService {
     @Value("${uinsight.trend.positive-threshold:3}")
     private BigDecimal positiveThreshold;
 
-    public TrendService(EvaluationRepository evaluationRepository, SectionRepository sectionRepository, GradeRepository gradeRepository, TrendMapper trendMapper) {
+    public TrendService(EvaluationRepository evaluationRepository, SectionRepository sectionRepository,
+            StudentRepository studentRepository, TrendRepository trendRepository, TrendMapper trendMapper) {
         this.evaluationRepository = evaluationRepository;
         this.sectionRepository = sectionRepository;
-        this.gradeRepository = gradeRepository;
+        this.studentRepository = studentRepository;
+        this.trendRepository = trendRepository;
         this.trendMapper = trendMapper;
     }
 
     public TrendResponse getTrendBySectionId(Long sectionId) {
         log.info("TREND_CALCULATION_STARTED scope=SECTION sectionId={}", sectionId);
 
-        // TODO(B4): validar que la sección exista, si no lanzar EntityNotFoundException
         sectionRepository.findById(sectionId)
                 .orElseThrow(() -> {
                     log.warn("TREND_SECTION_NOT_FOUND sectionId={}", sectionId);
                     return new EntityNotFoundException("Sección con ID " + sectionId + " no encontrada.");
                 });
 
-        // Se filtra las evaluaciones de la sección y se ordenan por fecha de evaluación
-        List<Evaluation> evaluations = evaluationRepository.findAll().stream()
-                .filter(evaluation -> evaluation.getSectionId().equals(sectionId))
-                .sorted(Comparator.comparing(Evaluation::getEvaluationDate))
-                .toList();
-
-        // Se obtiene todas las calificaciones de la sección
-        List<Grade> grades = gradeRepository.findAll().stream()
-                .filter(grade -> evaluations.stream()
-                        .anyMatch(evaluation -> evaluation.getId().equals(grade.getEvaluationId())))
-                .toList();
+        List<Grade> grades = trendRepository.findSectionGradesOrdered(sectionId);
 
         try {
             // Se construye la serie de promedios por evaluación y se calcula la tendencia
@@ -83,7 +75,7 @@ public class TrendService {
             TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
 
             if (result.classification() == TrendClassification.INSUFFICIENT_DATA) {
-                log.warn("TREND_INSUFFICIENT_DATA scope=SECTION sectionId={} evaluationsEncontradas={}",
+                log.warn("TREND_INSUFFICIENT_DATA scope=SECTION sectionId={} evaluacionesEncontradas={}",
                         sectionId, points.size());
             } else {
                 log.info("TREND_CALCULATION_SUCCESS scope=SECTION sectionId={} classification={} averageChange={}",
@@ -100,12 +92,13 @@ public class TrendService {
     public TrendResponse getTrendByStudentId(Long studentId) {
         log.info("TREND_CALCULATION_STARTED scope=STUDENT studentId={}", studentId);
 
-        List<Grade> grades = gradeRepository.findByStudentId(studentId).stream()
-                .sorted(Comparator.comparing(grade -> evaluationRepository.findById(grade.getEvaluationId())
-                        .orElseThrow(() -> new EntityNotFoundException(
-                                "Evaluación con ID " + grade.getEvaluationId() + " no encontrada."))
-                        .getEvaluationDate()))
-                .toList();
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> {
+                    log.warn("TREND_STUDENT_NOT_FOUND studentId={}", studentId);
+                    return new EntityNotFoundException("Estudiante con ID " + studentId + " no encontrado.");
+                });
+
+        List<Grade> grades = trendRepository.findStudentGradesOrdered(studentId);
 
         try {
             List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
@@ -135,16 +128,16 @@ public class TrendService {
         Evaluation evaluation = evaluationRepository.findById(grade.getEvaluationId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Evaluación con ID " + grade.getEvaluationId() + " no encontrada."));
-                        
-        if (evaluation == null || evaluation.getMaximumScore() == null
-                || evaluation.getMaximumScore() <= 0) {
+
+        if (evaluation.getMaximumScore() == null
+                || evaluation.getMaximumScore().compareTo(BigDecimal.ZERO) <= 0) {
             throw new TrendCalculationException(
-                    "La evaluación " + (evaluation != null ? evaluation.getId() : "desconocida")
+                    "La evaluación " + evaluation.getId()
                             + " no tiene una nota máxima válida para normalizar la calificación.");
         }
         return grade.getScore() == null ? BigDecimal.ZERO
-                : BigDecimal.valueOf(grade.getScore())
-                        .divide(BigDecimal.valueOf(evaluation.getMaximumScore()), 4, RoundingMode.HALF_UP)
+                : grade.getScore()
+                        .divide(evaluation.getMaximumScore(), 4, RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100));
     }
 
@@ -170,7 +163,7 @@ public class TrendService {
      */
     private List<TrendCalculator.ScorePoint> buildSectionAverageSeries(List<Grade> grades) {
         Map<Long, List<Grade>> gradesByEvaluation = grades.stream()
-                .collect(Collectors.groupingBy(Grade::getEvaluationId));
+                .collect(java.util.stream.Collectors.groupingBy(Grade::getEvaluationId));
 
         List<TrendCalculator.ScorePoint> points = new ArrayList<>();
         for (Map.Entry<Long, List<Grade>> entry : gradesByEvaluation.entrySet()) {

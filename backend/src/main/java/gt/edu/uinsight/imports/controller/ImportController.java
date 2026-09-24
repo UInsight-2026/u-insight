@@ -1,5 +1,17 @@
 package gt.edu.uinsight.imports.controller;
 
+import gt.edu.uinsight.imports.dto.response.ImportErrorDetail;
+import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
+import gt.edu.uinsight.imports.dto.response.ImportValidateResponse;
+import gt.edu.uinsight.imports.exception.ErrorResponse;
+import gt.edu.uinsight.imports.service.ImportService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,17 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
-import gt.edu.uinsight.imports.dto.response.ImportValidateResponse;
-import gt.edu.uinsight.imports.exception.ErrorResponse;
-import gt.edu.uinsight.imports.service.ImportService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
 
 @RestController
 @RequestMapping("/api/v1/imports")
@@ -35,15 +36,13 @@ public class ImportController {
     }
 
     @Operation(
-            summary = "Validar un archivo CSV de calificaciones (esqueleto)",
-            description = "Recibe el archivo, lo registra como una nueva Importacion en "
-                    + "estado PENDIENTE y devuelve su resumen inicial. El parseo por fila "
-                    + "y las reglas de negocio de la sección 4 de la cédula se incorporan "
-                    + "en la Semana 3."
+            summary = "Validar un archivo CSV de calificaciones",
+            description = "Recibe el archivo, aplica las 6 reglas de negocio fila por fila, "
+                    + "persiste el detalle de cada fila y devuelve el resumen de la validación."
     )
-    @ApiResponse(responseCode = "200", description = "Archivo recibido y registrado")
+    @ApiResponse(responseCode = "200", description = "Archivo procesado (puede incluir filas rechazadas)")
     @ApiResponse(responseCode = "400",
-            description = "Archivo vacío, ausente o con extensión inválida",
+            description = "Archivo vacío, ausente, con extensión o encabezado inválido",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping(value = "/grades/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImportValidateResponse> validar(
@@ -54,13 +53,40 @@ public class ImportController {
     }
 
     @Operation(summary = "Consultar el estado de una importación",
-            description = "Primer endpoint funcional del módulo (tarea 13 del backlog).")
+            description = "Devuelve el resumen actual de una Importacion por id.")
     @ApiResponse(responseCode = "200", description = "Importación encontrada")
     @ApiResponse(responseCode = "404", description = "No existe una importación con ese id",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/{id}")
     public ResponseEntity<ImportStatusResponse> consultarEstado(@PathVariable Long id) {
         ImportStatusResponse response = importService.consultarEstado(id);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "Confirmar una importación ya validada",
+            description = "Solo se permite sobre una Importacion en estado VALIDADO.")
+    @ApiResponse(responseCode = "200", description = "Importación confirmada")
+    @ApiResponse(responseCode = "404", description = "No existe una importación con ese id",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "La importación no está en estado VALIDADO",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @PostMapping("/grades/confirm")
+    public ResponseEntity<ImportStatusResponse> confirmar(@RequestParam("importId") Long importId) {
+        ImportStatusResponse response = importService.confirmar(importId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(summary = "Listar los errores de una importación",
+            description = "Devuelve, paginado, el detalle (fila, campo, motivo) de las filas rechazadas de una Importacion.")
+    @ApiResponse(responseCode = "200", description = "Página de errores de la importación")
+    @ApiResponse(responseCode = "404", description = "No existe una importación con ese id",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @GetMapping("/{id}/errors")
+    public ResponseEntity<Page<ImportErrorDetail>> consultarErrores(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<ImportErrorDetail> response = importService.consultarErrores(id, PageRequest.of(page, size));
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
