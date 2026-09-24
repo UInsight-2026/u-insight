@@ -1,6 +1,8 @@
 package gt.edu.uinsight.report.service;
 
-import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepositoryImpl;
+import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
+import gt.edu.uinsight.analytics.trend.service.TrendClassification;
+import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 import gt.edu.uinsight.report.common.ReportLogger;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
@@ -15,6 +17,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 class OverviewServiceTest {
 
@@ -22,9 +30,16 @@ class OverviewServiceTest {
     private final FilterValidator filterValidator = new FilterValidator();
     private final ReportLogger reportLogger = new ReportLogger();
 
-    // Integracion real con B6, la misma que usa la aplicacion.
+    // Servicio real de B6; solo se simulan sus dependencias, igual que en B6AnalyticsGatewayTest.
     private final AnalyticsGateway analyticsReal =
-            new B6AnalyticsGateway(new SummaryService(new AnalyticsClientRepositoryImpl()));
+            new B6AnalyticsGateway(new SummaryService(repositorioDeB6()));
+
+    private static AnalyticsClientRepository repositorioDeB6() {
+        AnalyticsClientRepository repo = mock(AnalyticsClientRepository.class);
+        when(repo.getTrend(anyLong())).thenReturn(new TrendResponse(
+                TrendClassification.NEGATIVE, new BigDecimal("-2.5"), List.of()));
+        return repo;
+    }
 
     // Doble de prueba que simula a B6 caido, para probar la degradacion.
     private final AnalyticsGateway analyticsCaido = AnalyticsSnapshot::unavailable;
