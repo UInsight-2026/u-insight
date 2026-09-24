@@ -13,8 +13,11 @@ import gt.edu.uinsight.analytics.trend.service.TrendService;
 @RequestMapping("/api/v1/analytics")
 public class TrendController {
     
-     //servicio
-     private final TrendService trendService = null; // Inyectar el servicio real en un escenario de producción
+    private final TrendService trendService;
+
+    public TrendController(TrendService trendService) {
+        this.trendService = trendService;
+    }
 
      @GetMapping("/sections/{id}/trend")
      public ResponseEntity<TrendResponse> getTrendBySectionId(@PathVariable Long id) {

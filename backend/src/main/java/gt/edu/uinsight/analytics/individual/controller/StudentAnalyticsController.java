@@ -3,7 +3,6 @@ package gt.edu.uinsight.analytics.individual.controller;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentSummaryResponse;
 import gt.edu.uinsight.analytics.individual.service.StudentAnalyticsService;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
-import gt.edu.uinsight.analytics.individual.dto.response.StudentTrendResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,11 +26,6 @@ public class StudentAnalyticsController {
     @GetMapping("/{id}/comparison")
     public StudentComparisonResponse getComparison(@PathVariable Long id) {
         return studentAnalyticsService.getComparison(id);
-    }
-
-    @GetMapping("/{id}/trend")
-    public StudentTrendResponse getTrend(@PathVariable Long id) {
-        return studentAnalyticsService.getTrend(id);
     }
 
 }
