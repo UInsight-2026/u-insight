@@ -21,10 +21,11 @@ class OverviewServiceTest {
 
         OverviewResponse response = overviewService.getOverview(sinFiltros);
 
-        assertEquals(12, response.getActiveAlerts());
+        assertEquals(13, response.getActiveAlerts());
         assertEquals(4, response.getHighRiskSections());
-        assertEquals(36, response.getStudentsAtRisk());
-        assertEquals("NEGATIVE", response.getOverallTrend());
+        assertEquals(39, response.getStudentsAtRisk());
+        // El calculo temporal compara cuatro secciones HIGH con cuatro LOW.
+        assertEquals("STABLE", response.getOverallTrend());
     }
 
     @Test

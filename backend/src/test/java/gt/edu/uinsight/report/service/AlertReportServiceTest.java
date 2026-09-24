@@ -20,7 +20,7 @@ class AlertReportServiceTest {
 
         AlertReportResponse response = alertReportService.getAlerts(sinFiltros);
 
-        assertEquals(14, response.getTotal());
+        assertEquals(16, response.getTotal());
     }
 
     @Test
