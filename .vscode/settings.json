@@ -1,3 +1,7 @@
 {
+ feature/semana-3-c2
+
+    "java.compile.nullAnalysis.mode": "automatic"
+develop
     "java.configuration.updateBuildConfiguration": "interactive"
 }
