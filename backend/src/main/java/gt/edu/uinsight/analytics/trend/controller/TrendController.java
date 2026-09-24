@@ -39,9 +39,17 @@ public class TrendController {
      }
 
     @GetMapping("/students/{id}/trend")
-    public ResponseEntity<TrendResponse> getTrendByStudentId(@PathVariable Long id) {
+    public ResponseEntity<?> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
-        //TrendResponse trendResponse = trendService.getTrendByStudentId(id);
+        TrendResponse trendResponse = trendService.getTrendByStudentId(id);
+        if(trendResponse == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of(
+                    "mensaje","El estudiante con id "+id+" no existe",
+                    "codigo",404
+                )
+            );
+        }
         return ResponseEntity.ok(null);
     }
 
