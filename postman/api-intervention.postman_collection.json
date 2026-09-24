@@ -1,0 +1,76 @@
+{
+  "info": {
+    "_postman_id": "561cdfd5-2bc6-4fde-a397-4ca484264667",
+    "name": "U-Insight - API Interventions",
+    "description": "Coleccion para probar los endpoints de intervenciones implementados actualmente (crear, listar por alerta, obtener por id). Ejecuta primero Crear intervencion: guarda el id creado en la variable interventionId para la siguiente solicitud. Los endpoints de seguimientos (follow-ups) y cambio de estado (status) aun no estan implementados en el backend (FollowUpController y el PATCH de estado estan pendientes, marcados como [semana 3] en el codigo), por eso se excluyeron de esta coleccion.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "alertId",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "interventionId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Interventions",
+      "item": [
+        {
+          "name": "POST - Crear intervencion",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Respuesta creada', () => pm.response.to.have.status(201));",
+                "if (pm.response.code === 201) {",
+                "  pm.collectionVariables.set('interventionId', String(pm.response.json().id));",
+                "}"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TUTORING\",\n  \"description\": \"Tutoria de refuerzo en matematica\",\n  \"responsible\": \"Lic. Ana Perez\",\n  \"startDate\": \"2026-09-20\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/alerts/{{alertId}}/interventions"
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar intervenciones de alerta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/alerts/{{alertId}}/interventions"
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Obtener intervencion por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/interventions/{{interventionId}}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
