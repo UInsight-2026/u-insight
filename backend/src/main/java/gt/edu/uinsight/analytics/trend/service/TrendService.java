@@ -66,23 +66,17 @@ public class TrendService {
         return trendMapper.toTrendResponse(result, points);        
     }
 
-<<<<<<< HEAD
-//     public TrendResponse getTrendByStudentId(Long studentId) {
-//         List<Grade> grades = gradeRepository
-//                 .findByStudentIdOrderByEvaluation_EvaluationDateAsc(studentId);
-=======
-    public TrendResponse getTrendByStudentId(Long studentId) {
+
+public TrendResponse getTrendByStudentId(Long studentId) {
         studentRepository.findById(studentId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Estudiante con ID " + studentId + " no encontrado."));
 
         List<Grade> grades = trendRepository.findStudentGradesOrdered(studentId);
->>>>>>> 96a243be3e887d3563d8cfcaa211820df0635c56
-
-//         List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
-//         TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
-//         return trendMapper.toTrendResponse(result, points);
-//     }
+         List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
+        TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
+        return trendMapper.toTrendResponse(result, points); 
+}
 
     /**
      * Regla de negocio 3: normaliza cada nota a escala 0-100
