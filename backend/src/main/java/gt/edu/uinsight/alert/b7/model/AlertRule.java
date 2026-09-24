@@ -34,7 +34,7 @@ public class AlertRule {
         return severidad;
     }
 
-    public boolean active(){
+    public boolean isActive(){
         return active;
     }
 

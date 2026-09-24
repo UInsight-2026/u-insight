@@ -1,5 +1,8 @@
 package gt.edu.uinsight.alert.b7.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class RiskInput {
     private double media;
     private double mediana;
@@ -7,6 +10,9 @@ public class RiskInput {
     private double tendencia;
     private double percentil90;
 
+    public RiskInput(){
+    }
+    
     public double getMedia(){
         return media;
     }
@@ -47,13 +53,13 @@ public class RiskInput {
         this.percentil90 = percentil90;
     }
 
-    public static RiskInput pruebas(){
-        RiskInput r = new RiskInput();
-        r.media = 0;
-        r.mediana = 0;
-        r.desviacion = 0;
-        r.tendencia = 0;
-        r.percentil90 = 0;
-        return r;
+    public Map<String, Double> toMap(){
+        Map<String, Double> map = new HashMap<>();
+        map.put("media", media);
+        map.put("mediana", mediana);
+        map.put("desviacion", desviacion);
+        map.put("tendencia", tendencia);
+        map.put("percentil90", percentil90);
+        return map;
     }
 }
