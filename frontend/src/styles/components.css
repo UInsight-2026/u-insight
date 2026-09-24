@@ -8,6 +8,8 @@
     --titles: #003366;
     --primaryText: #317eb3;
     --secondaryText: #fff;
+    --status: #16a34a;
+    --statustwo: #facc15;
 }
 
 
@@ -101,4 +103,53 @@
 .grafico-barra__etiqueta{
     font-size: 0.75rem;
     color: var(--primaryText);
+}
+
+.evolucion-card{
+    background:var(--cards);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:30px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.evolucion-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.evolucion-info{
+    display:flex;
+    gap:15px;
+    align-items:center;
+}
+
+.clasificacion{
+    padding:6px 12px;
+    border-radius:999px;
+    color: var(--secondaryText);
+    font-weight:bold;
+    font-size:.8rem;
+}
+
+.clasificacion.positive{
+    background: var(--status);
+}
+
+.clasificacion.negative{
+    background: var(--tertiary);
+}
+
+.clasificacion.stable{
+    background: var(--statustwo);
+}
+
+.clasificacion.insufficient_data{
+    background:#6b7280;
+}
+
+.promedio{
+    font-weight:600;
 }
