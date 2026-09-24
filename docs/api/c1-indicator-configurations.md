@@ -11,6 +11,20 @@ Modulo encargado de administrar parametros configurables utilizados por otros co
 | GET | `/api/v1/indicator-configurations/{key}` | Consulta por clave | 200 |
 | PUT | `/api/v1/indicator-configurations/{key}` | Actualiza valor y/o descripcion | 200 |
 
+## Configuraciones de referencia
+
+Ejemplos definidos para el proyecto:
+
+- `LOW_PERFORMANCE_THRESHOLD`
+- `HIGH_RISK_PERCENTAGE`
+- `NEGATIVE_CHANGE_THRESHOLD`
+
+Las demas celulas pueden consultar una configuracion mediante:
+
+`GET /api/v1/indicator-configurations/{key}`
+
+C1 administra y expone los parametros. La logica propia de cada celula consumidora se mantiene dentro de su modulo correspondiente.
+
 ## Crear configuracion
 
 ```json
@@ -40,6 +54,16 @@ Si la clave no existe se responde `404 Not Found`.
 
 Cada actualizacion registra el evento `INDICATOR_CONFIGURATION_CHANGED` con el valor anterior y el nuevo.
 
+## Logs de operacion
+
+El modulo registra eventos para:
+
+- inicio de operacion: `OPERATION_STARTED`
+- operacion exitosa: `OPERATION_SUCCEEDED`
+- error: `OPERATION_ERROR`
+- regla de negocio rechazada: `BUSINESS_RULE_REJECTED`
+- cambio de configuracion: `INDICATOR_CONFIGURATION_CHANGED`
+
 ## Errores implementados
 
 - `400 Bad Request`: validaciones o JSON invalido.
@@ -54,3 +78,16 @@ Con la aplicacion levantada, Swagger UI queda disponible en:
 `http://localhost:8080/swagger-ui/index.html`
 
 El grupo OpenAPI del modulo se llama `C1 - indicator-configurations`.
+
+## Pruebas
+
+Semana 3 incorpora pruebas unitarias de la capa de servicio para:
+
+- creacion correcta
+- rechazo de clave duplicada
+- consulta general
+- consulta por clave
+- consulta de clave inexistente
+- actualizacion correcta
+- rechazo de actualizacion vacia
+- rechazo de valor vacio

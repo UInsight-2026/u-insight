@@ -25,6 +25,11 @@ public class IndicatorConfigurationExceptionHandler {
             IndicatorConfigurationNotFoundException ex,
             HttpServletRequest request
     ) {
+        LOGGER.warn(
+                "event=OPERATION_ERROR status=404 path={} error=INDICATOR_CONFIGURATION_NOT_FOUND message={}",
+                request.getRequestURI(),
+                ex.getMessage()
+        );
         return build(HttpStatus.NOT_FOUND, "INDICATOR_CONFIGURATION_NOT_FOUND", ex.getMessage(), request, null);
     }
 
@@ -33,6 +38,11 @@ public class IndicatorConfigurationExceptionHandler {
             IndicatorConfigurationConflictException ex,
             HttpServletRequest request
     ) {
+        LOGGER.warn(
+                "event=BUSINESS_RULE_REJECTED status=409 path={} error=INDICATOR_CONFIGURATION_CONFLICT message={}",
+                request.getRequestURI(),
+                ex.getMessage()
+        );
         return build(HttpStatus.CONFLICT, "INDICATOR_CONFIGURATION_CONFLICT", ex.getMessage(), request, null);
     }
 
@@ -41,6 +51,11 @@ public class IndicatorConfigurationExceptionHandler {
             IndicatorConfigurationBadRequestException ex,
             HttpServletRequest request
     ) {
+        LOGGER.warn(
+                "event=BUSINESS_RULE_REJECTED status=400 path={} error=BAD_REQUEST message={}",
+                request.getRequestURI(),
+                ex.getMessage()
+        );
         return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), request, null);
     }
 
@@ -52,6 +67,12 @@ public class IndicatorConfigurationExceptionHandler {
         Map<String, String> fieldErrors = new LinkedHashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 fieldErrors.putIfAbsent(error.getField(), error.getDefaultMessage())
+        );
+
+        LOGGER.warn(
+                "event=BUSINESS_RULE_REJECTED status=400 path={} error=VALIDATION_ERROR fields={}",
+                request.getRequestURI(),
+                fieldErrors.keySet()
         );
 
         return build(
@@ -68,6 +89,10 @@ public class IndicatorConfigurationExceptionHandler {
             HttpMessageNotReadableException ex,
             HttpServletRequest request
     ) {
+        LOGGER.warn(
+                "event=OPERATION_ERROR status=400 path={} error=MALFORMED_JSON",
+                request.getRequestURI()
+        );
         return build(HttpStatus.BAD_REQUEST, "MALFORMED_JSON", "El cuerpo JSON no es valido", request, null);
     }
 
@@ -76,7 +101,11 @@ public class IndicatorConfigurationExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
-        LOGGER.error("Error no controlado en C1", ex);
+        LOGGER.error(
+                "event=OPERATION_ERROR status=500 path={} error=INTERNAL_SERVER_ERROR",
+                request.getRequestURI(),
+                ex
+        );
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "INTERNAL_SERVER_ERROR",
