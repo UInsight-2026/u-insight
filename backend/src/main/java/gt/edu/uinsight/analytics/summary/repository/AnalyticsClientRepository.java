@@ -1,15 +1,15 @@
 package gt.edu.uinsight.analytics.summary.repository;
 
-import gt.edu.uinsight.analytics.summary.dto.external.CentralTendencyData;
-import gt.edu.uinsight.analytics.summary.dto.external.DispersionData;
+import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
+import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
-import gt.edu.uinsight.analytics.summary.dto.external.StudentComparisonData;
-import gt.edu.uinsight.analytics.summary.dto.external.TrendData;
+import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 
 public interface AnalyticsClientRepository {
-    CentralTendencyData getCentralTendency(Long sectionId);
-    PositionData getPosition(Long sectionId);
-    DispersionData getDispersion(Long sectionId);
-    TrendData getTrend(Long sectionId);
-    StudentComparisonData getStudentComparison(Long sectionId);
+    CentralTendencyResponse getCentralTendency(Long sectionId);
+    PositionData getPosition(Long sectionId);           // sigue con mock, B2 no tiene DTO
+    DispersionResponse getDispersion(Long sectionId);
+    TrendResponse getTrend(Long sectionId);
+    StudentComparisonResponse getStudentComparison(Long sectionId);
 }
