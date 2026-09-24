@@ -1,10 +1,15 @@
 package gt.edu.uinsight.alertrule.controller;
 
 import gt.edu.uinsight.alertrule.dto.request.CreateAlertRuleRequest;
+feature/semana-2-c2
 import gt.edu.uinsight.alertrule.dto.request.UpdateStatusRequest;
 import gt.edu.uinsight.alertrule.dto.response.AlertRuleResponse;
 import gt.edu.uinsight.alertrule.service.AlertRuleService;
 import jakarta.validation.Valid;
+
+import gt.edu.uinsight.alertrule.dto.response.AlertRuleResponse;
+import gt.edu.uinsight.alertrule.service.AlertRuleService;
+main
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +26,7 @@ public class AlertRuleController {
         this.alertRuleService = alertRuleService;
     }
 
+feature/semana-2-c2
     // HU-C2-01: Crear Regla de Alerta
     @PostMapping
     public ResponseEntity<AlertRuleResponse> createRule(@Valid @RequestBody CreateAlertRuleRequest request) {
@@ -59,5 +65,20 @@ public class AlertRuleController {
             @Valid @RequestBody UpdateStatusRequest request) {
         AlertRuleResponse response = alertRuleService.updateStatus(id, request);
         return ResponseEntity.ok(response);
+
+    @PostMapping
+    public ResponseEntity<AlertRuleResponse> createRule(@RequestBody CreateAlertRuleRequest request) {
+        return new ResponseEntity<>(alertRuleService.createRule(request), HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AlertRuleResponse>> getRules(@RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(alertRuleService.getRules(active));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AlertRuleResponse> getRuleById(@PathVariable Long id) {
+        return ResponseEntity.ok(alertRuleService.getRuleById(id));
+ main
     }
 }

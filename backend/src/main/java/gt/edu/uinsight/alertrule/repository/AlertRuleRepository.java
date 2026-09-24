@@ -2,6 +2,7 @@ package gt.edu.uinsight.alertrule.repository;
 
 import gt.edu.uinsight.alertrule.entity.AlertRule;
 import org.springframework.data.jpa.repository.JpaRepository;
+feature/semana-2-c2
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,4 +12,10 @@ public interface AlertRuleRepository extends JpaRepository<AlertRule, Long> {
     List<AlertRule> findByActive(Boolean active);
     boolean existsByNameIgnoreCase(String name);
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
+import java.util.List;
+
+public interface AlertRuleRepository extends JpaRepository<AlertRule, Long> {
+    List<AlertRule> findByActive(Boolean active);
+main
 }
