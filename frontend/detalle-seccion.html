@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>U-Insight · Detalle de sección</title>
+  <link rel="stylesheet" href="src/styles/global.css" />
+  <link rel="stylesheet" href="src/styles/layout.css" />
+  <link rel="stylesheet" href="src/styles/components.css" />
+  <link rel="stylesheet" href="src/css/detalle-seccion.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__brand">U-Insight</div>
+    <nav class="nav" aria-label="Navegación principal">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="index.html">Inicio</a></li>
+        <li><a class="nav__link" href="exploracion.html">Exploración</a></li>
+        <li><a class="nav__link active" href="detalle-seccion.html" aria-current="page">Detalle de sección</a></li>
+        <li><a class="nav__link" href="evolucion.html">Evolución</a></li>
+        <li><a class="nav__link" href="alertas.html">Alertas</a></li>
+        <li><a class="nav__link" href="intervenciones.html">Intervenciones</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <h1>Detalle de sección</h1>
+    <p>Media, mediana, moda, dispersión, tendencia y alertas asociadas a la sección seleccionada.</p>
+
+    <section class="panel-selector">
+      <label for="selector-seccion">Sección</label>
+      <select id="selector-seccion">
+        <option value="">Cargando secciones...</option>
+      </select>
+    </section>
+
+    <section class="panel-indicadores">
+      <h2>Indicadores estadísticos</h2>
+      <div class="card-container" id="contenedor-indicadores">
+        <p class="mensaje-estado">Cargando indicadores...</p>
+      </div>
+    </section>
+
+    <section class="panel-evaluaciones">
+      <h2>Evaluaciones registradas</h2>
+      <p class="aviso-evaluaciones" id="aviso-evaluaciones" hidden></p>
+      <table id="tabla-evaluaciones">
+        <tbody>
+          <tr><td class="mensaje-estado">Cargando evaluaciones...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel-alertas">
+      <h2>Alertas de la sección</h2>
+      <div class="card-container" id="contenedor-alertas">
+        <p class="mensaje-estado">Cargando alertas...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="src/js/components/tarjeta.js"></script>
+  <script src="src/js/components/tabla.js"></script>
+  <script src="src/js/pages/detalle-seccion.js"></script>
+</body>
+</html>
