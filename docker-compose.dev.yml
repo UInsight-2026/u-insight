@@ -1,0 +1,26 @@
+name: uinsight-dev
+
+services:
+  database:
+    image: mysql:8.4
+    container_name: uinsight-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-uinsight}
+      MYSQL_USER: ${DB_USERNAME:-uinsight}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-uinsight}
+    ports:
+      - "${DB_PORT:-3307}:3306"
+    volumes:
+      - uinsight-mysql-data:/var/lib/mysql
+      - ./database/scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  uinsight-mysql-data:
