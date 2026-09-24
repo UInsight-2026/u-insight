@@ -2,43 +2,44 @@ package gt.edu.uinsight.analytics.summary.entity;
 
 import java.util.List;
 
-import gt.edu.uinsight.analytics.summary.dto.external.CentralTendencyData;
-import gt.edu.uinsight.analytics.summary.dto.external.DispersionData;
+import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
+import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
-import gt.edu.uinsight.analytics.summary.dto.external.StudentComparisonData;
-import gt.edu.uinsight.analytics.summary.dto.external.TrendData;
+import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 
 public class SectionSummary {
+
     private Long sectionId;
-    private CentralTendencyData centralTendency;
+    private CentralTendencyResponse centralTendency;
     private PositionData position;
-    private DispersionData dispersion;
-    private TrendData trend;
-    private StudentComparisonData studentComparison;
+    private DispersionResponse dispersion;
+    private TrendResponse trend;
+    private StudentComparisonResponse studentComparison;
     private Integer studentsAtRisk;
     private List<String> unavailableComponents;
 
-    public Long getSectionId(){return this.sectionId;}
-    public void setSectionId(Long sectionId){this.sectionId = sectionId;}
+    public Long getSectionId() { return sectionId; }
+    public void setSectionId(Long sectionId) { this.sectionId = sectionId; }
 
-    public CentralTendencyData getCentralTendencyData(){return this.centralTendency;}
-    public void setCentralTendencyData(CentralTendencyData ctd){ this.centralTendency = ctd;}
+    public CentralTendencyResponse getCentralTendencyData() { return centralTendency; }
+    public void setCentralTendencyData(CentralTendencyResponse ct) { this.centralTendency = ct; }
 
-    public PositionData getPositionData(){return this.position;}
-    public void setPositionData(PositionData pd){this.position = pd;}
-    
-    public DispersionData getPositiDispersionData(){return this.dispersion;}
-    public void setDispersionData(DispersionData dd){this.dispersion = dd;}
+    public PositionData getPositionData() { return position; }
+    public void setPositionData(PositionData pd) { this.position = pd; }
 
-    public TrendData getTrendData(){return this.trend;}
-    public void setTrendData(TrendData td){ this.trend = td;}
+    public DispersionResponse getDispersionData() { return dispersion; }
+    public void setDispersionData(DispersionResponse dd) { this.dispersion = dd; }
 
-    public StudentComparisonData getStudentComparisonData(){return this.studentComparison;}
-    public void setStudentComparisonData(StudentComparisonData scd){this.studentComparison = scd;}
+    public TrendResponse getTrendData() { return trend; }
+    public void setTrendData(TrendResponse td) { this.trend = td; }
 
-    public Integer getStudentsAtRisk(){return this.studentsAtRisk;}
-    public void setStudentsAtRisk(Integer sar){this.studentsAtRisk = sar;}
+    public StudentComparisonResponse getStudentComparisonData() { return studentComparison; }
+    public void setStudentComparisonData(StudentComparisonResponse scd) { this.studentComparison = scd; }
 
-    public List<String> getUnavailableComponents(){return this.unavailableComponents;}
-    public void setUnavailableComponents(List<String> unavailable){this.unavailableComponents = unavailable;}
+    public Integer getStudentsAtRisk() { return studentsAtRisk; }
+    public void setStudentsAtRisk(Integer sar) { this.studentsAtRisk = sar; }
+
+    public List<String> getUnavailableComponents() { return unavailableComponents; }
+    public void setUnavailableComponents(List<String> unavailable) { this.unavailableComponents = unavailable; }
 }
