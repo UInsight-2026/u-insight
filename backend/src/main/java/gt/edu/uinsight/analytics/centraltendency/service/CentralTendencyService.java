@@ -29,12 +29,12 @@ public class CentralTendencyService {
     }
 
     public CentralTendencyResponse getSectionCentralTendency(Long sectionId, Long evaluationId) {
-        List<GradeData> grades = gradeDataRepository.findBySectionId(sectionId);
+        List<GradeData> grades = gradeDataRepository.findBySectionId(sectionId, evaluationId);
         return buildResponse(grades);
     }
 
     public CentralTendencyResponse getCourseCentralTendency(Long courseId, Long periodId) {
-        List<GradeData> grades = gradeDataRepository.findByCourseId(courseId);
+        List<GradeData> grades = gradeDataRepository.findByCourseId(courseId, periodId);
         return buildResponse(grades);
     }
 
