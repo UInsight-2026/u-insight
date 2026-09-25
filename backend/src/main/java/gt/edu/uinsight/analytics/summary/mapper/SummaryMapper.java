@@ -1,7 +1,7 @@
 package gt.edu.uinsight.analytics.summary.mapper;
 
 
-import gt.edu.uinsight.analytics.position.dto.PositionResponse;
+import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.summary.dto.response.SectionSummaryResponse;
@@ -48,7 +48,7 @@ public class SummaryMapper {
     public SectionSummaryResponse toSectionSummaryResponse(
             Long sectionId,
             Optional<CentralTendencyResponse> centralTendency,
-            Optional<PositionResponse> position,
+            Optional<SectionPositionResponse> position,
             Optional<DispersionResponse> dispersion,
             Optional<TrendResponse> trend,
             Integer studentsAtRisk
