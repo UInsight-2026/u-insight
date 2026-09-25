@@ -1,47 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-feature/semana-3-c2
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-develop
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-feature/semana-3-c2
-        <version>3.2.3</version>
-        <relativePath/> <!-- lookup parent from repository -->
-
         <version>4.1.1</version>
         <relativePath/>
- develop
     </parent>
 
     <groupId>gt.edu</groupId>
     <artifactId>uinsight</artifactId>
     <version>0.0.1-SNAPSHOT</version>
- feature/semana-3-c2
-    <name>uinsight</name>
-    <description>Proyecto Integrador U-Insight - Célula C2</description>
-
-    <properties>
-        <java.version>21</java.version>
-    </properties>
-
-    <dependencies>
-        <!-- Spring Boot Web (Para Controladores REST / APIs) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring Boot Data JPA (Para Entidades y Repositorios) -->
-
 
     <name>uinsight</name>
     <description/>
@@ -72,60 +45,25 @@ feature/semana-3-c2
         </dependency>
 
         <!-- Base de datos -->
- develop
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
- feature/semana-3-c2
-        <!-- Spring Boot Validation (Indispensable para @Valid, @NotNull, @NotBlank) -->
-
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
-
-feature/semana-3-c2
-        <!-- Validaciones -->
- develop
 
         <!-- Base de datos para pruebas -->
-develop
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-
-feature/semana-3-c2
- feature/semana-3-c2
-        <!-- Base de datos en memoria H2 (Para pruebas rápidas locales) -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Conector MySQL (Para la base de datos oficial) -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Spring Boot Test (Para pruebas unitarias) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Swagger / OpenAPI -->
 
         <!-- Validaciones -->
-develop
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
@@ -138,7 +76,6 @@ develop
             <version>3.1.1</version>
         </dependency>
 
- develop
     </dependencies>
 
     <build>
@@ -150,8 +87,4 @@ develop
         </plugins>
     </build>
 
- feature/semana-3-c2
 </project>
-
-</project>
- develop
