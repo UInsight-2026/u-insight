@@ -21,4 +21,26 @@ public class PositionExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
+
+    @ExceptionHandler(NoGradesAvailableException.class)
+    public ResponseEntity<Map<String, Object>> handleNoGradesAvailable(NoGradesAvailableException ex) {
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                "error", "NO_GRADES_AVAILABLE",
+                "message", ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
+    @ExceptionHandler(InvalidPercentileException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidPercentile(InvalidPercentileException ex) {
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "INVALID_PERCENTILE",
+                "message", ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 }

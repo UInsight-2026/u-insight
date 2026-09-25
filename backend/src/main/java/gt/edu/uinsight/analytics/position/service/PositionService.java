@@ -2,6 +2,8 @@ package gt.edu.uinsight.analytics.position.service;
 
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.position.dto.response.StudentPositionResponse;
+import gt.edu.uinsight.analytics.position.exception.InvalidPercentileException;
+import gt.edu.uinsight.analytics.position.exception.NoGradesAvailableException;
 import gt.edu.uinsight.analytics.position.exception.PositionNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +39,11 @@ public class PositionService {
 
         // AQUI ESTA LA INTEGRACION: Pedimos los datos al servicio externo en lugar de usar datos estaticos
         List<Double> notasReales = gradeIntegrationService.getGradesBySection(sectionId);
+        if (notasReales == null || notasReales.isEmpty()) {
+            log.error("Regla de negocio rechazada: la seccion {} no tiene notas registradas", sectionId);
+            throw new NoGradesAvailableException("No hay notas registradas para la seccion con id: " + sectionId);
+        }
+
         List<Double> ordenados = new ArrayList<>(notasReales);
         Collections.sort(ordenados);
 
@@ -49,6 +56,11 @@ public class PositionService {
         if (requestedPercentiles != null && !requestedPercentiles.isEmpty()) {
             percentiles = new LinkedHashMap<>();
             for (Integer p : requestedPercentiles) {
+                if (p == null || p < 1 || p > 99) {
+                    log.error("Regla de negocio rechazada: el percentil {} es invalido", p);
+                    throw new InvalidPercentileException(
+                            "El percentil " + p + " es invalido. Debe estar entre 1 y 99.");
+                }
                 percentiles.put("P" + p, calcularFractila(ordenados, 100, p));
             }
         }
@@ -65,13 +77,27 @@ public class PositionService {
             throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
         }
 
-        // AQUI ESTA LA INTEGRACION: Usamos el servicio externo para obtener las notas
-        List<Double> notasReales = gradeIntegrationService.getGradesByStudent(studentId);
-        List<Double> ordenados = new ArrayList<>(notasReales);
-        Collections.sort(ordenados);
+        // AQUI ESTA LA INTEGRACION: Usamos el servicio externo para obtener las notas propias del estudiante
+        List<Double> notasEstudiante = gradeIntegrationService.getGradesByStudent(studentId);
+        if (notasEstudiante == null || notasEstudiante.isEmpty()) {
+            log.error("Regla de negocio rechazada: el estudiante {} no tiene notas registradas", studentId);
+            throw new NoGradesAvailableException("No hay notas registradas para el estudiante con id: " + studentId);
+        }
 
         String studentCode = "EST-%04d".formatted(studentId);
-        double studentAverage = 58.0;
+        double studentAverage = notasEstudiante.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
+
+        // El percentil se calcula contra TODA la seccion del estudiante, no contra sus propias notas
+        Long sectionId = gradeIntegrationService.getSectionIdByStudent(studentId);
+        List<Double> notasSeccion = gradeIntegrationService.getGradesBySection(sectionId);
+        if (notasSeccion == null || notasSeccion.isEmpty()) {
+            log.error("Regla de negocio rechazada: la seccion {} del estudiante {} no tiene notas registradas",
+                    sectionId, studentId);
+            throw new NoGradesAvailableException(
+                    "No hay notas registradas para la seccion del estudiante con id: " + studentId);
+        }
+        List<Double> ordenados = new ArrayList<>(notasSeccion);
+        Collections.sort(ordenados);
 
         int percentile = calcularPercentilDeValor(ordenados, studentAverage);
 
