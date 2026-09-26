@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>U-Insight · Intervenciones</title>
+  <link rel="stylesheet" href="src/styles/global.css" />
+  <link rel="stylesheet" href="src/styles/layout.css" />
+  <link rel="stylesheet" href="src/styles/components.css" />
+  <link rel="stylesheet" href="src/styles/intervenciones.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__brand">U-Insight</div>
+    <nav class="nav" aria-label="Navegación principal">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="index.html">Inicio</a></li>
+        <li><a class="nav__link" href="exploracion.html">Exploración</a></li>
+        <li><a class="nav__link" href="detalle-seccion.html">Detalle de sección</a></li>
+        <li><a class="nav__link" href="evolucion.html">Evolución</a></li>
+        <li><a class="nav__link" href="alertas.html">Alertas</a></li>
+        <li><a class="nav__link active" href="intervenciones.html" aria-current="page">Intervenciones</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <h1>Intervenciones</h1>
+    <p>Registro y seguimiento de intervenciones asociadas a una alerta.</p>
+
+    <p id="mensaje-carga" class="mensaje-estado">Cargando datos…</p>
+
+    <div id="contenido-intervenciones" hidden>
+
+      <!-- Resumen por estado -->
+      <section class="panel-resumen">
+        <h2>Resumen</h2>
+        <div class="card-container" id="contenedor-resumen"></div>
+      </section>
+
+      <!-- Crear intervención -->
+      <section class="panel-formulario">
+        <h2>Nueva intervención</h2>
+        <form id="form-nueva-intervencion" novalidate>
+          <div class="grid-formulario">
+            <div class="campo-formulario">
+              <label for="campo-alerta">Alerta asociada</label>
+              <select id="campo-alerta" name="alertId" required></select>
+            </div>
+
+            <div class="campo-formulario">
+              <label for="campo-tipo">Tipo de intervención</label>
+              <select id="campo-tipo" name="type" required>
+                <option value="">Selecciona…</option>
+                <option value="TUTORING">Tutoría</option>
+                <option value="MEETING">Reunión</option>
+                <option value="PARENT_CONTACT">Contacto con encargado</option>
+                <option value="ACADEMIC_PLAN">Plan académico</option>
+                <option value="REFERRAL">Derivación</option>
+                <option value="OTHER">Otro</option>
+              </select>
+            </div>
+
+            <div class="campo-formulario">
+              <label for="campo-responsable">Responsable</label>
+              <input type="text" id="campo-responsable" name="responsible" maxlength="150" required />
+            </div>
+
+            <div class="campo-formulario">
+              <label for="campo-fecha-inicio">Fecha de inicio</label>
+              <input type="date" id="campo-fecha-inicio" name="startDate" required />
+            </div>
+
+            <div class="campo-formulario campo-formulario--ancho">
+              <label for="campo-descripcion">Descripción</label>
+              <textarea id="campo-descripcion" name="description" maxlength="500" rows="3" required></textarea>
+              <span class="contador-caracteres" id="contador-descripcion">0 / 500</span>
+            </div>
+          </div>
+
+          <div class="acciones-filtro">
+            <button type="submit" class="boton boton-primario">Registrar intervención</button>
+          </div>
+
+          <p id="mensaje-form-intervencion" class="mensaje-form" hidden></p>
+        </form>
+      </section>
+
+      <!-- Historial -->
+      <section class="panel-resultados">
+        <h2>Historial</h2>
+
+        <div class="grid-filtros">
+          <div class="campo-filtro">
+            <label for="filtro-estado">Estado</label>
+            <select id="filtro-estado">
+              <option value="">Todos</option>
+              <option value="PLANNED">Planificada</option>
+              <option value="IN_PROGRESS">En progreso</option>
+              <option value="COMPLETED">Completada</option>
+              <option value="CANCELLED">Cancelada</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="contador-resultados" id="contador-historial"></p>
+
+        <div class="tabla-contenedor">
+          <table id="tabla-historial" class="tabla">
+            <!-- Encabezado y filas se generan dinámicamente con JS -->
+          </table>
+        </div>
+      </section>
+
+      <!-- Registrar seguimiento -->
+      <section class="panel-formulario">
+        <h2>Registrar seguimiento</h2>
+        <form id="form-seguimiento" novalidate>
+          <div class="grid-formulario">
+            <div class="campo-formulario">
+              <label for="campo-intervencion">Intervención</label>
+              <select id="campo-intervencion" name="interventionId" required></select>
+            </div>
+
+            <div class="campo-formulario">
+              <label for="campo-fecha-seguimiento">Fecha de seguimiento</label>
+              <input type="date" id="campo-fecha-seguimiento" name="followUpDate" required />
+            </div>
+
+            <div class="campo-formulario">
+              <label for="campo-resultado">Resultado (opcional)</label>
+              <select id="campo-resultado" name="result">
+                <option value="">Sin especificar</option>
+                <option value="IMPROVED">Mejoró</option>
+                <option value="NO_CHANGE">Sin cambios</option>
+                <option value="WORSENED">Empeoró</option>
+                <option value="PENDING">Pendiente</option>
+              </select>
+            </div>
+
+            <div class="campo-formulario campo-formulario--ancho">
+              <label for="campo-observacion">Observación</label>
+              <textarea id="campo-observacion" name="observation" rows="3" required></textarea>
+            </div>
+          </div>
+
+          <div class="acciones-filtro">
+            <button type="submit" class="boton boton-primario">Agregar seguimiento</button>
+          </div>
+
+          <p id="mensaje-form-seguimiento" class="mensaje-form" hidden></p>
+        </form>
+
+        <div id="detalle-seguimientos"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="src/js/components/tarjeta.js"></script>
+  <script src="src/js/components/tabla.js"></script>
+  <script src="src/js/pages/intervenciones.js"></script>
+</body>
+</html>

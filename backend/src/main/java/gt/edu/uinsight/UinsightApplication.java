@@ -10,15 +10,14 @@ import org.springframework.context.event.EventListener;
 @SpringBootApplication
 public class UinsightApplication {
 
-	private static final Logger log = LoggerFactory.getLogger(UinsightApplication.class);
+    private static final Logger log = LoggerFactory.getLogger(UinsightApplication.class);
 
-	public static void main(String[] args) {
-		SpringApplication.run(UinsightApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(UinsightApplication.class, args);
+    }
 
-	@EventListener(ApplicationReadyEvent.class)
-	public void onApplicationReady() {
-		log.info("APPLICATION_STARTED");
-	}
-
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        log.info("APPLICATION_STARTED");
+    }
 }
