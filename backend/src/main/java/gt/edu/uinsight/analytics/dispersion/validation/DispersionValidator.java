@@ -1,6 +1,6 @@
 package gt.edu.uinsight.analytics.dispersion.validation;
 
-import gt.edu.uinsight.analytics.dispersion.entity.Grade;
+import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
 import gt.edu.uinsight.analytics.dispersion.exception.DatosInsuficientesException;
 import gt.edu.uinsight.analytics.dispersion.exception.DatosInvalidosException;
 
@@ -8,8 +8,8 @@ import java.util.List;
 
 /**
  * Validaciones relacionadas con el módulo de dispersión: controla
- * ausencia o insuficiencia de calificaciones (Grade) antes de que
- * el calculator/service opere sobre la lista obtenida de GradeRepository.
+ * ausencia o insuficiencia de calificaciones (DispersionGrade) antes de que
+ * el calculator/service opere sobre la lista obtenida de DispersionGradeRepository.
  *
  * Se usa dentro de DispersionService, antes de invocar al calculator,
  * para las dos rutas (por sección y por curso).
@@ -28,11 +28,11 @@ public class DispersionValidator {
      * tenga al menos dos elementos y que cada registro tenga un
      * score válido (no nulo).
      *
-     * @param calificaciones lista de Grade obtenida del repositorio
+     * @param calificaciones lista de DispersionGrade obtenida del repositorio
      * @throws DatosInsuficientesException si la lista es nula, vacía o tiene menos del mínimo requerido
-     * @throws DatosInvalidosException     si algún registro tiene score nulo
+     * @throws DatosInvalidosException si algún registro tiene score nulo
      */
-    public static void validar(List<Grade> calificaciones) {
+    public static void validar(List<DispersionGrade> calificaciones) {
         if (calificaciones == null || calificaciones.isEmpty()) {
             throw new DatosInsuficientesException(
                     "No hay calificaciones registradas para calcular la dispersión.");
@@ -45,7 +45,7 @@ public class DispersionValidator {
                             + calificaciones.size());
         }
 
-        for (Grade calificacion : calificaciones) {
+        for (DispersionGrade calificacion : calificaciones) {
             if (calificacion == null || calificacion.getScore() == null) {
                 throw new DatosInvalidosException(
                         "Existe una calificación sin score registrado.");
