@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Entity(name = "DispersionEvaluation")
+@Entity
 @Table(name = "evaluation")
 public class Evaluation {
 
