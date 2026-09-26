@@ -1,0 +1,353 @@
+{
+  "info": {
+    "name": "U-Insight - C4 Intervenciones (semana 2)",
+    "description": "Pruebas de los 3 endpoints de intervenciones implementados en la Fase 2 de la célula C4 (registro y seguimiento). Requiere el backend corriendo en localhost:8080 y la base de datos sembrada con database/scripts/seed_c4_test_data.sql (alerta 10 = NEW, alerta 11 = RESOLVED). Equipo: Diego Flores, Javier Iboy, Luis Sanchez, Leandro Perez, Wesley Tuy.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "interventionId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Intervenciones",
+      "item": [
+        {
+          "name": "POST - Crear intervencion (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Location header presente\", function () {",
+                  "    pm.response.to.have.header(\"Location\");",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.test(\"status inicial es PLANNED\", function () {",
+                  "        pm.expect(body.status).to.eql(\"PLANNED\");",
+                  "    });",
+                  "    pm.collectionVariables.set(\"interventionId\", body.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TUTORING\",\n  \"description\": \"Tutoria de refuerzo en matematica\",\n  \"responsible\": \"Lic. Ana Perez\",\n  \"startDate\": \"2026-09-20\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/10/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "10", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Crear intervencion - alerta inexistente (404 ALERT_NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"error es ALERT_NOT_FOUND\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"ALERT_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TUTORING\",\n  \"description\": \"Tutoria de refuerzo en matematica\",\n  \"responsible\": \"Lic. Ana Perez\",\n  \"startDate\": \"2026-09-20\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/999999/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "999999", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Crear intervencion - alerta RESOLVED (409 ALERT_NOT_ACTIVE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test(\"error es ALERT_NOT_ACTIVE\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"ALERT_NOT_ACTIVE\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TUTORING\",\n  \"description\": \"Tutoria de refuerzo en matematica\",\n  \"responsible\": \"Lic. Ana Perez\",\n  \"startDate\": \"2026-09-20\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/11/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "11", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Crear intervencion - datos invalidos (400 VALIDATION_ERROR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"error es VALIDATION_ERROR\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"VALIDATION_ERROR\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": null,\n  \"description\": \"\",\n  \"responsible\": \"\",\n  \"startDate\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/10/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "10", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar intervenciones de una alerta (200, con datos)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"la respuesta es un arreglo\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/10/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "10", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar intervenciones - alerta sin intervenciones (200, lista vacia)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"la lista esta vacia\", function () {",
+                  "    pm.expect(pm.response.json()).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/11/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "11", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar intervenciones - alerta inexistente (404 ALERT_NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"error es ALERT_NOT_FOUND\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"ALERT_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/alerts/999999/interventions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "alerts", "999999", "interventions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Obtener intervencion por id (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"el id coincide con el solicitado\", function () {",
+                  "    pm.expect(String(pm.response.json().id)).to.eql(pm.collectionVariables.get(\"interventionId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/interventions/{{interventionId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "interventions", "{{interventionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Obtener intervencion - id inexistente (404 INTERVENTION_NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"error es INTERVENTION_NOT_FOUND\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"INTERVENTION_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/interventions/999999",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "v1", "interventions", "999999"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
