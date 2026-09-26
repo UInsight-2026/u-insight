@@ -7,10 +7,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import gt.edu.uinsight.analytics.dispersion.entity.Grade;
+import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
 
 @Repository("dispersionGradeRepository")
-public interface GradeRepository extends JpaRepository<Grade, Long> {
+public interface DispersionGradeRepository
+        extends JpaRepository<DispersionGrade, Long> {
 
     @Query(value = """
         SELECT g.*
@@ -19,7 +20,7 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
             ON g.evaluation_id = e.id
         WHERE e.section_id = :sectionId
         """, nativeQuery = true)
-    List<Grade> findGradesBySectionId(
+    List<DispersionGrade> findGradesBySectionId(
             @Param("sectionId") Long sectionId
     );
 
@@ -32,7 +33,7 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
             ON e.section_id = s.id
         WHERE s.course_id = :courseId
         """, nativeQuery = true)
-    List<Grade> findGradesByCourseId(
+    List<DispersionGrade> findGradesByCourseId(
             @Param("courseId") Long courseId
     );
 }
