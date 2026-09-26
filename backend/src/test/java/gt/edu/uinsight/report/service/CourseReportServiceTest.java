@@ -6,6 +6,7 @@ import gt.edu.uinsight.report.dto.response.CourseReportResponse;
 import gt.edu.uinsight.report.dto.response.CourseSectionItemResponse;
 import gt.edu.uinsight.report.exception.ResourceNotFoundException;
 import gt.edu.uinsight.report.gateway.ReportDataGateway;
+import gt.edu.uinsight.report.mock.MockDataGateway;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CourseReportServiceTest {
 
-    private final ReportDataGateway gateway = new ReportDataGateway();
+    private final ReportDataGateway gateway = new MockDataGateway();
     private final FilterValidator filterValidator = new FilterValidator();
     private final ReportLogger reportLogger = new ReportLogger();
 
@@ -51,7 +52,7 @@ class CourseReportServiceTest {
         CourseSectionItemResponse primeraSeccion =
                 response.getSections().get(0);
 
-        assertEquals(1L, primeraSeccion.getSectionId());
+        assertEquals(10L, primeraSeccion.getSectionId());
         assertEquals("A", primeraSeccion.getSectionName());
         assertEquals("HIGH", primeraSeccion.getRiskLevel());
         assertEquals(8, primeraSeccion.getStudentsAtRisk());
