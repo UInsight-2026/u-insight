@@ -1,5 +1,6 @@
 package gt.edu.uinsight.analytics.trend.entity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import gt.edu.uinsight.analytics.trend.dto.response.TrendPoint;

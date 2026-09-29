@@ -3,6 +3,7 @@ package gt.edu.uinsight.analytics.trend.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -49,37 +50,23 @@ public class Grade {
         return id;
     }
 
-    public Long getStudentId() {
-        return studentId;
-    }
-
     public Long getEvaluationId() {
         return evaluationId;
     }
 
-    public Double getScore() {
-        return score;
-    }
-    public String getRegisteredAt() {
-        return registeredAt;
-    }
-    public String getStatus() {
-        return status;
-    }
-    public void setScore(Double score) {
-        this.score = score;
-    }
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    public void setRegisteredAt(String registeredAt) {
-        this.registeredAt = registeredAt;
-    }
-    public void setEvaluationId(Long evaluationId) {
-        this.evaluationId = evaluationId;
-    }
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
+    public Long getStudentId() {
+        return studentId;
     }
 
+    public BigDecimal getScore() {
+        return score;
+    }
+
+    public LocalDateTime getRegisteredAt() {
+        return registeredAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }

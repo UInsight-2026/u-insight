@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -59,47 +60,32 @@ public class Evaluation {
     public Long getId() {
         return id;
     }
+
     public Long getSectionId() {
         return sectionId;
     }
+
     public String getName() {
         return name;
     }
-    public Type getType() {
+
+    public String getType() {
         return type;
     }
-    public String getEvaluationDate() {
+
+    public LocalDate getEvaluationDate() {
         return evaluationDate;
     }
-    public Double getMaximumScore() {
+
+    public BigDecimal getMaximumScore() {
         return maximumScore;
     }
-    public Double getWeight() {
+
+    public BigDecimal getWeight() {
         return weight;
     }
-    public Status getStatus() {
+
+    public String getStatus() {
         return status;
     }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public void setType(Type type) {
-        this.type = type;
-    }
-    public void setEvaluationDate(String evaluationDate) {
-        this.evaluationDate = evaluationDate;
-    }
-    public void setMaximumScore(Double maximumScore) {
-        this.maximumScore = maximumScore;
-    }
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-    public void setSectionId(Long sectionId) {
-        this.sectionId = sectionId;
-    }
-    
 }
