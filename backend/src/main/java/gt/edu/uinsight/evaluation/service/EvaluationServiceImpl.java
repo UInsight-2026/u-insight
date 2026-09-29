@@ -1,6 +1,9 @@
 // Celula A5 - Gestión de evaluaciones
 package gt.edu.uinsight.evaluation.service;
- 
+
+import gt.edu.uinsight.evaluation.api.EvaluationQueryService;
+import gt.edu.uinsight.evaluation.api.EvaluationSummary;
+import gt.edu.uinsight.evaluation.domain.EvaluationStatus;
 import gt.edu.uinsight.evaluation.dto.request.ChangeEvaluationStatusRequest;
 import gt.edu.uinsight.evaluation.dto.request.CreateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.request.UpdateEvaluationRequest;
@@ -18,132 +21,174 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
- 
+
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
- 
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 
+/**
+ * Lógica de negocio del módulo de evaluaciones (célula A5).
+ *
+ * RN1 la evaluación pertenece a una sección existente y ACTIVE (crear, actualizar, activar).
+ * RN2 maximumScore > 0 y RN3 0 < weight <= 100 (Bean Validation en los DTOs).
+ * RN4 la suma de ponderaciones no canceladas de la sección no supera 100.
+ * RN5 una evaluación CLOSED no se modifica; HU3 tampoco permite editar CANCELLED.
+ * RN6 transiciones DRAFT->ACTIVE->CLOSED o DRAFT/ACTIVE->CANCELLED.
+ */
 @Service
-public class EvaluationServiceImpl implements EvaluationService {
- 
+public class EvaluationServiceImpl implements EvaluationService, EvaluationQueryService {
+
     private static final Logger log = LoggerFactory.getLogger(EvaluationServiceImpl.class);
- 
-    private static final BigDecimal WEIGHT_LIMIT = new BigDecimal("100.00");
-    private static final String DRAFT = "DRAFT";
-    private static final String ACTIVE = "ACTIVE";
-    private static final String CLOSED = "CLOSED";
-    private static final String CANCELLED = "CANCELLED";
- 
-    // RN6: transiciones de estado permitidas
-    private static final Map<String, Set<String>> ALLOWED_TRANSITIONS = buildTransitions();
- 
-    private static Map<String, Set<String>> buildTransitions() {
-        Map<String, Set<String>> transitions = new java.util.HashMap<>();
-        transitions.put(DRAFT, Set.of(ACTIVE, CANCELLED));
-        transitions.put(ACTIVE, Set.of(CLOSED, CANCELLED));
-        transitions.put(CLOSED, Set.of());
-        transitions.put(CANCELLED, Set.of());
-        return transitions;
-    }
- 
+
+    static final BigDecimal WEIGHT_LIMIT = new BigDecimal("100.00");
+
     private final EvaluationRepository evaluationRepository;
     private final EvaluationMapper evaluationMapper;
     private final SectionValidationPort sectionValidationPort;
- 
-    public EvaluationServiceImpl(EvaluationRepository evaluationRepository, EvaluationMapper evaluationMapper,
-                                  SectionValidationPort sectionValidationPort) {
+    private final GradeEvaluationSyncPort gradeEvaluationSyncPort;
+
+    public EvaluationServiceImpl(EvaluationRepository evaluationRepository,
+                                 EvaluationMapper evaluationMapper,
+                                 SectionValidationPort sectionValidationPort,
+                                 GradeEvaluationSyncPort gradeEvaluationSyncPort) {
         this.evaluationRepository = evaluationRepository;
         this.evaluationMapper = evaluationMapper;
         this.sectionValidationPort = sectionValidationPort;
+        this.gradeEvaluationSyncPort = gradeEvaluationSyncPort;
     }
- 
+
+    // ------------------------------------------------------------ HU1
+
     @Override
     @Transactional
     public EvaluationResponse createEvaluation(CreateEvaluationRequest request) {
-        assertSectionActive(request.getSectionId()); // RN1
+        long start = System.currentTimeMillis();
+        assertSectionActive(request.getSectionId());                                // RN1
         assertWeightWithinLimit(request.getSectionId(), request.getWeight(), null); // RN4
- 
-        Evaluation entity = evaluationMapper.toEntity(request);
-        Evaluation saved = evaluationRepository.save(entity);
- 
-        log.info("EVALUATION_CREATED evaluationId={} sectionId={} type={} weight={}",
-                saved.getId(), saved.getSectionId(), saved.getType(), saved.getWeight());
- 
+
+        Evaluation saved = evaluationRepository.save(evaluationMapper.toEntity(request));
+
+        log.info("EVALUATION_CREATED operation=CREATE evaluationId={} sectionId={} type={} weight={} status={} durationMs={}",
+                saved.getId(), saved.getSectionId(), saved.getType(), saved.getWeight(), saved.getStatus(),
+                System.currentTimeMillis() - start);
         return evaluationMapper.toResponse(saved);
     }
- 
+
+    // ------------------------------------------------------------ Consultas
+
     @Override
     @Transactional(readOnly = true)
     public List<EvaluationResponse> getAllEvaluations() {
         return evaluationRepository.findAll().stream()
                 .map(evaluationMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
- 
+
     @Override
     @Transactional(readOnly = true)
     public EvaluationResponse getEvaluationById(Long id) {
         return evaluationMapper.toResponse(findEntityOrThrow(id));
     }
- 
+
+    /** HU2: 404 si la sección no existe; 200 con lista vacía si existe y no tiene evaluaciones. */
     @Override
     @Transactional(readOnly = true)
     public List<EvaluationResponse> getEvaluationsBySectionId(Long sectionId) {
-        // HU2 — GET /api/v1/sections/{id}/evaluations
-        // Si no hay evaluaciones, el contrato espera 200 + lista vacía, no 404.
+        assertSectionExists(sectionId);
         return evaluationRepository.findBySectionId(sectionId).stream()
                 .map(evaluationMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
- 
+
+    // ------------------------------------------------------------ HU3
+
     @Override
     @Transactional
     public EvaluationResponse updateEvaluation(Long id, UpdateEvaluationRequest request) {
+        long start = System.currentTimeMillis();
         Evaluation entity = findEntityOrThrow(id);
- 
-        if (CLOSED.equals(entity.getStatus())) {
-            log.warn("EVALUATION_NOT_EDITABLE evaluationId={} status={}", id, entity.getStatus());
-            throw new EvaluationNotEditableException(id); // RN5
+        EvaluationStatus status = statusOf(entity);
+
+        if (!status.isEditable()) {                                                  // RN5 / HU3
+            log.warn("EVALUATION_NOT_EDITABLE operation=UPDATE evaluationId={} status={}", id, status);
+            throw new EvaluationNotEditableException(id, status.name());
         }
- 
-        assertWeightWithinLimit(entity.getSectionId(), request.getWeight(), id); // RN4
- 
-        entity.setName(request.getName());
+        assertSectionActive(entity.getSectionId());                                  // RN1
+        assertWeightWithinLimit(entity.getSectionId(), request.getWeight(), id);     // RN4
+
+        entity.setName(request.getName().trim());
         entity.setEvaluationDate(request.getEvaluationDate());
         entity.setMaximumScore(request.getMaximumScore());
         entity.setWeight(request.getWeight());
         Evaluation saved = evaluationRepository.save(entity);
- 
-        log.info("EVALUATION_UPDATED evaluationId={} weight={}", saved.getId(), saved.getWeight());
- 
+
+        if (status == EvaluationStatus.ACTIVE) {
+            gradeEvaluationSyncPort.publish(toSummary(saved));                      // integración A6
+        }
+        log.info("EVALUATION_UPDATED operation=UPDATE evaluationId={} sectionId={} weight={} maximumScore={} durationMs={}",
+                saved.getId(), saved.getSectionId(), saved.getWeight(), saved.getMaximumScore(),
+                System.currentTimeMillis() - start);
         return evaluationMapper.toResponse(saved);
     }
- 
+
+    // ------------------------------------------------------------ HU4
+
     @Override
     @Transactional
     public EvaluationResponse changeStatus(Long id, ChangeEvaluationStatusRequest request) {
+        long start = System.currentTimeMillis();
         Evaluation entity = findEntityOrThrow(id);
-        String currentStatus = entity.getStatus();
-        String newStatus = request.getStatus() == null ? null : request.getStatus().toUpperCase(java.util.Locale.ROOT);
- 
-        Set<String> allowed = ALLOWED_TRANSITIONS.get(currentStatus);
-        if (newStatus == null || allowed == null || !allowed.contains(newStatus)) {
-            log.warn("INVALID_STATUS_TRANSITION evaluationId={} from={} to={}", id, currentStatus, request.getStatus());
+        EvaluationStatus current = statusOf(entity);
+        EvaluationStatus target = EvaluationStatus.valueOf(request.getStatus().trim().toUpperCase(Locale.ROOT));
+
+        if (!current.canTransitionTo(target)) {                                      // RN6
+            log.warn("INVALID_STATUS_TRANSITION operation=CHANGE_STATUS evaluationId={} from={} to={}",
+                    id, current, target);
             throw new InvalidStatusTransitionException(
-                    "Transición de " + currentStatus + " a " + request.getStatus() + " no permitida"); // RN6
+                    "No se permite cambiar la evaluación " + id + " de " + current + " a " + target
+                            + ". Transiciones válidas desde " + current + ": " + current.allowedNext());
         }
- 
-        entity.setStatus(newStatus);
+        if (target == EvaluationStatus.ACTIVE) {
+            assertSectionActive(entity.getSectionId());                              // RN1
+        }
+
+        entity.setStatus(target.name());
         Evaluation saved = evaluationRepository.save(entity);
- 
-        log.info("EVALUATION_STATUS_CHANGED evaluationId={} from={} to={}", id, currentStatus, newStatus);
- 
+
+        if (target == EvaluationStatus.ACTIVE) {
+            gradeEvaluationSyncPort.publish(toSummary(saved));                      // integración A6
+        }
+        log.info("EVALUATION_STATUS_CHANGED operation=CHANGE_STATUS evaluationId={} from={} to={} durationMs={}",
+                id, current, target, System.currentTimeMillis() - start);
         return evaluationMapper.toResponse(saved);
     }
- 
+
+    // ------------------------------------------------------------ API pública para otras células
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<EvaluationSummary> findSummary(Long evaluationId) {
+        return evaluationRepository.findById(evaluationId).map(this::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isGradable(Long evaluationId) {
+        return findSummary(evaluationId).map(EvaluationSummary::isGradable).orElse(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EvaluationSummary> findBySection(Long sectionId) {
+        return evaluationRepository.findBySectionId(sectionId).stream()
+                .map(this::toSummary)
+                .toList();
+    }
+
+    // ------------------------------------------------------------ Reglas auxiliares
+
     private Evaluation findEntityOrThrow(Long id) {
         return evaluationRepository.findById(id)
                 .orElseThrow(() -> {
@@ -151,36 +196,49 @@ public class EvaluationServiceImpl implements EvaluationService {
                     return new EvaluationNotFoundException(id);
                 });
     }
- 
-    private void assertSectionActive(Long sectionId) {
+
+    private void assertSectionExists(Long sectionId) {
         if (!sectionValidationPort.exists(sectionId)) {
             log.warn("SECTION_NOT_FOUND sectionId={}", sectionId);
             throw new SectionNotFoundException(sectionId);
         }
+    }
+
+    private void assertSectionActive(Long sectionId) {
+        assertSectionExists(sectionId);
         if (!sectionValidationPort.isActive(sectionId)) {
             log.warn("SECTION_NOT_ACTIVE sectionId={}", sectionId);
             throw new SectionNotActiveException(sectionId);
         }
     }
- 
+
     /**
-     * RN4. Al actualizar (excludeEvaluationId != null) se excluye la propia
-     * evaluación del total actual, para no contarla dos veces.
+     * RN4. Suma las ponderaciones de la sección que no están CANCELLED.
+     * Al actualizar (excludeEvaluationId != null) se excluye la propia evaluación.
      */
     private void assertWeightWithinLimit(Long sectionId, BigDecimal newWeight, Long excludeEvaluationId) {
         BigDecimal weightToAdd = newWeight == null ? BigDecimal.ZERO : newWeight;
- 
+
         BigDecimal currentTotal = evaluationRepository.findBySectionId(sectionId).stream()
-                .filter(e -> !CANCELLED.equals(e.getStatus()))
-                .filter(e -> excludeEvaluationId == null || !e.getId().equals(excludeEvaluationId))
+                .filter(e -> !EvaluationStatus.CANCELLED.name().equals(e.getStatus()))
+                .filter(e -> excludeEvaluationId == null || !Objects.equals(e.getId(), excludeEvaluationId))
                 .map(Evaluation::getWeight)
-                .filter(w -> w != null)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
- 
+
         if (currentTotal.add(weightToAdd).compareTo(WEIGHT_LIMIT) > 0) {
-            log.warn("WEIGHT_LIMIT_EXCEEDED sectionId={} currentTotal={} attemptedWeight={}",
-                    sectionId, currentTotal, newWeight);
-            throw new WeightLimitExceededException(sectionId, currentTotal, WEIGHT_LIMIT);
+            log.warn("WEIGHT_LIMIT_EXCEEDED sectionId={} currentTotal={} attemptedWeight={} limit={}",
+                    sectionId, currentTotal, weightToAdd, WEIGHT_LIMIT);
+            throw new WeightLimitExceededException(sectionId, currentTotal, weightToAdd, WEIGHT_LIMIT);
         }
+    }
+
+    private static EvaluationStatus statusOf(Evaluation entity) {
+        return EvaluationStatus.valueOf(entity.getStatus().trim().toUpperCase(Locale.ROOT));
+    }
+
+    private EvaluationSummary toSummary(Evaluation e) {
+        return new EvaluationSummary(e.getId(), e.getSectionId(), e.getName(),
+                e.getMaximumScore(), e.getWeight(), e.getStatus());
     }
 }

@@ -2,8 +2,8 @@
 package gt.edu.uinsight.evaluation.exception;
 
 /**
- * RN1: se lanza cuando no existe una sección con el id indicado.
- * Mapeada a HTTP 422 por {@link EvaluationExceptionHandler}.
+ * RN1: no existe una sección con el id indicado.
+ * Mapeada a HTTP 404 por {@link EvaluationExceptionHandler} (contrato de APIs de A5).
  */
 public class SectionNotFoundException extends RuntimeException {
 
