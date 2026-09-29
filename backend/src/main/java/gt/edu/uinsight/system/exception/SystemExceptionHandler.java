@@ -15,8 +15,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import gt.edu.uinsight.system.logging.SystemEventLogger;
+
 @RestControllerAdvice(basePackages = "gt.edu.uinsight.system")
 public class SystemExceptionHandler {
+
+    private final SystemEventLogger eventLogger;
+
+    public SystemExceptionHandler(SystemEventLogger eventLogger) {
+        this.eventLogger = eventLogger;
+    }
 
     @ExceptionHandler(CheckNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleCheckNotFound(
@@ -26,7 +34,21 @@ public class SystemExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "NOT_FOUND",
                 exception.getMessage(),
-                List.of()
+                List.of(),
+                "RESOURCE_NOT_FOUND"
+        );
+    }
+
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidStatusTransition(
+            InvalidStatusTransitionException exception) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "CONFLICT",
+                exception.getMessage(),
+                List.of(),
+                "BUSINESS_RULE_REJECTED"
         );
     }
 
@@ -44,7 +66,8 @@ public class SystemExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "VALIDATION_ERROR",
                 "Request validation failed",
-                details
+                details,
+                "VALIDATION_REJECTED"
         );
     }
 
@@ -56,7 +79,8 @@ public class SystemExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "BAD_REQUEST",
                 "Malformed or unreadable request body",
-                List.of()
+                List.of(),
+                "VALIDATION_REJECTED"
         );
     }
 
@@ -68,7 +92,8 @@ public class SystemExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "BAD_REQUEST",
                 exception.getMessage(),
-                List.of()
+                List.of(),
+                "BUSINESS_RULE_REJECTED"
         );
     }
 
@@ -80,7 +105,8 @@ public class SystemExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "BAD_REQUEST",
                 "Invalid value for parameter '" + exception.getName() + "'",
-                List.of()
+                List.of(),
+                "VALIDATION_REJECTED"
         );
     }
 
@@ -92,7 +118,8 @@ public class SystemExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "NOT_FOUND",
                 "Resource not found",
-                List.of()
+                List.of(),
+                "RESOURCE_NOT_FOUND"
         );
     }
 
@@ -104,7 +131,8 @@ public class SystemExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "INTERNAL_ERROR",
                 "An unexpected error occurred",
-                List.of()
+                List.of(),
+                "UNEXPECTED_ERROR"
         );
     }
 
@@ -112,15 +140,29 @@ public class SystemExceptionHandler {
             HttpStatus status,
             String error,
             String message,
-            List<String> details) {
+            List<String> details,
+            String operation) {
+
+        String traceId = eventLogger.currentTraceId();
+        if (traceId == null) {
+            traceId = UUID.randomUUID().toString();
+        }
+
+        String safeMessage = message != null ? message : "";
+
+        if (status.is5xxServerError()) {
+            eventLogger.error(operation, status.value(), safeMessage);
+        } else {
+            eventLogger.warn(operation, status.value(), safeMessage);
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", status.value());
         response.put("error", error);
-        response.put("message", message != null ? message : "");
+        response.put("message", safeMessage);
         response.put("details", details);
-        response.put("traceId", UUID.randomUUID().toString());
+        response.put("traceId", traceId);
 
         return ResponseEntity.status(status).body(response);
     }

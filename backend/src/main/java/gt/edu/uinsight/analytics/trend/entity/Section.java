@@ -16,23 +16,17 @@ public class Section {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "academic_period_id", nullable = false)
-    private Long periodId;
-
-    @Column(name = "course_id", nullable = false)
-    private Long courseId;
-
-    @Column(name = "teacher_id", nullable = false)
-    private Long teacherId;
-
-    @Column(name = "section_code", nullable = false, length = 20)
-    private String sectionCode;
-
-    @Column(nullable = false, length = 20)
-    private String status;
-
+    // Constructor sin argumentos agregado por C7: Hibernate lo necesita para instanciar
+    // la entidad y sin el el contexto de Spring no arranca.
     protected Section() {
-        // Requerido por JPA.
+    }
+
+    public Section(Long periodId, Long courseId, Long teacherId, String sectionCode, String status) {
+        this.periodId = periodId;
+        this.courseId = courseId;
+        this.teacherId = teacherId;
+        this.sectionCode = sectionCode;
+        this.status = status;
     }
 
     public Long getId() {
