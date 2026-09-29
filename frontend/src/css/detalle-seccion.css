@@ -1,0 +1,71 @@
+.panel-selector,
+.panel-indicadores,
+.panel-evaluaciones,
+.panel-alertas {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.panel-indicadores h2,
+.panel-evaluaciones h2,
+.panel-alertas h2 {
+  margin: 0 0 var(--spacing-md);
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.panel-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.panel-selector label {
+  font-weight: 600;
+}
+
+#selector-seccion {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background-color: var(--color-surface);
+}
+
+.aviso-evaluaciones {
+  font-size: 0.8rem;
+  color: #92400e;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: var(--spacing-md);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead th {
+  text-align: left;
+  padding: 0.6rem 0.7rem;
+  border-bottom: 2px solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+tbody td {
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mensaje-estado {
+  padding: 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
