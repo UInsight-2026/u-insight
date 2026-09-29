@@ -22,7 +22,7 @@ public class TrendController {
         this.trendService = trendService;
     }
 
-     @GetMapping("/sections/{id}/trend")
+     @GetMapping("/sections/{id}/trends")
      public ResponseEntity<?> getTrendBySectionId(@PathVariable Long id) {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);
@@ -38,15 +38,8 @@ public class TrendController {
          return ResponseEntity.ok(trendResponse);
      }
 
-    // Parche de arranque aportado por C7: esta ruta era identica a la
-    // GET /api/v1/analytics/students/{id}/trend que la celula B5 ya entrego en la semana 2,
-    // y Spring se negaba a levantar por mapeo ambiguo. Se renombra la de B4 para que ambas
-    // convivan; no se borro nada.
-    // Pendiente: que B4 y B5 acuerden cual de las dos queda y con que ruta definitiva.
-    // Aviso aparte: trendService esta fijado a null mas arriba, asi que estos dos endpoints
-    // responden 500 aunque arranquen. Es codigo sin terminar de B4, no lo causo este parche.
-    @GetMapping("/students/{id}/trend-analysis")
-    public ResponseEntity<TrendResponse> getTrendByStudentId(@PathVariable Long id) {
+    @GetMapping("/students/{id}/trends")
+    public ResponseEntity<?> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
         TrendResponse trendResponse = trendService.getTrendByStudentId(id);
         if(trendResponse == null){

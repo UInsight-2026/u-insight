@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import gt.edu.uinsight.analytics.dispersion.entity.Grade;
 
-@Repository
-public interface GradeRepository extends JpaRepository<Grade, Long> {
+@Repository("dispersionGradeRepository")
+public interface DispersionGradeRepository extends JpaRepository<Grade, Long> {
 
     @Query(value = "SELECT g.* FROM grade g INNER JOIN evaluation e ON g.evaluation_id = e.id WHERE e.section_id = :sectionId", nativeQuery = true)
     List<Grade> findGradesBySectionId(@Param("sectionId") Long sectionId);
