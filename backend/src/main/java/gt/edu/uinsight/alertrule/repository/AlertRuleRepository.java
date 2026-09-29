@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface AlertRuleRepository extends JpaRepository<AlertRule, Long> {
     List<AlertRule> findByActive(Boolean active);
-    boolean existsByNameIgnoreCase(String name);
-    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+    List<AlertRule> findByActiveTrue();
 }
