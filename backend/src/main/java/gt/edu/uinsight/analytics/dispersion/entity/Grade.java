@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
+// Misma colisión que ya se parchó en Evaluation.java de este mismo paquete: la célula
+// A6 (grade) tiene su propia entidad Grade sobre esta tabla, y Hibernate identifica las
+// entidades por su nombre simple. Se le da un nombre de entidad distinto manteniendo el
+// mismo @Table, igual que ya se hizo para Evaluation, DispersionEvaluation (este paquete)
+// y TrendGrade/TrendEvaluation/TrendSection (paquete trend, célula B4).
+@Entity(name = "DispersionGrade")
 @Table(name = "grade")
 public class Grade {
 

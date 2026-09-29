@@ -9,7 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import gt.edu.uinsight.analytics.dispersion.entity.Grade;
 
-@Repository
+// La célula A6 (grade) y la célula B4 (trend) también declaran una interfaz GradeRepository
+// sobre la misma tabla; Spring deriva el nombre del bean del nombre simple de la interfaz,
+// así que colisionaban por 'gradeRepository' y el contexto no arrancaba
+// (BeanDefinitionOverrideException). Se nombra explícitamente este bean, igual que ya se
+// hizo para el de la célula B4 (ver trend/repository/GradeRepository.java); la inyección
+// por tipo dentro de este módulo no cambia.
+@Repository("dispersionGradeRepository")
 public interface GradeRepository extends JpaRepository<Grade, Long> {
 
     @Query(value = "SELECT g.* FROM grade g INNER JOIN evaluation e ON g.evaluation_id = e.id WHERE e.section_id = :sectionId", nativeQuery = true)
