@@ -7,6 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 // Parche de arranque aportado por C7: la celula B3 (dispersion) tiene tambien una entidad
 // llamada Grade sobre esta misma tabla. Hibernate identifica las entidades por su nombre
 // simple y ambas colisionaban. Se le da un nombre de entidad distinto, se mantiene el mismo
@@ -26,10 +29,13 @@ public class Grade {
     @Column(name = "student_id")
     private Long studentId;
 
-    private Double score;
+    private BigDecimal score;
 
     @Column(name = "registered_at")
-    private String registeredAt;
+    private LocalDateTime registeredAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     private String status;
 
@@ -38,7 +44,7 @@ public class Grade {
     protected Grade() {
     }
 
-    public Grade(Long evaluationId, Long studentId, Double score, String registeredAt, String status) {
+    public Grade(Long evaluationId, Long studentId, BigDecimal score, LocalDateTime registeredAt, String status) {
         this.evaluationId = evaluationId;
         this.studentId = studentId;
         this.score = score;

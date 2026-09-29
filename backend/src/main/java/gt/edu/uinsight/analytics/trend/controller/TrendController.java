@@ -46,7 +46,7 @@ public class TrendController {
     // Aviso aparte: trendService esta fijado a null mas arriba, asi que estos dos endpoints
     // responden 500 aunque arranquen. Es codigo sin terminar de B4, no lo causo este parche.
     @GetMapping("/students/{id}/trend-analysis")
-    public ResponseEntity<TrendResponse> getTrendByStudentId(@PathVariable Long id) {
+    public ResponseEntity<?> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
         TrendResponse trendResponse = trendService.getTrendByStudentId(id);
         if(trendResponse == null){
@@ -57,7 +57,7 @@ public class TrendController {
                 )
             );
         }
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(trendResponse);
     }
 
 }
