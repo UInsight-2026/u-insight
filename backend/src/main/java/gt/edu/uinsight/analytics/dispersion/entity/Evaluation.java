@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+// Parche de arranque aportado por C7: las celulas A5 y B4 tienen tambien una entidad
+// llamada Evaluation. Hibernate las identifica por su nombre simple y las tres
+// colisionaban. Se le da un nombre de entidad distinto manteniendo el mismo @Table.
 @Entity(name = "DispersionEvaluation")
 @Table(name = "evaluation")
 public class Evaluation {
