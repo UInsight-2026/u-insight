@@ -9,6 +9,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 // Parche de arranque aportado por C7: las celulas A5 y B3 tienen tambien una entidad
 // llamada Evaluation sobre esta misma tabla. Hibernate identifica las entidades por su
 // nombre simple, asi que las tres colisionaban al construir el modelo. Se le da un nombre
@@ -32,12 +35,12 @@ public class Evaluation {
     private Type type;
 
     @Column(name = "evaluation_date")
-    private String evaluationDate;
+    private LocalDate evaluationDate;
 
     @Column(name = "maximum_score")
-    private Double maximumScore;
+    private BigDecimal maximumScore;
 
-    private Double weight;
+    private BigDecimal weight;
 
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -47,7 +50,7 @@ public class Evaluation {
     protected Evaluation() {
     }
 
-    public Evaluation(Long sectionId, String name, Type type, String evaluationDate, Double maximumScore, Double weight, Status status) {
+    public Evaluation(Long sectionId, String name, Type type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight, Status status) {
         this.sectionId = sectionId;
         this.name = name;
         this.type = type;
@@ -69,7 +72,7 @@ public class Evaluation {
         return name;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 
@@ -85,7 +88,7 @@ public class Evaluation {
         return weight;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 }

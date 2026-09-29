@@ -5,54 +5,26 @@ import gt.edu.uinsight.alertrule.dto.request.UpdateStatusRequest;
 import gt.edu.uinsight.alertrule.dto.response.AlertRuleResponse;
 import gt.edu.uinsight.alertrule.entity.AlertRule;
 import gt.edu.uinsight.alertrule.repository.AlertRuleRepository;
-<<<<<<< HEAD
 import gt.edu.uinsight.common.exception.ResourceNotFoundException;
 import gt.edu.uinsight.integration.c1.C1ConfigurationClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-=======
-import org.springframework.stereotype.Service;
-
 import java.util.Arrays;
->>>>>>> origin/develop
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class AlertRuleService {
 
+    private static final List<String> ALLOWED_SEVERITIES = Arrays.asList("LOW", "MEDIUM", "HIGH");
+
     private final AlertRuleRepository repository;
-<<<<<<< HEAD
     private final C1ConfigurationClient c1Client;
 
     public AlertRuleService(AlertRuleRepository repository, C1ConfigurationClient c1Client) {
         this.repository = repository;
         this.c1Client = c1Client;
-    }
-
-    // --- Mapeador interno de Entidad a DTO Response ---
-    private AlertRuleResponse mapToResponse(AlertRule rule) {
-        AlertRuleResponse response = new AlertRuleResponse();
-        response.setId(rule.getId());
-        response.setName(rule.getName());
-        response.setDescription(rule.getDescription());
-        response.setConditionExpression(rule.getConditionExpression());
-        response.setSeverity(rule.getSeverity());
-        response.setActive(rule.getActive());
-        response.setCreatedAt(rule.getCreatedAt());
-        response.setUpdatedAt(rule.getUpdatedAt());
-        return response;
-    }
-
-    // --- Métodos CRUD retornando AlertRuleResponse ---
-
-    public AlertRuleResponse createRule(CreateAlertRuleRequest request) {
-=======
-    private static final List<String> ALLOWED_SEVERITIES = Arrays.asList("LOW", "MEDIUM", "HIGH");
-
-    public AlertRuleService(AlertRuleRepository repository) {
-        this.repository = repository;
     }
 
     // HU-C2-01: Crear Regla
@@ -67,44 +39,28 @@ public class AlertRuleService {
             throw new IllegalArgumentException("La expresión condicional no puede estar vacía.");
         }
 
->>>>>>> origin/develop
         AlertRule rule = new AlertRule();
         rule.setName(request.getName());
         rule.setDescription(request.getDescription());
         rule.setConditionExpression(request.getConditionExpression());
-<<<<<<< HEAD
-        rule.setSeverity(request.getSeverity());
+        rule.setSeverity(request.getSeverity().toUpperCase());
         rule.setActive(true);
         rule.setCreatedAt(LocalDateTime.now());
         rule.setUpdatedAt(LocalDateTime.now());
         return mapToResponse(repository.save(rule));
     }
 
+    // HU-C2-02: Consultar Reglas (filtro por activas)
     public List<AlertRuleResponse> getAllRules(Boolean active) {
         List<AlertRule> rules;
         if (active != null) {
             rules = repository.findByActive(active);
-=======
-        rule.setSeverity(request.getSeverity().toUpperCase());
-        rule.setActive(true);
-
-        AlertRule saved = repository.save(rule);
-        return mapToResponse(saved);
-    }
-
-    // HU-C2-02: Consultar Reglas (filtro por activas)
-    public List<AlertRuleResponse> getAllRules(Boolean activeOnly) {
-        List<AlertRule> rules;
-        if (Boolean.TRUE.equals(activeOnly)) {
-            rules = repository.findByActive(true);
->>>>>>> origin/develop
         } else {
             rules = repository.findAll();
         }
         return rules.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
-<<<<<<< HEAD
     public List<AlertRule> getActiveRules() {
         return repository.findByActiveTrue();
     }
@@ -115,40 +71,10 @@ public class AlertRuleService {
         return mapToResponse(rule);
     }
 
-    public AlertRuleResponse updateRule(Long id, CreateAlertRuleRequest request) {
-        AlertRule rule = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Alert rule not found with id: " + id));
-        rule.setName(request.getName());
-        rule.setDescription(request.getDescription());
-        rule.setConditionExpression(request.getConditionExpression());
-        rule.setSeverity(request.getSeverity());
-        rule.setUpdatedAt(LocalDateTime.now());
-        return mapToResponse(repository.save(rule));
-    }
-
-    public AlertRuleResponse updateStatus(Long id, UpdateStatusRequest request) {
-        AlertRule rule = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Alert rule not found with id: " + id));
-        rule.setActive(request.getActive());
-        rule.setUpdatedAt(LocalDateTime.now());
-        return mapToResponse(repository.save(rule));
-    }
-
-    // --- Integración con Célula C1 ---
-
-    public Double getSystemThresholdFromC1() {
-        return c1Client.getLowPerformanceThreshold();
-=======
-    public AlertRuleResponse getRuleById(Long id) {
-        AlertRule rule = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alert rule not found with id: " + id));
-        return mapToResponse(rule);
-    }
-
     // HU-C2-03: Modificar Regla
     public AlertRuleResponse updateRule(Long id, CreateAlertRuleRequest request) {
         AlertRule rule = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alert rule not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Alert rule not found with id: " + id));
 
         if (repository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
             throw new IllegalArgumentException("Nombre de regla en uso por otro registro.");
@@ -160,19 +86,22 @@ public class AlertRuleService {
         rule.setDescription(request.getDescription());
         rule.setConditionExpression(request.getConditionExpression());
         rule.setSeverity(request.getSeverity().toUpperCase());
-
-        AlertRule updated = repository.save(rule);
-        return mapToResponse(updated);
+        rule.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(repository.save(rule));
     }
 
     // HU-C2-04: Activar / Desactivar (PATCH)
     public AlertRuleResponse updateStatus(Long id, UpdateStatusRequest request) {
         AlertRule rule = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alert rule not found"));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Alert rule not found with id: " + id));
         rule.setActive(request.getActive());
-        AlertRule updated = repository.save(rule);
-        return mapToResponse(updated);
+        rule.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(repository.save(rule));
+    }
+
+    // --- Integración con Célula C1 ---
+    public Double getSystemThresholdFromC1() {
+        return c1Client.getLowPerformanceThreshold();
     }
 
     private void validateSeverity(String severity) {
@@ -182,16 +111,15 @@ public class AlertRuleService {
     }
 
     private AlertRuleResponse mapToResponse(AlertRule rule) {
-        AlertRuleResponse res = new AlertRuleResponse();
-        res.setId(rule.getId());
-        res.setName(rule.getName());
-        res.setDescription(rule.getDescription());
-        res.setConditionExpression(rule.getConditionExpression());
-        res.setSeverity(rule.getSeverity());
-        res.setActive(rule.getActive());
-        res.setCreatedAt(rule.getCreatedAt());
-        res.setUpdatedAt(rule.getUpdatedAt());
-        return res;
->>>>>>> origin/develop
+        AlertRuleResponse response = new AlertRuleResponse();
+        response.setId(rule.getId());
+        response.setName(rule.getName());
+        response.setDescription(rule.getDescription());
+        response.setConditionExpression(rule.getConditionExpression());
+        response.setSeverity(rule.getSeverity());
+        response.setActive(rule.getActive());
+        response.setCreatedAt(rule.getCreatedAt());
+        response.setUpdatedAt(rule.getUpdatedAt());
+        return response;
     }
 }

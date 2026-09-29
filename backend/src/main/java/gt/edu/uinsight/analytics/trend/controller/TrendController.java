@@ -50,7 +50,7 @@ public class TrendController {
                 )
             );
         }
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(trendResponse);
     }
 
 }
