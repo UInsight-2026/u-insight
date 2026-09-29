@@ -50,17 +50,20 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Base de datos para pruebas -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Validaciones -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Swagger / OpenAPI.
-             El starter -ui ya incluye al -api, por eso solo se declara este.
-             La version tiene que ser la serie 3.x: springdoc 2.8.6 esta hecho para
-             Spring Boot 3 y con el Boot 4.1.1 de este proyecto el contexto no arranca
-             (referencia circular en swaggerWebMvcConfigurer). -->
+        <!-- Swagger / OpenAPI (el -ui ya incluye el -api) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

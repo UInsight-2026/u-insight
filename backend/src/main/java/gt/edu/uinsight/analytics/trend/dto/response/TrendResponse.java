@@ -6,7 +6,7 @@ import java.util.List;
 import gt.edu.uinsight.analytics.trend.service.TrendClassification;
 
 public record TrendResponse(
-    TrendClassification clasification,
+    TrendClassification classification,
     BigDecimal averageChange,
     List<TrendPoint> points
 ) {
