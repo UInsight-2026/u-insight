@@ -1,8 +1,8 @@
 package gt.edu.uinsight.analytics.dispersion.validation;
 
 import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
-import gt.edu.uinsight.analytics.dispersion.exception.DatosInsuficientesException;
-import gt.edu.uinsight.analytics.dispersion.exception.DatosInvalidosException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInsuficientesException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
 
 import java.util.List;
 
@@ -29,17 +29,18 @@ public class DispersionValidator {
      * score válido (no nulo).
      *
      * @param calificaciones lista de DispersionGrade obtenida del repositorio
-     * @throws DatosInsuficientesException si la lista es nula, vacía o tiene menos del mínimo requerido
-     * @throws DatosInvalidosException si algún registro tiene score nulo
+     * @throws DispersionDatosInsuficientesException si la lista es nula, vacía
+     *         o tiene menos del mínimo requerido
+     * @throws DispersionDatosInvalidosException si algún registro tiene score nulo
      */
     public static void validar(List<DispersionGrade> calificaciones) {
         if (calificaciones == null || calificaciones.isEmpty()) {
-            throw new DatosInsuficientesException(
+            throw new DispersionDatosInsuficientesException(
                     "No hay calificaciones registradas para calcular la dispersión.");
         }
 
         if (calificaciones.size() < MINIMO_DATOS_REQUERIDOS) {
-            throw new DatosInsuficientesException(
+            throw new DispersionDatosInsuficientesException(
                     "Se requieren al menos " + MINIMO_DATOS_REQUERIDOS
                             + " calificaciones para calcular la dispersión. Encontradas: "
                             + calificaciones.size());
@@ -47,7 +48,7 @@ public class DispersionValidator {
 
         for (DispersionGrade calificacion : calificaciones) {
             if (calificacion == null || calificacion.getScore() == null) {
-                throw new DatosInvalidosException(
+                throw new DispersionDatosInvalidosException(
                         "Existe una calificación sin score registrado.");
             }
         }
