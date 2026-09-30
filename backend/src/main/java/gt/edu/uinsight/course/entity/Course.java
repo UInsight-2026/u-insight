@@ -10,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -37,7 +39,9 @@ public class Course {
     @Column(name = "credits")
     private Integer credits;
 
+    // VARCHAR(20) segun el contrato: sin @JdbcTypeCode, Hibernate 6 lo mapea a ENUM de MySQL.
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "status", nullable = false, length = 20)
     private CourseStatus status;
 
