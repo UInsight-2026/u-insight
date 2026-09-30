@@ -22,7 +22,7 @@ public class TrendController {
         this.trendService = trendService;
     }
 
-     @GetMapping("/sections/{id}/trend")
+     @GetMapping("/sections/{id}/trends")
      public ResponseEntity<?> getTrendBySectionId(@PathVariable Long id) {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);
@@ -38,7 +38,7 @@ public class TrendController {
          return ResponseEntity.ok(trendResponse);
      }
 
-    @GetMapping("/students/{id}/trend")
+    @GetMapping("/students/{id}/trends")
     public ResponseEntity<?> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
         TrendResponse trendResponse = trendService.getTrendByStudentId(id);
@@ -50,7 +50,7 @@ public class TrendController {
                 )
             );
         }
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(trendResponse);
     }
 
 }
