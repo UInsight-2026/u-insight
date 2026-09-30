@@ -5,9 +5,9 @@ package gt.edu.uinsight.analytics.dispersion.exception;
  * para una sección o curso no es suficiente para calcular las
  * medidas de dispersión (mínimo 2 valores).
  */
-public class DatosInsuficientesException extends RuntimeException {
+public class DispersionDatosInsuficientesException extends RuntimeException {
 
-    public DatosInsuficientesException(String mensaje) {
+    public DispersionDatosInsuficientesException(String mensaje) {
         super(mensaje);
     }
 }
