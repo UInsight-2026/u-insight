@@ -1,8 +1,8 @@
 package gt.edu.uinsight.analytics.dispersion;
 
 import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
-import gt.edu.uinsight.analytics.dispersion.exception.DatosInsuficientesException;
-import gt.edu.uinsight.analytics.dispersion.exception.DatosInvalidosException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInsuficientesException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
 import org.junit.jupiter.api.Test;
 
@@ -23,34 +23,34 @@ class DispersionValidatorTest {
     }
 
     @Test
-    void listaNulaLanzaDatosInsuficientesException() {
-        assertThrows(DatosInsuficientesException.class,
+    void listaNulaLanzaDispersionDatosInsuficientesException() {
+        assertThrows(DispersionDatosInsuficientesException.class,
                 () -> DispersionValidator.validar(null));
     }
 
     @Test
-    void listaVaciaLanzaDatosInsuficientesException() {
+    void listaVaciaLanzaDispersionDatosInsuficientesException() {
         List<DispersionGrade> calificaciones = Collections.emptyList();
-        assertThrows(DatosInsuficientesException.class,
+        assertThrows(DispersionDatosInsuficientesException.class,
                 () -> DispersionValidator.validar(calificaciones));
     }
 
     @Test
-    void listaConUnSoloRegistroLanzaDatosInsuficientesException() {
+    void listaConUnSoloRegistroLanzaDispersionDatosInsuficientesException() {
         List<DispersionGrade> calificaciones =
                 List.of(crearGrade(new BigDecimal("85.00")));
 
-        assertThrows(DatosInsuficientesException.class,
+        assertThrows(DispersionDatosInsuficientesException.class,
                 () -> DispersionValidator.validar(calificaciones));
     }
 
     @Test
-    void listaConScoreNuloLanzaDatosInvalidosException() {
+    void listaConScoreNuloLanzaDispersionDatosInvalidosException() {
         List<DispersionGrade> calificaciones = new ArrayList<>();
         calificaciones.add(crearGrade(new BigDecimal("70.00")));
         calificaciones.add(crearGrade(null));
 
-        assertThrows(DatosInvalidosException.class,
+        assertThrows(DispersionDatosInvalidosException.class,
                 () -> DispersionValidator.validar(calificaciones));
     }
 
