@@ -8,43 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Prueba de flujo End-to-End de la Célula C7 - Sistema.
- *
- * Flujo oficial de Semana 4:
- *
- * 1. Período
- * 2. Curso
- * 3. Docente
- * 4. Estudiantes
- * 5. Sección
- * 6. Inscripción
- * 7. Evaluación
- * 8. Calificaciones
- * 9. Estadísticas
- * 10. Tendencia
- * 11. Riesgo
- * 12. Alerta
- * 13. Intervención
- * 14. Seguimiento
- *
- * La prueba utiliza los endpoints reales identificados en el código.
- *
- * Actualmente la ejecución integrada está bloqueada por un error externo
- * a C7 durante la inicialización del ApplicationContext:
- *
- * DuplicateMappingException:
- * DispersionEvaluation y Evaluation comparten el nombre de entidad
- * JPA "DispersionEvaluation".
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -56,36 +27,23 @@ class SystemEndToEndFlowTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    /**
-     * Flujo oficial completo de Semana 4.
-     *
-     * Está deshabilitado mientras el ApplicationContext no pueda iniciar.
-     * La prueba conserva las llamadas reales y las validaciones requeridas
-     * para ejecutar el flujo cuando la dependencia externa sea corregida.
-     */
     @Disabled(
-        "Bloqueado por DuplicateMappingException en analytics.dispersion: "
-        + "DispersionEvaluation y Evaluation comparten el nombre de entidad "
-        + "JPA 'DispersionEvaluation'. Dependencia externa a C7."
+        "Bloqueado por error de compilación externo a C7 en "
+        + "AcademicExceptionHandler.java: PropertyReferenceException "
+        + "no encontrada en org.springframework.data.mapping."
     )
     @Test
     void officialEndToEndFlow() throws Exception {
 
-        Long academicPeriodId = null;
-        Long teacherId = null;
-        Long sectionId = null;
-        Long evaluationId = null;
-        Long studentId = null;
-        Long alertId = null;
-
         /*
          * ============================================================
          * PASO 1 - PERÍODO
+         * Célula: A1
          * ============================================================
          *
-         * Endpoint real:
          * POST /api/v1/academic-periods
          */
+
         String academicPeriodResponse = mockMvc.perform(
                 post("/api/v1/academic-periods")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,29 +64,30 @@ class SystemEndToEndFlowTest {
         JsonNode academicPeriodJson =
                 objectMapper.readTree(academicPeriodResponse);
 
-        academicPeriodId = academicPeriodJson.get("id").asLong();
+        Long academicPeriodId = academicPeriodJson.get("id").asLong();
 
         /*
          * ============================================================
          * PASO 2 - CURSO
+         * Célula: A1
          * ============================================================
          *
-         * No se identificó un CourseController ni un endpoint CRUD real
-         * de Course en el código revisado.
+         * Endpoint oficial:
+         * POST /api/v1/courses
          *
-         * Responsable: no identificado en la documentación disponible.
-         *
-         * No se inventa un endpoint ni un ID.
+         * No se ejecuta porque el endpoint no fue identificado
+         * en el código actual de develop.
          */
 
         /*
          * ============================================================
          * PASO 3 - DOCENTE
+         * Célula: A2
          * ============================================================
          *
-         * Endpoint real:
          * POST /api/v1/teachers
          */
+
         String teacherResponse = mockMvc.perform(
                 post("/api/v1/teachers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -146,28 +105,30 @@ class SystemEndToEndFlowTest {
                 .getResponse()
                 .getContentAsString();
 
-        JsonNode teacherJson = objectMapper.readTree(teacherResponse);
-        teacherId = teacherJson.get("id").asLong();
+        JsonNode teacherJson =
+                objectMapper.readTree(teacherResponse);
+
+        Long teacherId = teacherJson.get("id").asLong();
 
         /*
          * ============================================================
          * PASO 4 - ESTUDIANTES
+         * Célula: A3
          * ============================================================
          *
-         * No se identificó un StudentController ni un endpoint CRUD real
-         * de Student en el código revisado.
+         * Endpoint oficial:
+         * POST /api/v1/students
          *
-         * Responsable: no identificado en la documentación disponible.
-         *
-         * No se inventa un endpoint ni un ID.
+         * No se ejecuta porque el endpoint no fue identificado
+         * en el código actual de develop.
          */
 
         /*
          * ============================================================
          * PASO 5 - SECCIÓN
+         * Célula: A4
          * ============================================================
          *
-         * Endpoint real:
          * POST /api/v1/sections
          *
          * Requiere:
@@ -176,115 +137,118 @@ class SystemEndToEndFlowTest {
          * teacherId
          * sectionCode
          *
-         * Este paso depende del curso del paso 2.
-         * Como no existe un endpoint Course identificado, no se inventa
-         * un courseId para continuar.
+         * No se ejecuta porque el paso 2 no proporciona courseId.
          */
 
         /*
          * ============================================================
          * PASO 6 - INSCRIPCIÓN
+         * Célula: A4
          * ============================================================
          *
-         * Endpoint real:
-         * POST /api/v1/sections/{sectionId}/enrollments
+         * POST /api/v1/sections/{id}/enrollments
          *
-         * Requiere un sectionId y studentId reales.
+         * Requiere sectionId y studentId.
          *
-         * No se continúa porque los pasos 2 y 4 no proporcionan
-         * esos identificadores mediante endpoints reales identificados.
+         * No se ejecuta porque los pasos anteriores no proporcionan
+         * los identificadores necesarios.
          */
 
         /*
          * ============================================================
          * PASO 7 - EVALUACIÓN
+         * Célula: A5
          * ============================================================
          *
-         * Endpoint real:
          * POST /api/v1/evaluations
          *
          * Requiere sectionId.
-         *
-         * No se ejecuta sin una sección válida.
          */
 
         /*
          * ============================================================
          * PASO 8 - CALIFICACIONES
+         * Célula: A6
          * ============================================================
          *
-         * Endpoint real:
          * POST /api/v1/grades
          *
          * Requiere evaluationId y studentId.
-         *
-         * No se ejecuta sin los pasos anteriores.
          */
 
         /*
          * ============================================================
          * PASO 9 - ESTADÍSTICAS
+         * Células: B1, B2, B3, B5 y B6
          * ============================================================
          *
-         * Existen endpoints de analítica identificados en el proyecto.
-         * Su ejecución integrada depende de disponer de los datos creados
-         * por los pasos anteriores.
+         * Endpoint de consolidación:
+         * GET /api/v1/analytics/sections/{id}/summary
+         *
+         * No se ejecuta porque requiere datos académicos y
+         * calificaciones generadas por los pasos anteriores.
          */
 
         /*
          * ============================================================
          * PASO 10 - TENDENCIA
+         * Célula: B4
          * ============================================================
          *
-         * Existe endpoint real de tendencia.
-         * Su ejecución integrada depende de disponer de datos de estudiante.
+         * GET /api/v1/analytics/sections/{id}/trend
+         *
+         * No se ejecuta porque requiere datos académicos.
          */
 
         /*
          * ============================================================
          * PASO 11 - RIESGO
+         * Célula: B7
          * ============================================================
          *
-         * Endpoint real:
+         * Endpoint actualmente identificado en develop:
          * POST /api/v1/alert/b7/evaluar
          *
-         * Entrada identificada:
-         * media
-         * mediana
-         * desviacion
-         * tendencia
-         * percentil90
-         *
-         * No se ejecuta de forma aislada porque el flujo oficial requiere
-         * llegar aquí después de estadísticas y tendencia.
+         * No se ejecuta porque requiere los resultados del análisis
+         * y tendencia del flujo anterior.
          */
 
         /*
          * ============================================================
          * PASO 12 - ALERTA
+         * Célula: C3
          * ============================================================
          *
-         * La revisión realizada no identificó un endpoint independiente
-         * de creación/persistencia de una alerta que permita continuar
-         * determinísticamente desde este test.
+         * Endpoints:
+         * GET /api/v1/alerts
+         * GET /api/v1/alerts/{id}
+         * GET /api/v1/alerts/active
+         * PATCH /api/v1/alerts/{id}/status
+         *
+         * La alerta es generada por B7 y administrada por C3.
          */
 
         /*
          * ============================================================
          * PASO 13 - INTERVENCIÓN
+         * Célula: C4
          * ============================================================
          *
-         * Existe endpoint de intervención, pero requiere una alerta
-         * existente y por tanto depende de los pasos anteriores.
+         * POST /api/v1/alerts/{id}/interventions
+         *
+         * Requiere alertId.
          */
 
         /*
          * ============================================================
          * PASO 14 - SEGUIMIENTO
+         * Célula: C4
          * ============================================================
          *
-         * No se identificó un endpoint de seguimiento en el código
-         * revisado.
+         * POST /api/v1/interventions/{id}/follow-ups
+         * GET /api/v1/interventions/{id}/follow-ups
+         *
+         * Requiere interventionId.
          */
 
         /*
@@ -294,8 +258,6 @@ class SystemEndToEndFlowTest {
          *
          * GET /api/v1/system/readiness
          * GET /api/v1/system/integration-status
-         *
-         * Estos endpoints pertenecen a C7 y cierran el flujo.
          */
 
         mockMvc.perform(get("/api/v1/system/readiness"))
@@ -307,32 +269,44 @@ class SystemEndToEndFlowTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
 
-    /**
-     * Tabla de cobertura requerida por Semana 4.
-     *
-     * Se conserva como test documental para que la cobertura del flujo
-     * quede explícita aunque la ejecución integrada esté bloqueada.
-     */
+    @Disabled(
+        "A1 - Curso: el documento oficial define "
+        + "POST /api/v1/courses, pero el endpoint no fue identificado "
+        + "en el código actual de develop."
+    )
+    @Test
+    void courseEndpointNotAvailable() {
+    }
+
+    @Disabled(
+        "A3 - Estudiantes: el documento oficial define "
+        + "POST /api/v1/students, pero el endpoint no fue identificado "
+        + "en el código actual de develop."
+    )
+    @Test
+    void studentEndpointNotAvailable() {
+    }
+
     @Test
     void officialFlowCoverageDocumentation() {
 
         String[] coverage = {
-            "1 | Académico | POST /api/v1/academic-periods | pasa / bloqueado por contexto",
-            "2 | No identificado | Course endpoint | no existe",
-            "3 | Académico | POST /api/v1/teachers | pasa / bloqueado por contexto",
-            "4 | No identificado | Student endpoint | no existe",
-            "5 | Académico | POST /api/v1/sections | disponible, depende de Course",
-            "6 | Académico | POST /api/v1/sections/{sectionId}/enrollments | disponible, depende de Section/Student",
-            "7 | Evaluaciones | POST /api/v1/evaluations | disponible, depende de Section",
-            "8 | Calificaciones | POST /api/v1/grades | disponible, depende de Evaluation/Student",
-            "9 | Analítica | endpoints de estadísticas | disponibles",
-            "10 | Analítica | endpoint de tendencia | disponible",
-            "11 | B7 | POST /api/v1/alert/b7/evaluar | disponible",
-            "12 | B7 | creación/persistencia independiente de alerta | no identificado",
-            "13 | Intervenciones | endpoint de intervención | disponible, requiere alerta",
-            "14 | Seguimiento | endpoint de seguimiento | no identificado",
-            "C7 | Sistema | GET /api/v1/system/readiness | cierre del flujo",
-            "C7 | Sistema | GET /api/v1/system/integration-status | cierre del flujo"
+            "01 | A1 | POST /api/v1/academic-periods | BLOQUEADO | Error de compilación en AcademicExceptionHandler",
+            "02 | A1 | POST /api/v1/courses | NO DISPONIBLE EN DEVELOP | Endpoint oficial no identificado",
+            "03 | A2 | POST /api/v1/teachers | BLOQUEADO | Error de compilación en AcademicExceptionHandler",
+            "04 | A3 | POST /api/v1/students | NO DISPONIBLE EN DEVELOP | Endpoint oficial no identificado",
+            "05 | A4 | POST /api/v1/sections | NO EJECUTADO | Requiere courseId",
+            "06 | A4 | POST /api/v1/sections/{id}/enrollments | NO EJECUTADO | Requiere sectionId y studentId",
+            "07 | A5 | POST /api/v1/evaluations | NO EJECUTADO | Requiere sectionId",
+            "08 | A6 | POST /api/v1/grades | NO EJECUTADO | Requiere evaluationId y studentId",
+            "09 | B1/B2/B3/B5/B6 | GET /api/v1/analytics/sections/{id}/summary | NO EJECUTADO | Requiere datos académicos",
+            "10 | B4 | GET /api/v1/analytics/sections/{id}/trend | NO EJECUTADO | Requiere datos académicos",
+            "11 | B7 | POST /api/v1/alert/b7/evaluar | NO EJECUTADO | Requiere datos analíticos",
+            "12 | C3 | GET /api/v1/alerts/{id} | NO EJECUTADO | Requiere alerta generada por B7",
+            "13 | C4 | POST /api/v1/alerts/{id}/interventions | NO EJECUTADO | Requiere alertId",
+            "14 | C4 | POST /api/v1/interventions/{id}/follow-ups | NO EJECUTADO | Requiere interventionId",
+            "C7 | C7 | GET /api/v1/system/readiness | BLOQUEADO | Error de compilación",
+            "C7 | C7 | GET /api/v1/system/integration-status | BLOQUEADO | Error de compilación"
         };
 
         for (String row : coverage) {
@@ -340,15 +314,10 @@ class SystemEndToEndFlowTest {
         }
     }
 
-    /**
-     * Cierre explícito de los dos endpoints propios de C7.
-     *
-     * Se mantiene deshabilitado por el mismo bloqueo global del
-     * ApplicationContext.
-     */
     @Disabled(
-        "Bloqueado por la inicialización del ApplicationContext "
-        + "debido a DuplicateMappingException externa a C7."
+        "Bloqueado por error de compilación externo a C7 en "
+        + "AcademicExceptionHandler.java: PropertyReferenceException "
+        + "no encontrada en org.springframework.data.mapping."
     )
     @Test
     void systemEndpointsCloseEndToEndFlow() throws Exception {
