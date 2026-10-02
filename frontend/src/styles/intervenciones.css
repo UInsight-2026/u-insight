@@ -1,0 +1,158 @@
+
+.mensaje-estado {
+  padding: var(--spacing-md);
+  color: var(--color-text-muted);
+}
+
+.mensaje-estado--error {
+  color: var(--color-severidad-alta, #d64545);
+  font-weight: 600;
+}
+
+.panel-resumen,
+.panel-formulario,
+.panel-resultados {
+  background-color: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e1e4ea);
+  border-radius: 8px;
+  padding: var(--spacing-lg, 24px);
+  margin-bottom: var(--spacing-lg, 24px);
+}
+
+.grid-formulario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-md, 16px);
+}
+
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campo-formulario--ancho {
+  grid-column: 1 / -1;
+}
+
+.campo-formulario label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2430);
+}
+
+.campo-formulario input,
+.campo-formulario select,
+.campo-formulario textarea {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border, #e1e4ea);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.campo-formulario textarea {
+  resize: vertical;
+}
+
+.contador-caracteres {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #5a6270);
+  align-self: flex-end;
+}
+
+.acciones-filtro {
+  margin-top: 1.25rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.boton {
+  padding: 0.55rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.boton-primario {
+  background-color: var(--color-primary, #2453ff);
+  color: #fff;
+}
+
+.boton-primario:hover {
+  background-color: var(--color-primary-dark, #1a3fcc);
+}
+
+.boton-secundario {
+  background-color: transparent;
+  color: var(--color-text, #1f2430);
+  border: 1px solid var(--color-border, #e1e4ea);
+}
+
+.mensaje-form {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.mensaje-form--ok {
+  background-color: #e6f4ea;
+  color: #1e7e34;
+}
+
+.mensaje-form--error {
+  background-color: #fdecea;
+  color: #b3261e;
+}
+
+.tabla-contenedor {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e1e4ea);
+  font-size: 0.85rem;
+}
+
+.tabla th {
+  color: var(--color-text-muted, #5a6270);
+  font-weight: 600;
+}
+
+.tipo-tutoria,
+.tipo-meeting { background: var(--secondary, #2996cd); color: #fff; }
+.tipo-parent_contact,
+.tipo-academic_plan { background: var(--prymary, #194775); color: #fff; }
+.tipo-referral,
+.tipo-other { background: #6b7280; color: #fff; }
+
+.estado-intervencion-planned { background: #6b7280; color: #fff; }
+.estado-intervencion-in_progress { background: #e8a33d; color: #fff; }
+.estado-intervencion-completed { background: #2e7d32; color: #fff; }
+.estado-intervencion-cancelled { background: var(--tertiary, #c22f3c); color: #fff; }
+
+.resultado-improved { background: #2e7d32; color: #fff; }
+.resultado-no_change { background: #9e9e9e; color: #fff; }
+.resultado-worsened { background: var(--tertiary, #c22f3c); color: #fff; }
+.resultado-pending { background: #e8a33d; color: #fff; }
+
+.lista-seguimientos {
+  margin-top: 1rem;
+  padding-left: 1.1rem;
+}
+
+.lista-seguimientos li {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
