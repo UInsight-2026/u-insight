@@ -1,63 +1,87 @@
 package gt.edu.uinsight.system.service;
 
-import gt.edu.uinsight.system.dto.response.IntegrationStatusResponse;
+import gt.edu.uinsight.system.config.IntegrationProperties;
+import gt.edu.uinsight.system.dto.request.CreateCheckRequest;
 import gt.edu.uinsight.system.entity.CheckStatus;
+import gt.edu.uinsight.system.logging.SystemEventLogger;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class IntegrationStatusService {
 
+    private final IntegrationProperties properties;
+    private final SystemCheckService systemCheckService;
+    private final SystemEventLogger systemEventLogger;
     private final RestClient restClient;
 
-    public IntegrationStatusService() {
-        this(RestClient.builder());
+ public IntegrationStatusService(
+            IntegrationProperties properties,
+            SystemCheckService systemCheckService,
+            SystemEventLogger systemEventLogger,
+            RestClient.Builder restClientBuilder) {
+        this.properties = properties;
+        this.systemCheckService = systemCheckService;
+        this.systemEventLogger = systemEventLogger;
+
+        this.restClient = restClientBuilder.build();
     }
 
-    IntegrationStatusService(RestClient.Builder builder) {
-        this.restClient = builder
-                .baseUrl("http://localhost:8080")
-                .build();
-    }
+    public List<ModuleStatus> getIntegrationStatus() {
+        List<ModuleStatus> statusList = new ArrayList<>();
 
-    public List<IntegrationStatusResponse> getIntegrationStatus() {
-        List<IntegrationStatusResponse> results = new ArrayList<>();
+        for (Map.Entry<String, String> entry : properties.getEndpoints().entrySet()) {
+            String moduleName = entry.getKey();
+            String url = entry.getValue();
 
-        results.add(checkModule("teachers", "/api/v1/teachers"));
-        results.add(checkModule("evaluations", "/api/v1/evaluations"));
-        results.add(checkModule("interventions", "/api/v1/alerts/1/interventions"));
+            long startTime = System.currentTimeMillis();
+            CheckStatus status;
+            String message;
 
-        return results;
-    }
+            try {
+                var response = restClient.get()
+                        .uri(url)
+                        .retrieve()
+                        .toBodilessEntity();
 
-    private IntegrationStatusResponse checkModule(String name, String endpoint) {
-        long start = System.currentTimeMillis();
+                long duration = System.currentTimeMillis() - startTime;
 
-        try {
-            restClient.get()
-                    .uri(endpoint)
-                    .retrieve()
-                    .toBodilessEntity();
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    status = (duration > properties.getDegradedThresholdMs()) ? CheckStatus.DEGRADED : CheckStatus.UP;
+                    message = "Respondió correctamente (" + response.getStatusCode().value() + ")";
+                } else {
+                    status = CheckStatus.DOWN;
+                    message = "Respuesta no exitosa (" + response.getStatusCode().value() + ")";
+                }
+            } catch (Exception e) {
+                status = CheckStatus.DOWN;
+                message = "Error de conexión: " + (e.getMessage() != null ? e.getMessage() : "Timeout/Inalcanzable");
+            }
 
-            long responseTime = System.currentTimeMillis() - start;
+            long totalDuration = System.currentTimeMillis() - startTime;
 
-            return new IntegrationStatusResponse(
-                    name,
-                    CheckStatus.UP,
-                    responseTime
-            );
+            // 1. Guardar chequeo en BD con los DTOs y Enums reales
+            systemCheckService.createCheck(new CreateCheckRequest(moduleName, status, message));
 
-        } catch (Exception e) {
-            long responseTime = System.currentTimeMillis() - start;
+            // 2. Log de evento
+            systemEventLogger.info("INTEGRATION_CHECK", 200, "Módulo " + moduleName + " estado: " + status + " (" + totalDuration + "ms)");
 
-            return new IntegrationStatusResponse(
-                    name,
-                    CheckStatus.DOWN,
-                    responseTime
-            );
+            statusList.add(new ModuleStatus(moduleName, url, status.name(), totalDuration, message));
         }
+
+        return statusList;
     }
+
+    public record ModuleStatus(
+            String module,
+            String url,
+            String status,
+            long responseTimeMs,
+            String details
+    ) {}
 }
