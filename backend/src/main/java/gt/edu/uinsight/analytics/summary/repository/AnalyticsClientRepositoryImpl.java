@@ -11,7 +11,8 @@ import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.dispersion.service.DispersionService;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.individual.service.StudentAnalyticsService;
-import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
+import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
+import gt.edu.uinsight.analytics.position.service.PositionService;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendService;
 
@@ -19,16 +20,19 @@ import gt.edu.uinsight.analytics.trend.service.TrendService;
 public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository {
 
     private final CentralTendencyService centralTendencyService;
+    private final PositionService positionService;
     private final DispersionService dispersionService;
     private final TrendService trendService;
     private final StudentAnalyticsService studentAnalyticsService;
 
     public AnalyticsClientRepositoryImpl(
             CentralTendencyService centralTendencyService,
+            PositionService positionService,
             DispersionService dispersionService,
             TrendService trendService,
             StudentAnalyticsService studentAnalyticsService) {
         this.centralTendencyService = centralTendencyService;
+        this.positionService = positionService;
         this.dispersionService = dispersionService;
         this.trendService = trendService;
         this.studentAnalyticsService = studentAnalyticsService;
@@ -42,12 +46,8 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
     }
 
     @Override
-    public PositionData getPosition(Long sectionId) {
-        // TODO: migrar cuando B2 exponga PositionResponse
-        PositionData data = new PositionData();
-        data.setSectionId(sectionId);
-        data.setSampleSize(30);
-        return data;
+    public SectionPositionResponse getPosition(Long sectionId) {
+        return positionService.getSectionPosition(sectionId, java.util.List.of());
     }
 
     @Override
