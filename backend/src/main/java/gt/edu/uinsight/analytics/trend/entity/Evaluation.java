@@ -1,47 +1,63 @@
 package gt.edu.uinsight.analytics.trend.entity;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** Vista de solo lectura de una evaluación para el cálculo de tendencias. */
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+// Parche de arranque aportado por C7: las celulas A5 y B3 tienen tambien una entidad
+// llamada Evaluation sobre esta misma tabla. Hibernate identifica las entidades por su
+// nombre simple, asi que las tres colisionaban al construir el modelo. Se le da un nombre
+// de entidad distinto, se mantiene el mismo @Table y se declaran los @Column en snake_case
+// igual que A5 y B3: sin eso Hibernate rechazaba la tabla 'evaluation' por tener una misma
+// columna fisica referida con dos nombres logicos distintos.
 @Entity(name = "TrendEvaluation")
-@Table(name = "evaluation")
+@Table (name = "evaluation")
 public class Evaluation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "section_id", nullable = false)
+    @Column(name = "section_id")
     private Long sectionId;
 
-    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 30)
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private Type type;
 
-    @Column(name = "evaluation_date", nullable = false)
+    @Column(name = "evaluation_date")
     private LocalDate evaluationDate;
 
-    @Column(name = "maximum_score", nullable = false, precision = 5, scale = 2)
+    @Column(name = "maximum_score")
     private BigDecimal maximumScore;
 
-    @Column(precision = 5, scale = 2)
     private BigDecimal weight;
 
-    @Column(nullable = false, length = 20)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
+    // Constructor sin argumentos agregado por C7: Hibernate lo necesita para instanciar
+    // la entidad y sin el el contexto de Spring no arranca.
     protected Evaluation() {
-        // Requerido por JPA.
+    }
+
+    public Evaluation(Long sectionId, String name, Type type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight, Status status) {
+        this.sectionId = sectionId;
+        this.name = name;
+        this.type = type;
+        this.evaluationDate = evaluationDate;
+        this.maximumScore = maximumScore;
+        this.weight = weight;
+        this.status = status;
     }
 
     public Long getId() {
@@ -56,7 +72,7 @@ public class Evaluation {
         return name;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 
@@ -72,7 +88,7 @@ public class Evaluation {
         return weight;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 }
