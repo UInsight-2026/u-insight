@@ -1,7 +1,6 @@
 package gt.edu.uinsight.teacher;
 
 import com.jayway.jsonpath.JsonPath;
-import gt.edu.uinsight.analytics.trend.entity.Section;
 import gt.edu.uinsight.teacher.repository.TeacherSectionRepository;
 import gt.edu.uinsight.teacher.model.Teacher;
 import gt.edu.uinsight.teacher.model.TeacherStatus;
@@ -11,9 +10,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +33,10 @@ class TeacherEndpointsTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private TeacherRepository teacherRepository;
     @Autowired private TeacherSectionRepository sectionRepository;
+    @Autowired private JdbcTemplate jdbcTemplate;
+
+    /** Ids propios de esta prueba, fuera del rango que usan las pruebas de otras celulas. */
+    private static final AtomicLong SECTION_IDS = new AtomicLong(9000);
 
     @BeforeEach
     void cleanDatabase() {
@@ -53,10 +59,18 @@ class TeacherEndpointsTest {
         return ((Number) JsonPath.read(response, "$.id")).longValue();
     }
 
-    /** La creacion de secciones pertenece a otro modulo, aqui se inserta el dato directamente. */
+    /**
+     * La creacion de secciones pertenece a la celula B4 y su entidad es de solo lectura,
+     * asi que la fila se inserta directamente en la tabla compartida.
+     */
     private Long createSection(String sectionCode, Long teacherId) {
-        Section section = new Section(1L, 1L, teacherId, sectionCode, "ACTIVE");
-        return sectionRepository.save(section).getId();
+        Long sectionId = SECTION_IDS.incrementAndGet();
+        jdbcTemplate.update("""
+                INSERT INTO section
+                    (id, academic_period_id, course_id, teacher_id, section_code, status)
+                VALUES (?, 1, 1, ?, ?, 'ACTIVE')
+                """, sectionId, teacherId, sectionCode);
+        return sectionId;
     }
 
     // --- Regla: codigo unico ---
@@ -169,8 +183,9 @@ class TeacherEndpointsTest {
 
     @Test
     void inactiveTeacherCannotBeAssignedToNewSection() throws Exception {
+        Long previousId = createTeacher("DOC-050A", "Docente Saliente", "saliente@uinsight.edu.gt");
         Long id = createTeacher("DOC-050", "Ana Lopez", "ana.lopez@uinsight.edu.gt");
-        Long sectionId = createSection("SEC-050", null);
+        Long sectionId = createSection("SEC-050", previousId);
 
         mockMvc.perform(patch("/api/v1/teachers/" + id + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,16 +194,33 @@ class TeacherEndpointsTest {
 
         mockMvc.perform(put("/api/v1/teachers/" + id + "/sections/" + sectionId))
                 .andExpect(status().isConflict());
+
+        mockMvc.perform(get("/api/v1/teachers/" + previousId + "/sections"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
     void activeTeacherCanBeAssignedToSection() throws Exception {
+        Long previousId = createTeacher("DOC-051A", "Docente Saliente", "saliente2@uinsight.edu.gt");
         Long id = createTeacher("DOC-051", "Ana Lopez", "ana.lopez@uinsight.edu.gt");
-        Long sectionId = createSection("SEC-051", null);
+        Long sectionId = createSection("SEC-051", previousId);
 
         mockMvc.perform(put("/api/v1/teachers/" + id + "/sections/" + sectionId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.teacherId").value(id));
+
+        mockMvc.perform(get("/api/v1/teachers/" + previousId + "/sections"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void assignSectionReturnsNotFoundForUnknownSection() throws Exception {
+        Long id = createTeacher("DOC-052", "Ana Lopez", "ana.lopez@uinsight.edu.gt");
+
+        mockMvc.perform(put("/api/v1/teachers/" + id + "/sections/999999"))
+                .andExpect(status().isNotFound());
     }
 
     // --- Regla: no eliminar fisicamente docentes con historial ---
