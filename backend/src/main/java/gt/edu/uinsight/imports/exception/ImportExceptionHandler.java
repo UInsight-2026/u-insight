@@ -1,5 +1,6 @@
 package gt.edu.uinsight.imports.exception;
 
+import gt.edu.uinsight.imports.util.ImportLogEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public class ImportExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotFound(ImportNotFoundException ex,
                                                           WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.warn("RESOURCE_NOT_FOUND traceId={} message={}", traceId, ex.getMessage());
+        log.warn("{} traceId={} message={}", ImportLogEvents.RESOURCE_NOT_FOUND, traceId, ex.getMessage());
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "Not Found",
@@ -34,7 +35,7 @@ public class ImportExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidCsv(InvalidCsvFileException ex,
                                                             WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.warn("INVALID_CSV_FILE traceId={} message={}", traceId, ex.getMessage());
+        log.warn("{} traceId={} message={}", ImportLogEvents.INVALID_CSV_FILE, traceId, ex.getMessage());
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Bad Request",
@@ -45,10 +46,25 @@ public class ImportExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(ImportNotConfirmableException.class)
+    public ResponseEntity<ErrorResponse> handleNotConfirmable(ImportNotConfirmableException ex,
+                                                                WebRequest request) {
+        String traceId = UUID.randomUUID().toString();
+        log.warn("{} traceId={} message={}", ImportLogEvents.BUSINESS_RULE_REJECTED, traceId, ex.getMessage());
+        ErrorResponse body = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getDescription(false),
+                traceId
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.error("INTERNAL_ERROR traceId={} message={}", traceId, ex.getMessage(), ex);
+        log.error("{} traceId={} message={}", ImportLogEvents.INTERNAL_ERROR, traceId, ex.getMessage(), ex);
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",

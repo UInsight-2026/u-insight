@@ -1,5 +1,8 @@
 package gt.edu.uinsight.report.exception;
 
+//semana 3
+import gt.edu.uinsight.report.common.ReportLogger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,7 +23,7 @@ public class ReportExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) {
-        String traceId = newTraceId();
+        String traceId = ReportLogger.newTraceId();
         log.warn("RESOURCE_NOT_FOUND traceId={} message={}", traceId, ex.getMessage());
         ApiError error = new ApiError(
                 HttpStatus.NOT_FOUND.value(),
@@ -33,7 +36,7 @@ public class ReportExceptionHandler {
 
     @ExceptionHandler(InvalidFilterException.class)
     public ResponseEntity<ApiError> handleInvalidFilter(InvalidFilterException ex) {
-        String traceId = newTraceId();
+        String traceId = ReportLogger.newTraceId();
         log.warn("VALIDATION_ERROR traceId={} message={}", traceId, ex.getMessage());
         ApiError error = new ApiError(
                 HttpStatus.BAD_REQUEST.value(),
@@ -46,7 +49,7 @@ public class ReportExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String traceId = newTraceId();
+        String traceId = ReportLogger.newTraceId();
         String message = "El parametro '" + ex.getName() + "' tiene un formato invalido.";
         log.warn("VALIDATION_ERROR traceId={} message={}", traceId, message);
         ApiError error = new ApiError(
@@ -58,7 +61,6 @@ public class ReportExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
-    private String newTraceId() {
-        return "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
+   
+   
 }
