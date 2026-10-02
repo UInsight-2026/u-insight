@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import gt.edu.uinsight.alert.b7.model.RiskInput;
 import gt.edu.uinsight.alert.b7.model.RiskOutput;
-import gt.edu.uinsight.alert.b7.service.RiskEngineService;
+import gt.edu.uinsight.alert.b7.Service.RiskEngineService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController

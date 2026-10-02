@@ -1,4 +1,4 @@
-package gt.edu.uinsight.alert.b7.service;
+package gt.edu.uinsight.alert.b7.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

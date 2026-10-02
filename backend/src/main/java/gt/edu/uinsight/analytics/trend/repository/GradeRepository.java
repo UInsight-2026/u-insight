@@ -26,5 +26,9 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
     // Pendiente: trasladarlo a la celula B4 para que lo adopte en develop.
     @Query(value = "SELECT g.* FROM grade g INNER JOIN evaluation e ON g.evaluation_id = e.id "
             + "WHERE g.student_id = :studentId ORDER BY e.evaluation_date ASC", nativeQuery = true)
-    List<Grade> findByStudentIdOrderByEvaluation_EvaluationDateAsc(@Param("studentId") Long studentId);
+    List<Grade> findByStudentId(@Param("studentId") Long studentId);
+
+    @Query(value = "SELECT g.* FROM grade g  inner join evaluation e on g.evaluation_id = e.id WHERE e.section_id = :sectionId ORDER BY e.evaluation_date ASC", nativeQuery = true)
+    List<Grade> findBySectionId(@Param("sectionId") Long sectionId);
+
 }
