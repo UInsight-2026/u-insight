@@ -1,21 +1,39 @@
 package gt.edu.uinsight.analytics.trend.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-@Entity
+/** Vista mínima de la sección necesaria para validar las consultas de B4. */
+@Entity(name = "TrendSection")
 @Table(name = "section")
 public class Section {
-    @Id 
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    Long periodId, courseId, teacherId;
-    String sectionCode;
-    String status;
+
+    @Column(name = "academic_period_id")
+    private Long periodId;
+
+    @Column(name = "course_id")
+    private Long courseId;
+
+    @Column(name = "teacher_id")
+    private Long teacherId;
+
+    @Column(name = "section_code")
+    private String sectionCode;
+
+    private String status;
+
+    // Constructor sin argumentos agregado por C7: Hibernate lo necesita para instanciar
+    // la entidad y sin el el contexto de Spring no arranca.
+    protected Section() {
+    }
 
     public Section(Long periodId, Long courseId, Long teacherId, String sectionCode, String status) {
         this.periodId = periodId;
@@ -40,6 +58,7 @@ public class Section {
     public Long getTeacherId() {
         return teacherId;
     }
+
     public String getSectionCode() {
         return sectionCode;
     }
@@ -47,23 +66,4 @@ public class Section {
     public String getStatus() {
         return status;
     }
-
-    public void setPeriodId(Long periodId) {
-        this.periodId = periodId;
-    }
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
-    public void setTeacherId(Long teacherId) {
-        this.teacherId = teacherId;
-    }
-    public void setSectionCode(String sectionCode) {
-        this.sectionCode = sectionCode;
-    }
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    
-
-    
 }
