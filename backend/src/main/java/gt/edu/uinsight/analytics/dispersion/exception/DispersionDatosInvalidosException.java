@@ -6,7 +6,7 @@ package gt.edu.uinsight.analytics.dispersion.exception;
  * el análisis de dispersión.
  *
  * Incluye calificaciones nulas, negativas o superiores
- * al máximo permitido de 100.
+ *  *al máximo permitido de la evaluación.
  */
 public class DispersionDatosInvalidosException
         extends RuntimeException {
