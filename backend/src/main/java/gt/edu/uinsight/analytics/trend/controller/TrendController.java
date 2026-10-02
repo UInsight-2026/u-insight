@@ -22,23 +22,22 @@ public class TrendController {
         this.trendService = trendService;
     }
 
-     @GetMapping("/sections/{id}/trend")
+     @GetMapping("/sections/{id}/trends")
      public ResponseEntity<?> getTrendBySectionId(@PathVariable Long id) {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);
          if(trendResponse == null){
-            //error aca si algo fallo y la seccion no existe
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                Map.of(
-                    "mensaje","La seccion con id"+id+" no existe",
-                    "codigo",404
-                )
-            );
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                 Map.of(
+                     "mensaje","La sección con id "+id+" no existe",
+                     "codigo",404
+                 )
+             );
          }
          return ResponseEntity.ok(trendResponse);
      }
 
-    @GetMapping("/students/{id}/trend")
+    @GetMapping("/students/{id}/trends")
     public ResponseEntity<?> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
         TrendResponse trendResponse = trendService.getTrendByStudentId(id);
@@ -50,7 +49,7 @@ public class TrendController {
                 )
             );
         }
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(trendResponse);
     }
 
 }
