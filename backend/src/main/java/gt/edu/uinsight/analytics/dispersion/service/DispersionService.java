@@ -12,6 +12,7 @@ import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosEx
 import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
 import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
+import gt.edu.uinsight.section.repository.SectionRepository;
 
 @Service
 public class DispersionService {
@@ -19,20 +20,29 @@ public class DispersionService {
     private final DispersionGradeRepository gradeRepository;
     private final DispersionCalculator calculator;
     private final DispersionMapper mapper;
+    private final SectionRepository sectionRepository;
 
     public DispersionService(
             DispersionGradeRepository gradeRepository,
             DispersionCalculator calculator,
-            DispersionMapper mapper) {
+            DispersionMapper mapper,
+            SectionRepository sectionRepository) {
 
         this.gradeRepository = gradeRepository;
         this.calculator = calculator;
         this.mapper = mapper;
+        this.sectionRepository = sectionRepository;
     }
 
     public DispersionResponse getSectionDispersion(Long sectionId) {
 
         validarId(sectionId, "sección");
+
+        if (!sectionRepository.existsById(sectionId)) {
+            throw new DispersionDatosInvalidosException(
+                    "La sección con ID " + sectionId + " no existe."
+            );
+        }
 
         List<BigDecimal> scores =
                 gradeRepository.findScoresBySectionId(sectionId);
@@ -71,6 +81,13 @@ public class DispersionService {
     public DispersionResponse getCourseDispersion(Long courseId) {
 
         validarId(courseId, "curso");
+
+        if (sectionRepository.findByCourseId(courseId).isEmpty()) {
+            throw new DispersionDatosInvalidosException(
+                    "No existe un curso con ID " + courseId
+                            + " asociado a una sección."
+            );
+        }
 
         List<BigDecimal> scores =
                 gradeRepository.findScoresByCourseId(courseId);
@@ -119,8 +136,10 @@ public class DispersionService {
             BigDecimal standardDeviation) {
 
         /*
-         * Aquí deben utilizarse los umbrales configurables
-         * definidos para B3.
+         * Aquí se deben utilizar los umbrales configurables
+         * definidos en la especificación de B3.
+         *
+         * No se colocan valores arbitrarios.
          */
         throw new UnsupportedOperationException(
                 "Los umbrales de dispersión aún no están configurados."
