@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>U-Insight · Alertas</title>
+  <link rel="stylesheet" href="src/styles/global.css" />
+  <link rel="stylesheet" href="src/styles/layout.css" />
+  <link rel="stylesheet" href="src/styles/components.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__brand">U-Insight</div>
+    <nav class="nav" aria-label="Navegación principal">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="index.html">Inicio</a></li>
+        <li><a class="nav__link" href="exploracion.html">Exploración</a></li>
+        <li><a class="nav__link" href="detalle-seccion.html">Detalle de sección</a></li>
+        <li><a class="nav__link" href="evolucion.html">Evolución</a></li>
+        <li><a class="nav__link active" href="alertas.html" aria-current="page">Alertas</a></li>
+        <li><a class="nav__link" href="intervenciones.html">Intervenciones</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <h1>Alertas</h1>
+    <p>Listado de alertas filtrable por severidad y estado.</p>
+
+    <section class="panel-filtros">
+      <h2>Filtros</h2>
+
+      <div class="grid-filtros">
+        <div class="campo-filtro">
+          <label for="filtro-severidad">Severidad</label>
+          <select id="filtro-severidad" name="severidad">
+            <option value="">Todos</option>
+            <option value="HIGH">Alta</option>
+            <option value="MEDIUM">Media</option>
+            <option value="LOW">Baja</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-estado">Estado</label>
+          <select id="filtro-estado" name="estado">
+            <option value="">Todos</option>
+            <option value="NEW">Nueva</option>
+            <option value="UNDER_REVIEW">Bajo Revisión</option>
+            <option value="IN_PROGRESS">En Progreso</option>
+            <option value="RESOLVED">Resuelta</option>
+            <option value="DISMISSED">Descartada</option>
+          </select>
+        </div>
+      </div>
+
+        <div class="acciones-filtro">
+          <button type="button" class="boton boton-primario" id="btn-buscar">Buscar</button>
+          <button type="button" class="boton boton-secundario" id="btn-limpiar">Limpiar</button>
+        </div>
+    </section>
+
+    <section class="panel-resultados">
+      <h2>Resultados</h2>
+      <p class="contador-resultados" id="contador-resultados">Cargando...</p>
+
+      <div class="card-container" id="contenedor-resultados">
+        <!-- Las tarjetas de alerta se generarán dinámicamente con JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <script src="src/js/components/tarjeta.js"></script>
+  <script src="src/js/pages/alertas.js"></script>
+</body>
+</html>

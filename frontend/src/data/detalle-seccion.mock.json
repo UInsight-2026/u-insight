@@ -1,0 +1,115 @@
+[
+  {
+    "sectionId": 10,
+    "sectionCode": "A",
+    "courseName": "Programación II",
+    "teacherName": "Ing. Marta Solís",
+    "centralTendency": {
+      "sampleSize": 30,
+      "mean": 72.5,
+      "median": 73,
+      "mode": [70, 75]
+    },
+    "position": {
+      "sectionId": 10,
+      "sampleSize": 30,
+      "percentiles": { "25": 60, "50": 73, "75": 85, "90": 92 },
+      "quartiles": { "q1": 60, "q2": 73, "q3": 85 }
+    },
+    "dispersion": {
+      "sectionId": 10,
+      "min": 45,
+      "max": 98,
+      "range": 53,
+      "variance": 124.6,
+      "standardDeviation": 11.16,
+      "classification": "MODERATE_DISPERSION"
+    },
+    "trend": {
+      "scope": "SECTION",
+      "referenceId": 10,
+      "classification": "NEGATIVE",
+      "averageChange": -5,
+      "points": [
+        { "evaluationId": 1, "label": "E1", "evaluationDate": "2026-07-10", "value": 78, "present": true },
+        { "evaluationId": 2, "label": "E2", "evaluationDate": "2026-08-05", "value": 72, "present": true },
+        { "evaluationId": 3, "label": "E3", "evaluationDate": "2026-09-01", "value": 68, "present": true }
+      ],
+      "warnings": []
+    },
+    "studentsAtRisk": 8,
+    "unavailableComponents": []
+  },
+  {
+    "sectionId": 15,
+    "sectionCode": "B",
+    "courseName": "Cálculo II",
+    "teacherName": "Lic. Roberto Aguilar",
+    "centralTendency": {
+      "sampleSize": 25,
+      "mean": 68.2,
+      "median": 70,
+      "mode": [58]
+    },
+    "position": {
+      "sectionId": 15,
+      "sampleSize": 25,
+      "percentiles": { "25": 52, "50": 70, "75": 88, "90": 95 },
+      "quartiles": { "q1": 52, "q2": 70, "q3": 88 }
+    },
+    "dispersion": {
+      "sectionId": 15,
+      "min": 30,
+      "max": 99,
+      "range": 69,
+      "variance": 310.4,
+      "standardDeviation": 17.62,
+      "classification": "HIGH_DISPERSION"
+    },
+    "trend": {
+      "scope": "SECTION",
+      "referenceId": 15,
+      "classification": "POSITIVE",
+      "averageChange": 4,
+      "points": [
+        { "evaluationId": 4, "label": "E1", "evaluationDate": "2026-07-12", "value": 60, "present": true },
+        { "evaluationId": 5, "label": "E2", "evaluationDate": "2026-08-08", "value": 65, "present": true },
+        { "evaluationId": 6, "label": "E3", "evaluationDate": "2026-09-03", "value": 69, "present": true }
+      ],
+      "warnings": []
+    },
+    "studentsAtRisk": 5,
+    "unavailableComponents": []
+  },
+  {
+    "sectionId": 22,
+    "sectionCode": "A",
+    "courseName": "Estadística",
+    "teacherName": "Licda. Carolina Reyes",
+    "centralTendency": {
+      "sampleSize": 12,
+      "mean": 80.1,
+      "median": 81,
+      "mode": []
+    },
+    "position": {
+      "sectionId": 22,
+      "sampleSize": 12,
+      "percentiles": { "25": 70, "50": 81, "75": 90, "90": 94 },
+      "quartiles": { "q1": 70, "q2": 81, "q3": 90 }
+    },
+    "dispersion": null,
+    "trend": {
+      "scope": "SECTION",
+      "referenceId": 22,
+      "classification": "INSUFFICIENT_DATA",
+      "averageChange": null,
+      "points": [
+        { "evaluationId": 7, "label": "E1", "evaluationDate": "2026-09-05", "value": 81, "present": true }
+      ],
+      "warnings": ["Se necesitan al menos 2 evaluaciones para calcular tendencia."]
+    },
+    "studentsAtRisk": 1,
+    "unavailableComponents": ["dispersion"]
+  }
+]

@@ -1,0 +1,163 @@
+package gt.edu.uinsight.analytics.trend.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
+import gt.edu.uinsight.analytics.trend.entity.Evaluation;
+import gt.edu.uinsight.analytics.trend.exception.TrendCalculationException;
+import gt.edu.uinsight.analytics.trend.mapper.TrendMapper;
+import gt.edu.uinsight.analytics.trend.repository.EvaluationRepository;
+import gt.edu.uinsight.analytics.trend.repository.GradeRepository;
+import gt.edu.uinsight.analytics.trend.entity.Grade;
+import jakarta.persistence.EntityNotFoundException;
+
+
+/**
+ * Orquesta el cálculo de tendencia: obtiene los datos crudos del
+ * repositorio, los normaliza y ordena, delega la clasificación a
+ * TrendCalculator y devuelve el DTO final vía TrendMapper.
+ */
+@Service
+public class TrendService {
+
+    private static final Logger log = LoggerFactory.getLogger(TrendService.class);
+    private final GradeRepository gradeRepository;
+    private final TrendMapper trendMapper;
+    private final EvaluationRepository evaluationRepository;
+
+    // TODO(B4): estos valores deben venir de la célula C1
+    // (indicator_configuration) cuando su API esté disponible.
+    // Por ahora son configurables por application.properties para no
+    // hardcodear el umbral en el código (regla de negocio 4).
+    @Value("${uinsight.trend.negative-threshold:-3}")
+    private BigDecimal negativeThreshold;
+
+    @Value("${uinsight.trend.positive-threshold:3}")
+    private BigDecimal positiveThreshold;
+
+    public TrendService( TrendMapper trendMapper, EvaluationRepository evaluationRepository,
+                         GradeRepository gradeRepository) {
+        this.trendMapper = trendMapper;
+        this.evaluationRepository = evaluationRepository;
+        this.gradeRepository = gradeRepository;
+    }
+
+    public TrendResponse getTrendBySectionId(Long sectionId) {
+        log.info("TREND_CALCULATION_STARTED scope=SECTION sectionId={}", sectionId);
+
+        
+        List<Grade> grades = gradeRepository.findBySectionId(sectionId);
+        if (grades.isEmpty()) {
+            log.warn("TREND_CALCULATION_NO_DATA scope=SECTION sectionId={}", sectionId);
+            return null;
+        }
+        try {
+            // Se construye la serie de promedios por evaluación y se calcula la tendencia
+            List<TrendCalculator.ScorePoint> points = buildSectionAverageSeries(grades);
+            TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
+
+            if (result.classification() == TrendClassification.INSUFFICIENT_DATA) {
+                log.warn("TREND_INSUFFICIENT_DATA scope=SECTION sectionId={} evaluacionesEncontradas={}",
+                        sectionId, points.size());
+            } else {
+                log.info("TREND_CALCULATION_SUCCESS scope=SECTION sectionId={} classification={} averageChange={}",
+                        sectionId, result.classification(), result.averageChange());
+            }
+
+            return trendMapper.toTrendResponse(result, points);
+        } catch (TrendCalculationException ex) {
+            log.error("TREND_CALCULATION_ERROR scope=SECTION sectionId={} motivo={}", sectionId, ex.getMessage());
+            throw ex;
+        }
+    }
+
+    public TrendResponse getTrendByStudentId(Long studentId) {
+        log.info("TREND_CALCULATION_STARTED scope=STUDENT studentId={}", studentId);
+
+    
+        List<Grade> grades = gradeRepository.findByStudentId(studentId);
+        if (grades.isEmpty()) {
+            log.warn("TREND_CALCULATION_NO_DATA scope=STUDENT studentId={}", studentId);
+            return null;
+        }
+        List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
+        TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
+        return trendMapper.toTrendResponse(result, points);
+    }
+
+    /**
+     * Regla de negocio 3: normaliza cada nota a escala 0-100
+     * (score / maximumScore * 100) para poder comparar evaluaciones
+     * con distinta nota máxima.
+     */
+    private BigDecimal normalize(Grade grade) {
+        Evaluation evaluation = evaluationRepository.findByEvaluationId(grade.getEvaluationId());
+
+        if (evaluation.getMaximumScore() == null
+                || evaluation.getMaximumScore().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new TrendCalculationException(
+                    "La evaluación " + evaluation.getId()
+                            + " no tiene una nota máxima válida para normalizar la calificación.");
+        }
+        return grade.getScore() == null ? BigDecimal.ZERO
+                : grade.getScore()
+                        .divide(evaluation.getMaximumScore(), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100));
+    }
+
+    /**
+     * si un estudiante no presentó una evaluación
+     * simplemente no hay Grade para ella, así que ese punto queda
+     * excluido de la serie (nunca se asume un cero).
+     */
+    private List<TrendCalculator.ScorePoint> buildStudentSeries(List<Grade> grades) {
+        List<TrendCalculator.ScorePoint> points = new ArrayList<>();
+        int index = 1;
+        for (Grade grade : grades) {
+            points.add(new TrendCalculator.ScorePoint(
+                    "E" + index++, grade.getEvaluationId(), normalize(grade)));
+        }
+        return points;
+    }
+
+    /**
+     * agrupa las calificaciones por evaluación,
+     * calcula el promedio normalizado de la sección en cada una, y
+     * ordena la serie por la fecha real de la evaluación (no por id).
+     */
+    private List<TrendCalculator.ScorePoint> buildSectionAverageSeries(List<Grade> grades) {
+        Map<Long, List<Grade>> gradesByEvaluation = grades.stream()
+                .collect(java.util.stream.Collectors.groupingBy(Grade::getEvaluationId));
+        int index = 1;
+        List<TrendCalculator.ScorePoint> points = new ArrayList<>();
+        for (Map.Entry<Long, List<Grade>> entry : gradesByEvaluation.entrySet()) {
+            Long evaluationId = entry.getKey();
+            List<Grade> evaluationGrades = entry.getValue();
+
+            BigDecimal averageNormalizedScore = evaluationGrades.stream()
+                    .map(this::normalize)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(evaluationGrades.size()), 4, RoundingMode.HALF_UP);
+
+            points.add(new TrendCalculator.ScorePoint(
+                    "E"+index++, evaluationId, averageNormalizedScore));
+        }
+
+        return points.stream()
+                .sorted(Comparator.comparing(p -> {
+                    Evaluation evaluation = evaluationRepository.findByEvaluationId(p.evaluationId());
+                    return evaluation.getEvaluationDate();
+                }))
+                .toList();
+    }
+}
