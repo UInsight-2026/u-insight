@@ -1,55 +1,129 @@
-
 package gt.edu.uinsight.analytics.dispersion.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import gt.edu.uinsight.analytics.dispersion.dto.DispersionResponse;
+import gt.edu.uinsight.analytics.dispersion.calculator.DispersionCalculator;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
+import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
 import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
-import gt.edu.uinsight.analytics.dispersion.exception.DatosInsuficientesException;
-import gt.edu.uinsight.analytics.dispersion.exception.DatosInvalidosException;
+import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
 
 @Service
 public class DispersionService {
 
     private final DispersionGradeRepository gradeRepository;
     private final DispersionCalculator calculator;
+    private final DispersionMapper mapper;
 
     public DispersionService(
             DispersionGradeRepository gradeRepository,
-            DispersionCalculator calculator) {
+            DispersionCalculator calculator,
+            DispersionMapper mapper) {
 
         this.gradeRepository = gradeRepository;
         this.calculator = calculator;
+        this.mapper = mapper;
     }
 
     public DispersionResponse getSectionDispersion(Long sectionId) {
 
-        if (sectionId == null || sectionId <= 0) {
-            throw new DatosInvalidosException(
-                    "El ID de la sección debe ser válido"
+        validarId(sectionId, "sección");
+
+        List<BigDecimal> scores =
+                gradeRepository.findScoresBySectionId(sectionId);
+
+        DispersionValidator.validar(scores);
+
+        BigDecimal min =
+                calculator.calculateMin(scores);
+
+        BigDecimal max =
+                calculator.calculateMax(scores);
+
+        BigDecimal range =
+                calculator.calculateRange(scores);
+
+        BigDecimal variance =
+                calculator.calculateVariance(scores);
+
+        BigDecimal standardDeviation =
+                calculator.calculateStandardDeviation(scores);
+
+        DispersionClassification classification =
+                classify(standardDeviation);
+
+        return mapper.toSectionResponse(
+                sectionId,
+                min,
+                max,
+                range,
+                variance,
+                standardDeviation,
+                classification
+        );
+    }
+
+    public DispersionResponse getCourseDispersion(Long courseId) {
+
+        validarId(courseId, "curso");
+
+        List<BigDecimal> scores =
+                gradeRepository.findScoresByCourseId(courseId);
+
+        DispersionValidator.validar(scores);
+
+        BigDecimal min =
+                calculator.calculateMin(scores);
+
+        BigDecimal max =
+                calculator.calculateMax(scores);
+
+        BigDecimal range =
+                calculator.calculateRange(scores);
+
+        BigDecimal variance =
+                calculator.calculateVariance(scores);
+
+        BigDecimal standardDeviation =
+                calculator.calculateStandardDeviation(scores);
+
+        DispersionClassification classification =
+                classify(standardDeviation);
+
+        return mapper.toCourseResponse(
+                courseId,
+                min,
+                max,
+                range,
+                variance,
+                standardDeviation,
+                classification
+        );
+    }
+
+    private void validarId(Long id, String tipo) {
+
+        if (id == null || id <= 0) {
+            throw new DispersionDatosInvalidosException(
+                    "El ID de la " + tipo + " debe ser válido."
             );
         }
+    }
 
-        List<Double> grades =
-                gradeRepository.findGradesBySectionId(sectionId);
+    private DispersionClassification classify(
+            BigDecimal standardDeviation) {
 
-        if (grades == null || grades.size() < 2) {
-            throw new DatosInsuficientesException(
-                    "La sección necesita al menos dos calificaciones para calcular la dispersión"
-            );
-        }
-
-        for (Double grade : grades) {
-
-            if (grade == null || grade < 0 || grade > 100) {
-                throw new DatosInvalidosException(
-                        "Se encontraron calificaciones inválidas"
-                );
-            }
-        }
-
-        return calculator.calculate(sectionId, grades);
+        /*
+         * Aquí deben utilizarse los umbrales configurables
+         * definidos para B3.
+         */
+        throw new UnsupportedOperationException(
+                "Los umbrales de dispersión aún no están configurados."
+        );
     }
 }
