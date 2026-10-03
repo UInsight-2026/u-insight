@@ -1,0 +1,377 @@
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..9d721e1
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,13 @@
++DB_HOST=localhost
++DB_PORT=3307
++DB_NAME=uinsight
++DB_USERNAME=uinsight
++DB_PASSWORD=uinsight
++DB_ROOT_PASSWORD=root
++
++# URLs de las celulas que B1 (tendencia central) consume por HTTP.
++# Hoy las tres corren en el mismo monolito (localhost:8080); se separan
++# por variable para cuando A6, A4 y A1 se desplieguen aparte.
++A6_BASE_URL=http://localhost:8080
++A4_BASE_URL=http://localhost:8080
++A1_BASE_URL=http://localhost:8080
+diff --git a/.gitignore b/.gitignore
+index cd9dfa0..9c46929 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -2,7 +2,7 @@
+ .vscode/
+ 
+ ### Entorno y credenciales (seccion 12.5 del documento oficial) ###
+-.env.example
++.env
+ *.log
+ target/
+ node_modules/
+diff --git a/backend/pom.xml b/backend/pom.xml
+index 5a7b638..9b8aef1 100644
+--- a/backend/pom.xml
++++ b/backend/pom.xml
+@@ -60,7 +60,7 @@
+         <dependency>
+             <groupId>com.h2database</groupId>
+             <artifactId>h2</artifactId>
+-            <scope>test</scope>
++            <scope>runtime</scope>
+         </dependency>
+ 
+         <!-- Validaciones -->
+diff --git a/backend/src/main/java/gt/edu/uinsight/academicperiod/support/exception/AcademicExceptionHandler.java b/backend/src/main/java/gt/edu/uinsight/academicperiod/support/exception/AcademicExceptionHandler.java
+index 21de79e..e26fa90 100644
+--- a/backend/src/main/java/gt/edu/uinsight/academicperiod/support/exception/AcademicExceptionHandler.java
++++ b/backend/src/main/java/gt/edu/uinsight/academicperiod/support/exception/AcademicExceptionHandler.java
+@@ -6,7 +6,7 @@ import org.springframework.core.Ordered;
+ import org.springframework.core.annotation.Order;
+ import org.springframework.dao.DataAccessException;
+ import org.springframework.dao.DataIntegrityViolationException;
+-import org.springframework.data.mapping.PropertyReferenceException;
++import org.springframework.data.core.PropertyReferenceException;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.http.converter.HttpMessageNotReadableException;
+diff --git a/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/dto/integration/SectionApiResponse.java b/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/dto/integration/SectionApiResponse.java
+index 4219db4..fec985b 100644
+--- a/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/dto/integration/SectionApiResponse.java
++++ b/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/dto/integration/SectionApiResponse.java
+@@ -3,14 +3,15 @@ package gt.edu.uinsight.analytics.centraltendency.dto.integration;
+ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+ 
+ /**
+- * Respuesta de A4: GET /api/v1/sections/{id} y elemento de GET /api/v1/sections.
+- * El campo status no forma parte del contrato publicado de A4 todavia; se mapea
+- * para poder filtrar secciones ACTIVE en cuanto A4 lo exponga.
++ * Respuesta de A4 (SectionResponseDTO): GET /api/v1/sections/{id} y elemento
++ * de GET /api/v1/sections. Contrato confirmado en develop (section.controller
++ * .SectionController): id, academicPeriodId, courseId, teacherId,
++ * sectionCode, status. B1 solo usa id, academicPeriodId, courseId y status.
+  */
+ @JsonIgnoreProperties(ignoreUnknown = true)
+ public record SectionApiResponse(
+         Long id,
+-        String code,
++        String sectionCode,
+         Long academicPeriodId,
+         Long courseId,
+         String status
+diff --git a/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/exception/GlobalAnalyticsExceptionHandler.java b/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/exception/GlobalAnalyticsExceptionHandler.java
+index 88ce7c6..3519010 100644
+--- a/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/exception/GlobalAnalyticsExceptionHandler.java
++++ b/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/exception/GlobalAnalyticsExceptionHandler.java
+@@ -6,8 +6,15 @@ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+ import org.springframework.web.bind.annotation.RestControllerAdvice;
++import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+ 
+-@RestControllerAdvice
++/**
++ * Acotado a los controllers de B1: un manejador global con catch-all
++ * convertiria en 500 los errores de los demas modulos y las rutas inexistentes
++ * (confirmado en el informe de pruebas de integracion de A5, 2-oct-2026:
++ * capturaba tambien errores de A2, A4 y A6).
++ */
++@RestControllerAdvice(basePackages = "gt.edu.uinsight.analytics.centraltendency")
+ public class GlobalAnalyticsExceptionHandler {
+ private static final Logger log = LoggerFactory.getLogger(GlobalAnalyticsExceptionHandler.class);
+ 
+@@ -18,6 +25,14 @@ private static final Logger log = LoggerFactory.getLogger(GlobalAnalyticsExcepti
+         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+     }
+ 
++    // Error 400: un id o parametro no numerico (por ejemplo /sections/abc/...)
++    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
++    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
++        log.warn("ANALYTICS_INVALID_PARAMETER - {}", ex.getName());
++        return buildResponse(HttpStatus.BAD_REQUEST,
++                "El parametro '" + ex.getName() + "' no tiene un formato valido");
++    }
++
+     // Error 404: Sección o curso inexistente
+     @ExceptionHandler(AnalyticsResourceNotFoundException.class)
+     public ResponseEntity<ErrorResponse> handleNotFound(AnalyticsResourceNotFoundException ex) {
+diff --git a/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/repository/GradeDataRepositoryImpl.java b/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/repository/GradeDataRepositoryImpl.java
+index 0fac08a..09c6c83 100644
+--- a/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/repository/GradeDataRepositoryImpl.java
++++ b/backend/src/main/java/gt/edu/uinsight/analytics/centraltendency/repository/GradeDataRepositoryImpl.java
+@@ -7,15 +7,16 @@ import java.util.function.Supplier;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.core.ParameterizedTypeReference;
+-import org.springframework.http.HttpStatus;
+ import org.springframework.stereotype.Repository;
+ import org.springframework.web.client.HttpClientErrorException;
+ import org.springframework.web.client.RestClient;
+ import org.springframework.web.client.RestClientException;
+-import org.springframework.web.server.ResponseStatusException;
+ 
+ import gt.edu.uinsight.analytics.centraltendency.dto.integration.GradeApiResponse;
+ import gt.edu.uinsight.analytics.centraltendency.dto.integration.SectionApiResponse;
++import gt.edu.uinsight.analytics.centraltendency.exception.AnalyticsResourceNotFoundException;
++import gt.edu.uinsight.analytics.centraltendency.exception.GradeDataIntegrationException;
++import gt.edu.uinsight.analytics.centraltendency.exception.InvalidAnalyticsRequestException;
+ import gt.edu.uinsight.analytics.centraltendency.model.GradeData;
+ 
+ /**
+@@ -33,9 +34,9 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
+ 
+     @Autowired
+     public GradeDataRepositoryImpl(
+-            @Value("${uinsight.integration.a6.base-url:http://localhost:8080}") String a6BaseUrl,
+-            @Value("${uinsight.integration.a4.base-url:http://localhost:8080}") String a4BaseUrl,
+-            @Value("${uinsight.integration.a1.base-url:http://localhost:8080}") String a1BaseUrl) {
++            @Value("${uinsight.integration.a6.base-url}") String a6BaseUrl,
++            @Value("${uinsight.integration.a4.base-url}") String a4BaseUrl,
++            @Value("${uinsight.integration.a1.base-url}") String a1BaseUrl) {
+         this(RestClient.builder().baseUrl(a6BaseUrl).build(),
+                 RestClient.builder().baseUrl(a4BaseUrl).build(),
+                 RestClient.builder().baseUrl(a1BaseUrl).build());
+@@ -49,36 +50,39 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
+ 
+     @Override
+     public List<GradeData> findBySectionId(Long sectionId, Long evaluationId) {
+-        SectionApiResponse section = execute("A4", HttpStatus.NOT_FOUND,
+-                "La seccion " + sectionId + " no existe",
++        SectionApiResponse section = execute("A4",
++                () -> new AnalyticsResourceNotFoundException("La seccion " + sectionId + " no existe"),
+                 () -> sectionsClient.get()
+                         .uri("/api/v1/sections/{id}", sectionId)
+                         .retrieve()
+                         .body(SectionApiResponse.class));
+         if (section == null) {
+-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La seccion " + sectionId + " no existe");
++            throw new AnalyticsResourceNotFoundException("La seccion " + sectionId + " no existe");
+         }
+         return fetchGrades(section, evaluationId);
+     }
+ 
+     @Override
+     public List<GradeData> findByCourseId(Long courseId, Long periodId) {
+-        execute("A1", HttpStatus.NOT_FOUND, "El curso " + courseId + " no existe",
++        execute("A1",
++                () -> new AnalyticsResourceNotFoundException("El curso " + courseId + " no existe"),
+                 () -> academicClient.get()
+                         .uri("/api/v1/courses/{id}", courseId)
+                         .retrieve()
+                         .toBodilessEntity());
+ 
+-                if (periodId != null) {
+-                    execute("A1", HttpStatus.BAD_REQUEST, "El periodo academico " + periodId + " no es valido",
+-                        () -> academicClient.get()
++        if (periodId != null) {
++            execute("A1",
++                    () -> new InvalidAnalyticsRequestException(
++                            "El periodo academico " + periodId + " no es valido"),
++                    () -> academicClient.get()
+                             .uri("/api/v1/academic-periods/{id}", periodId)
+                             .retrieve()
+                             .toBodilessEntity());
+-                }
++        }
+ 
+-        List<SectionApiResponse> sections = execute("A4", HttpStatus.NOT_FOUND,
+-                "No se pudo listar las secciones",
++        List<SectionApiResponse> sections = execute("A4",
++                () -> new GradeDataIntegrationException("No se pudo listar las secciones en A4"),
+                 () -> sectionsClient.get()
+                         .uri("/api/v1/sections")
+                         .retrieve()
+@@ -89,15 +93,16 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
+ 
+         return sections.stream()
+                 .filter(section -> Objects.equals(section.courseId(), courseId))
+-            .filter(section -> periodId == null || Objects.equals(section.academicPeriodId(), periodId))
++                .filter(section -> periodId == null || Objects.equals(section.academicPeriodId(), periodId))
+                 .filter(section -> ACTIVE.equalsIgnoreCase(section.status()))
+                 .flatMap(section -> fetchGrades(section, null).stream())
+                 .toList();
+     }
+ 
+     private List<GradeData> fetchGrades(SectionApiResponse section, Long evaluationId) {
+-        List<GradeApiResponse> grades = execute("A6", HttpStatus.NOT_FOUND,
+-                "No se encontraron calificaciones para la seccion " + section.id(),
++        List<GradeApiResponse> grades = execute("A6",
++                () -> new GradeDataIntegrationException(
++                        "A6 no expone las calificaciones de la seccion " + section.id()),
+                 () -> gradesClient.get()
+                         .uri("/api/v1/sections/{id}/grades", section.id())
+                         .retrieve()
+@@ -114,14 +119,13 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
+                 .toList();
+     }
+ 
+-    private <T> T execute(String service, HttpStatus notFoundStatus, String notFoundMessage, Supplier<T> call) {
++    private <T> T execute(String service, Supplier<RuntimeException> onNotFound, Supplier<T> call) {
+         try {
+             return call.get();
+         } catch (HttpClientErrorException.NotFound ex) {
+-            throw new ResponseStatusException(notFoundStatus, notFoundMessage);
++            throw onNotFound.get();
+         } catch (RestClientException ex) {
+-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+-                    "No se pudo consultar el servicio " + service);
++            throw new GradeDataIntegrationException("No se pudo consultar el servicio " + service);
+         }
+     }
+ }
+diff --git a/backend/src/main/java/gt/edu/uinsight/analytics/dispersion/entity/Grade.java b/backend/src/main/java/gt/edu/uinsight/analytics/dispersion/entity/Grade.java
+index 2b412db..beefa55 100644
+--- a/backend/src/main/java/gt/edu/uinsight/analytics/dispersion/entity/Grade.java
++++ b/backend/src/main/java/gt/edu/uinsight/analytics/dispersion/entity/Grade.java
+@@ -4,7 +4,7 @@ import jakarta.persistence.*;
+ import java.math.BigDecimal;
+ import java.time.LocalDateTime;
+ 
+-@Entity(name = "DispersionGrade")
++@Entity(name = "DispersionGradeLegacy")
+ @Table(name = "grade")
+ public class Grade {
+ 
+diff --git a/backend/src/main/java/gt/edu/uinsight/mock/a1/MockCourseController.java b/backend/src/main/java/gt/edu/uinsight/mock/a1/MockCourseController.java
+new file mode 100644
+index 0000000..ba41364
+--- /dev/null
++++ b/backend/src/main/java/gt/edu/uinsight/mock/a1/MockCourseController.java
+@@ -0,0 +1,53 @@
++package gt.edu.uinsight.mock.a1;
++
++import java.time.LocalDateTime;
++import java.util.List;
++
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++/**
++ * MOCK TEMPORAL de A1 (cursos), mientras esa celula fusiona su API real
++ * (feature/A1-course) a develop. Replica el contrato publicado en esa rama
++ * (CourseResponse: id, code, name, description, credits, status, createdAt,
++ * updatedAt). B1 solo usa la existencia (200/404) del recurso, no sus campos.
++ *
++ * BORRAR ESTE PAQUETE COMPLETO ("gt.edu.uinsight.mock") en cuanto A1 entregue
++ * el controller real en gt.edu.uinsight.course.
++ */
++@RestController
++@RequestMapping("/api/v1/courses")
++public class MockCourseController {
++
++    private record CourseResponse(Long id, String code, String name, String description,
++                                    Integer credits, String status,
++                                    LocalDateTime createdAt, LocalDateTime updatedAt) {
++    }
++
++    private static CourseResponse course(long id, String code, String name, int credits) {
++        LocalDateTime now = LocalDateTime.now();
++        return new CourseResponse(id, code, name, "Curso " + name, credits, "ACTIVE", now, now);
++    }
++
++    private static final List<CourseResponse> COURSES = List.of(
++            course(1, "MAT101", "Matematica Basica", 4),
++            course(2, "PRG101", "Programacion I", 5),
++            course(3, "BD101", "Bases de Datos", 4),
++            course(5, "PRG201", "Programacion II", 5),
++            course(9, "EST101", "Estadistica", 3));
++
++    @GetMapping
++    public List<CourseResponse> findAll() {
++        return COURSES;
++    }
++
++    @GetMapping("/{id}")
++    public ResponseEntity<CourseResponse> findById(@PathVariable long id) {
++        return COURSES.stream().filter(c -> c.id() == id).findFirst()
++                .map(ResponseEntity::ok)
++                .orElseGet(() -> ResponseEntity.notFound().build());
++    }
++}
+diff --git a/backend/src/main/resources/application.properties b/backend/src/main/resources/application.properties
+index b4ee77d..74b6eb6 100644
+--- a/backend/src/main/resources/application.properties
++++ b/backend/src/main/resources/application.properties
+@@ -15,3 +15,11 @@ springdoc.swagger-ui.path=/swagger-ui.html
+ springdoc.api-docs.path=/v3/api-docs
+ 
+ spring.main.allow-bean-definition-overriding=true
++
++# Integracion B1 (tendencia central) con A6 (calificaciones), A4 (secciones)
++# y A1 (cursos, periodos academicos). En desarrollo todo corre en el mismo
++# monolito, pero las URLs son configurables por variable de entorno para
++# cuando cada celula se despliegue por separado.
++uinsight.integration.a6.base-url=${A6_BASE_URL:http://localhost:8080}
++uinsight.integration.a4.base-url=${A4_BASE_URL:http://localhost:8080}
++uinsight.integration.a1.base-url=${A1_BASE_URL:http://localhost:8080}
+diff --git a/backend/src/test/java/gt/edu/uinsight/academicperiod/controller/AcademicPeriodControllerTest.java b/backend/src/test/java/gt/edu/uinsight/academicperiod/controller/AcademicPeriodControllerTest.java
+index a5b2e05..dfc0c28 100644
+--- a/backend/src/test/java/gt/edu/uinsight/academicperiod/controller/AcademicPeriodControllerTest.java
++++ b/backend/src/test/java/gt/edu/uinsight/academicperiod/controller/AcademicPeriodControllerTest.java
+@@ -15,8 +15,8 @@ import gt.edu.uinsight.academicperiod.support.logging.AcademicWebConfig;
+ import org.junit.jupiter.api.DisplayName;
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+-import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
++import org.springframework.test.context.bean.override.mockito.MockitoBean;
+ import org.springframework.context.annotation.ComponentScan;
+ import org.springframework.context.annotation.FilterType;
+ import org.springframework.data.domain.PageRequest;
+@@ -67,7 +67,7 @@ class AcademicPeriodControllerTest {
+     @Autowired
+     private MockMvc mockMvc;
+ 
+-    @MockBean
++    @MockitoBean
+     private AcademicPeriodService service;
+ 
+     private static AcademicPeriodResponse response(Long id, PeriodStatus status) {
+diff --git a/docs/integration/B1-A6.md b/docs/integration/B1-A6.md
+index 3aadd17..6d326a5 100644
+--- a/docs/integration/B1-A6.md
++++ b/docs/integration/B1-A6.md
+@@ -32,11 +32,12 @@
+ ## 3. Estructuras de Datos (JSON Estables para Célula C6)
+ 
+ ### Ejemplo de Respuesta Exitosa (HTTP 200)
+-Para mapeo en la interfaz de resultados:
++Para mapeo en la interfaz de resultados. Los nombres de campo son los reales
++de `CentralTendencyResponse` (en ingles, no se traducen en el JSON):
+ ```json
+ {
+-  "media": 73.6,
+-  "mediana": 73.0,
+-  "moda": [70.0],
+-  "sampleSize": 5
++  "sampleSize": 5,
++  "mean": 73.6,
++  "median": 73.0,
++  "mode": [70.0]
+ }
+\ No newline at end of file
