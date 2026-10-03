@@ -4,6 +4,8 @@ package gt.edu.uinsight.report.service;
 import gt.edu.uinsight.report.dto.filter.PageFilter;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
 import gt.edu.uinsight.report.exception.InvalidFilterException;
+import gt.edu.uinsight.teacher.repository.TeacherRepository;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
@@ -26,14 +28,7 @@ public class FilterValidator {
     // Período académico: cuatro dígitos de año, guión, y 1 o 2. Ej. 2026-2
     private static final Pattern PERIOD_PATTERN = Pattern.compile("\\d{4}-[12]");
 
-    public void validate(ReportFilter filter) {
-        if (filter == null) {
-            return;
-        }
-        validateRiskLevel(filter.getRiskLevel());
-        validateAlertStatus(filter.getAlertStatus());
-        validatePeriod(filter.getPeriod());
-    }
+    
 
     public void validatePage(PageFilter pageFilter) {
         if (pageFilter == null) {
@@ -89,4 +84,49 @@ public class FilterValidator {
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
+
+
+
+//s4
+// El validador pasa a necesitar el catálogo de docentes. No hay ciclo: ningún
+    // gateway depende de FilterValidator.
+    private final TeacherRepository teacherRepository;
+
+    public FilterValidator(TeacherRepository teacherRepository) {
+        this.teacherRepository = teacherRepository;
+    }
+
+    public void validate(ReportFilter filter) {
+        if (filter == null) {
+            return;
+        }
+        validateRiskLevel(filter.getRiskLevel());
+        validateAlertStatus(filter.getAlertStatus());
+        validatePeriod(filter.getPeriod());        // forma, como hasta ahora
+        validateTeacherExists(filter.getTeacher()); // nuevo: existencia en A2
+    }
+
+    /**
+     * Un código de docente bien formado pero que no está en el catálogo de A2 se
+     * rechaza. Si A2 no responde NO se rechaza: no se puede castigar al usuario por
+     * una caída de otra célula.
+     */
+    private void validateTeacherExists(String teacherCode) {
+        if (isBlank(teacherCode)) {
+            return;
+        }
+        try {
+            if (teacherRepository.findByTeacherCodeIgnoreCase(teacherCode).isEmpty()) {
+                throw new InvalidFilterException(
+                        "teacher invalido: '" + teacherCode + "'. No existe en el catalogo de docentes.");
+            }
+        } catch (InvalidFilterException ex) {
+            throw ex; // es nuestro rechazo, debe salir
+        } catch (RuntimeException ex) {
+            log.warn("INTEGRATION_ERROR source=A2 reason=no se pudo validar el docente, se omite");
+        }
+    }
+
+
+
 }

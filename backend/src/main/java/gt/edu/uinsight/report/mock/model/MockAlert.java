@@ -45,7 +45,8 @@ public class MockAlert {
     }
 
     public boolean isActive() {
-        return !CLOSED_STATUSES.contains(status.toUpperCase());
+        //Pagina 20 del pdf allan
+         return status != null && !CLOSED_STATUSES.contains(status.toUpperCase());
     }
 
     public Long getId() {
