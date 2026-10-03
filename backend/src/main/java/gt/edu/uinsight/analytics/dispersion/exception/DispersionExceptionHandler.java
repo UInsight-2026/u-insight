@@ -1,4 +1,4 @@
-```java
+
 package gt.edu.uinsight.analytics.dispersion.exception;
 
 import java.time.LocalDateTime;
@@ -51,4 +51,3 @@ public class DispersionExceptionHandler {
                 .body(body);
     }
 }
-```
