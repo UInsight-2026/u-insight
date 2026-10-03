@@ -5,10 +5,6 @@ import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyRes
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendClassification;
-import java.math.BigDecimal;
-import java.util.List;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 import gt.edu.uinsight.report.common.ReportLogger;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
@@ -20,43 +16,82 @@ import gt.edu.uinsight.report.gateway.B6AnalyticsGateway;
 import gt.edu.uinsight.report.mock.MockDataGateway;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SectionReportServiceTest {
 
-    private final MockDataGateway gateway = new MockDataGateway();
-    private final FilterValidator filterValidator = new FilterValidator();
-    private final ReportLogger reportLogger = new ReportLogger();
+    private final MockDataGateway gateway =
+            new MockDataGateway();
 
-    // Integración real con B6.
+    private final FilterValidator filterValidator =
+            new FilterValidator();
+
+    private final ReportLogger reportLogger =
+            new ReportLogger();
+
     private final AnalyticsGateway analyticsReal =
             new B6AnalyticsGateway(
                     new SummaryService(
                             repositorioDeB6()));
 
-    // Servicio real de B6 con sus dependencias simuladas, sin base de datos.
     private static AnalyticsClientRepository repositorioDeB6() {
-        var repository = mock(AnalyticsClientRepository.class);
+
+        var repository =
+                mock(AnalyticsClientRepository.class);
+
         when(repository.getCentralTendency(10L))
-                .thenReturn(new CentralTendencyResponse(30, 72.5, 73.0, List.of()));
+                .thenReturn(
+                        new CentralTendencyResponse(
+                                30,
+                                72.5,
+                                73.0,
+                                List.of()));
+
         when(repository.getDispersion(10L))
-                .thenReturn(new DispersionResponse(10L, null, 40.0, 95.0, 55.0, 124.55, 11.16, null));
-        when(repository.getTrend(10L)).thenReturn(new TrendResponse(
-                TrendClassification.NEGATIVE, new BigDecimal("-2.5"), List.of()));
+                .thenReturn(
+                        new DispersionResponse(
+                                10L,
+                                null,
+                                40.0,
+                                95.0,
+                                55.0,
+                                124.55,
+                                11.16,
+                                null));
+
+        when(repository.getTrend(10L))
+                .thenReturn(
+                        new TrendResponse(
+                                TrendClassification.NEGATIVE,
+                                new BigDecimal("-2.5"),
+                                List.of()));
+
         return repository;
     }
 
-    // Simula que B6 no está disponible.
     private final AnalyticsGateway analyticsCaido =
             AnalyticsSnapshot::unavailable;
 
     private final ReportFilter sinFiltros =
-            new ReportFilter(null, null, null, null, null, null);
+            new ReportFilter(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
 
-    private SectionReportService servicioCon(AnalyticsGateway analytics) {
+    private SectionReportService servicioCon(
+            AnalyticsGateway analytics) {
+
         return new SectionReportService(
                 gateway,
                 analytics,
@@ -86,10 +121,13 @@ class SectionReportServiceTest {
 
         assertTrue(response.getAnalytics().isAvailable());
         assertEquals(72.5, response.getAnalytics().getMean());
-        assertEquals(11.16, response.getAnalytics().getStandardDeviation());
+        assertEquals(
+                11.16,
+                response.getAnalytics().getStandardDeviation());
         assertEquals(
                 "NEGATIVE",
-                response.getAnalytics().getTrendClassification());
+                response.getAnalytics()
+                        .getTrendClassification());
     }
 
     @Test
@@ -99,12 +137,14 @@ class SectionReportServiceTest {
                 servicioCon(analyticsCaido)
                         .getSectionReport(10L, sinFiltros);
 
-        // Lo propio de C5 sigue completo.
         assertEquals("A", response.getSectionName());
         assertEquals(5, response.getActiveAlerts());
 
-        // El bloque de B6 queda marcado como no disponible.
         assertFalse(response.getAnalytics().isAvailable());
+
+        assertTrue(
+                response.getUnavailableSources()
+                        .contains("B6"));
     }
 
     @Test
@@ -113,6 +153,46 @@ class SectionReportServiceTest {
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> servicioCon(analyticsReal)
-                        .getSectionReport(999L, sinFiltros));
+                        .getSectionReport(
+                                999L,
+                                sinFiltros));
+    }
+
+    @Test
+    void deberiaExponerPeriodoDocenteYCurso() {
+
+        SectionReportResponse response =
+                servicioCon(analyticsReal)
+                        .getSectionReport(10L, sinFiltros);
+
+        assertEquals(
+                gateway.findSectionById(10L)
+                        .orElseThrow()
+                        .getPeriod(),
+                response.getPeriodCode());
+
+        assertEquals(
+                gateway.findSectionById(10L)
+                        .orElseThrow()
+                        .getTeacherCode(),
+                response.getTeacherCode());
+
+        assertEquals(
+                gateway.findSectionById(10L)
+                        .orElseThrow()
+                        .getCourseId(),
+                response.getCourseId());
+    }
+
+    @Test
+    void deberiaIndicarB7ComoOrigenDelRiesgo() {
+
+        SectionReportResponse response =
+                servicioCon(analyticsReal)
+                        .getSectionReport(10L, sinFiltros);
+
+        assertEquals(
+                "B7",
+                response.getRiskSource());
     }
 }

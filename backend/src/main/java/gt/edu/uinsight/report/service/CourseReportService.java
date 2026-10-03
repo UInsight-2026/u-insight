@@ -12,13 +12,16 @@ import gt.edu.uinsight.report.mock.model.MockCourse;
 import gt.edu.uinsight.report.mock.model.MockSection;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Reporte consolidado por curso (GET /api/v1/reports/courses/{id}).
  *
- * Semana 3: agrega el desglose de las secciones del curso,
- * estudiantes en riesgo y alertas activas por sección.
+ * Semana 4: permite entregar una respuesta degradada cuando
+ * A1 no publica el catalogo del curso, siempre que existan
+ * secciones asociadas al courseId.
  */
 @Service
 public class CourseReportService {
@@ -34,6 +37,7 @@ public class CourseReportService {
             ReportDataGateway gateway,
             FilterValidator filterValidator,
             ReportLogger reportLogger) {
+
         this.gateway = gateway;
         this.filterValidator = filterValidator;
         this.reportLogger = reportLogger;
@@ -51,11 +55,41 @@ public class CourseReportService {
             throw ex;
         }
 
-        MockCourse course = gateway.findCourseById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No se encontro el curso con id " + id));
-
+        Optional<MockCourse> course = gateway.findCourseById(id);
         List<MockSection> sections = gateway.findSectionsByCourseId(id);
+
+        if (course.isEmpty() && sections.isEmpty()) {
+
+            reportLogger.rejected(
+                    traceId,
+                    OPERATION,
+                    "No se encontro el curso con id " + id);
+
+            throw new ResourceNotFoundException(
+                    "No se encontro el curso con id " + id);
+        }
+
+        List<String> unavailableSources = new ArrayList<>();
+
+        if (course.isEmpty()) {
+            unavailableSources.add("A1");
+        }
+
+        String courseName = course
+                .map(MockCourse::getName)
+                .orElse(null);
+
+        /*
+         * Cuando A1 esta disponible se utiliza su total.
+         *
+         * Si A1 no esta disponible, el calculo mediante
+         * countEnrolledStudents depende de la integracion
+         * pendiente del ReportDataGateway.
+         */
+        int totalStudents = course
+                .map(MockCourse::getTotalStudents)
+                .orElse(0);
+
         List<MockAlert> courseAlerts = gateway.findAlertsByCourseId(id);
 
         int studentsAtRisk = sections.stream()
@@ -82,15 +116,17 @@ public class CourseReportService {
                 "courseId=" + id
                         + " sections=" + desglose.size()
                         + " studentsAtRisk=" + studentsAtRisk
-                        + " activeAlerts=" + activeAlerts);
+                        + " activeAlerts=" + activeAlerts
+                        + " unavailableSources=" + unavailableSources);
 
         return new CourseReportResponse(
-                course.getId(),
-                course.getName(),
-                course.getTotalStudents(),
+                id,
+                courseName,
+                totalStudents,
                 studentsAtRisk,
                 activeAlerts,
-                desglose);
+                desglose,
+                unavailableSources);
     }
 
     private int contarAlertasActivasDeLaSeccion(Long sectionId) {
