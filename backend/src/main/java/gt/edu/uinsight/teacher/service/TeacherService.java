@@ -95,20 +95,29 @@ public class TeacherService {
                 .toList();
     }
 
-    /** Asigna el docente a una seccion existente. Un docente inactivo no puede recibir secciones. */
+    /**
+     * Asigna el docente a una seccion existente. Un docente inactivo no puede recibir secciones.
+     *
+     * La seccion es una entidad de solo lectura de la celula B4, asi que la asociacion
+     * se escribe con la sentencia acotada del repositorio y luego se relee para responder.
+     */
     @Transactional
     public TeacherSectionResponse assignToSection(Long teacherId, Long sectionId) {
         Teacher teacher = findById(teacherId);
-        Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new ResourceNotFoundException("No existe la seccion con id " + sectionId));
+        if (!sectionRepository.existsById(sectionId)) {
+            throw new ResourceNotFoundException("No existe la seccion con id " + sectionId);
+        }
 
         if (!teacher.isActive()) {
             throw new BusinessRuleException("El docente " + teacher.getTeacherCode()
                     + " esta INACTIVE y no puede asignarse a nuevas secciones");
         }
 
-        section.setTeacherId(teacher.getId());
-        return TeacherSectionResponse.from(sectionRepository.save(section));
+        sectionRepository.assignTeacher(sectionId, teacher.getId());
+
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe la seccion con id " + sectionId));
+        return TeacherSectionResponse.from(section);
     }
 
     /**
