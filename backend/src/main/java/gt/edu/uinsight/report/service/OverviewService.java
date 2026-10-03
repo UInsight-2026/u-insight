@@ -62,6 +62,11 @@ public class OverviewService {
         int lowRiskSections = (int) sections.stream()
                 .filter(s -> "LOW".equalsIgnoreCase(s.getRiskLevel()))
                 .count();
+        // Semana 4: con datos reales el nivel lo calcula B7 y puede faltar. Esas
+        // secciones se cuentan aparte; no se dan por buenas.
+        int unknownRiskSections = (int) sections.stream()
+                .filter(s -> s.getRiskLevel() == null)
+                .count();
         int studentsAtRisk = sections.stream()
                 .mapToInt(MockSection::getStudentsAtRisk)
                 .sum();
@@ -69,7 +74,7 @@ public class OverviewService {
                 .filter(MockAlert::isActive)
                 .count();
 
-        List<String> unavailableSources = new ArrayList<>();
+        List<String> unavailableSources = declararOrigenesFaltantes(sections, studentsAtRisk);
         String overallTrend;
         String trendSource;
 
@@ -92,12 +97,44 @@ public class OverviewService {
         reportLogger.success(traceId, OPERATION, startedAt,
                 "activeAlerts=" + activeAlerts
                         + " highRiskSections=" + highRiskSections
+                        + " unknownRiskSections=" + unknownRiskSections
                         + " studentsAtRisk=" + studentsAtRisk
                         + " overallTrend=" + overallTrend
-                        + " trendSource=" + trendSource);
+                        + " trendSource=" + trendSource
+                        + " unavailableSources=" + unavailableSources);
 
-        return new OverviewResponse(activeAlerts, highRiskSections, studentsAtRisk,
-                overallTrend, trendSource, unavailableSources);
+        return new OverviewResponse(activeAlerts, highRiskSections, unknownRiskSections,
+                studentsAtRisk, overallTrend, trendSource, unavailableSources);
+    }
+
+    /**
+     * Declara que origenes de datos no respondieron, deduciendolo de lo que el
+     * gateway alcanzo a resolver: deja en null lo que no pudo traer.
+     *
+     * Se deduce en lugar de preguntarlo porque la interfaz ReportDataGateway no
+     * reporta el estado de cada fuente. Mientras no lo haga, esta es la lectura
+     * mas fiel que se puede dar al consumidor.
+     */
+    private List<String> declararOrigenesFaltantes(List<MockSection> sections, int studentsAtRisk) {
+        List<String> faltantes = new ArrayList<>();
+        if (sections.isEmpty()) {
+            return faltantes;
+        }
+        if (sections.stream().anyMatch(s -> s.getPeriod() == null)) {
+            faltantes.add("A1");
+        }
+        if (sections.stream().anyMatch(s -> s.getTeacherCode() == null)) {
+            faltantes.add("A2");
+        }
+        if (sections.stream().anyMatch(s -> s.getRiskLevel() == null)) {
+            faltantes.add("B7");
+        }
+        // studentsAtRisk necesita los estudiantes de A3 y sus notas; sin eso no
+        // se puede calcular y queda en cero.
+        if (studentsAtRisk == 0) {
+            faltantes.add("A3");
+        }
+        return faltantes;
     }
 
     /**
