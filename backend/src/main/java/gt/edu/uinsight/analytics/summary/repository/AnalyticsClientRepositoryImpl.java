@@ -10,7 +10,6 @@ import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassificatio
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.dispersion.service.DispersionService;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
-import gt.edu.uinsight.analytics.individual.service.StudentAnalyticsService;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.position.service.PositionService;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
@@ -23,19 +22,16 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
     private final PositionService positionService;
     private final DispersionService dispersionService;
     private final TrendService trendService;
-    private final StudentAnalyticsService studentAnalyticsService;
 
     public AnalyticsClientRepositoryImpl(
             CentralTendencyService centralTendencyService,
             PositionService positionService,
             DispersionService dispersionService,
-            TrendService trendService,
-            StudentAnalyticsService studentAnalyticsService) {
+            TrendService trendService) {
         this.centralTendencyService = centralTendencyService;
         this.positionService = positionService;
         this.dispersionService = dispersionService;
         this.trendService = trendService;
-        this.studentAnalyticsService = studentAnalyticsService;
     }
 
     @Override
@@ -74,9 +70,8 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
 
     @Override
     public StudentComparisonResponse getStudentComparison(Long sectionId) {
-        // Individual devuelve comparación por studentId, no sectionId
-        // TODO: cuando B5 exponga comparación por sección, migrar aquí
-        return studentAnalyticsService.getComparison(sectionId);
+        // B5 solo ofrece comparación por estudiante; sectionId no es un studentId.
+        return null;
     }
 
     // --- helpers para convertir el Map de B3 ---
