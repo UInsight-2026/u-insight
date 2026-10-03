@@ -1,10 +1,11 @@
 package gt.edu.uinsight.system.service;
 
 import gt.edu.uinsight.system.config.IntegrationProperties;
+import gt.edu.uinsight.system.config.IntegrationRestClientConfig;
 import gt.edu.uinsight.system.dto.request.CreateCheckRequest;
 import gt.edu.uinsight.system.entity.CheckStatus;
 import gt.edu.uinsight.system.logging.SystemEventLogger;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -20,16 +21,16 @@ public class IntegrationStatusService {
     private final SystemEventLogger systemEventLogger;
     private final RestClient restClient;
 
- public IntegrationStatusService(
+    public IntegrationStatusService(
             IntegrationProperties properties,
             SystemCheckService systemCheckService,
             SystemEventLogger systemEventLogger,
-            RestClient.Builder restClientBuilder) {
+            @Qualifier(IntegrationRestClientConfig.QUALIFIER) RestClient restClient) {
         this.properties = properties;
         this.systemCheckService = systemCheckService;
         this.systemEventLogger = systemEventLogger;
 
-        this.restClient = restClientBuilder.build();
+        this.restClient = restClient;
     }
 
     public List<ModuleStatus> getIntegrationStatus() {

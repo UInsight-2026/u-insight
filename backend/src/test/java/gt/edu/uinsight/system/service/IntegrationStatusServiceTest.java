@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -45,15 +47,15 @@ class IntegrationStatusServiceTest {
                 properties,
                 systemCheckService,
                 systemEventLogger,
-                builder
+                builder.build()
         );
     }
 
     @Test
     void testModuleUp() {
-        properties.setEndpoints(Map.of("A1", "http://localhost:8081/api/v1/academic-periods"));
+        properties.setEndpoints(Map.of("A1", "http://localhost:8080/api/v1/academic-periods"));
 
-        mockServer.expect(requestTo("http://localhost:8081/api/v1/academic-periods"))
+        mockServer.expect(requestTo("http://localhost:8080/api/v1/academic-periods"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
@@ -65,9 +67,9 @@ class IntegrationStatusServiceTest {
 
     @Test
     void testModuleDown() {
-        properties.setEndpoints(Map.of("A2", "http://localhost:8082/api/v1/teachers"));
+        properties.setEndpoints(Map.of("A2", "http://localhost:8080/api/v1/teachers"));
 
-        mockServer.expect(requestTo("http://localhost:8082/api/v1/teachers"))
+        mockServer.expect(requestTo("http://localhost:8080/api/v1/teachers"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withServerError());
 
@@ -79,9 +81,9 @@ class IntegrationStatusServiceTest {
 
     @Test
     void testModuleDegraded() {
-        properties.setEndpoints(Map.of("A5", "http://localhost:8085/api/v1/evaluations"));
+        properties.setEndpoints(Map.of("A5", "http://localhost:8080/api/v1/evaluations"));
 
-        mockServer.expect(requestTo("http://localhost:8085/api/v1/evaluations"))
+        mockServer.expect(requestTo("http://localhost:8080/api/v1/evaluations"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(request -> {
                     try {
@@ -96,5 +98,19 @@ class IntegrationStatusServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("DEGRADED", result.get(0).status());
+    }
+
+    @Test
+    void losEndpointsPorDefectoApuntanAlUnicoPuertoDelMonolito() {
+
+        Map<String, String> porDefecto = new IntegrationProperties().getEndpoints();
+
+        assertFalse(porDefecto.isEmpty(), "Debe haber modulos a consultar");
+
+        porDefecto.forEach((modulo, url) -> assertTrue(
+                url.startsWith("http://localhost:8080/api/v1/"),
+                "El modulo " + modulo + " apunta a " + url + ". U-Insight es un monolito: "
+                + "las 21 celulas viven en la misma aplicacion y en el unico puerto de "
+                + "server.port, no hay un puerto por celula."));
     }
 }

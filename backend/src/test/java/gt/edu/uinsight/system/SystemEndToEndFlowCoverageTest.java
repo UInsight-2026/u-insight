@@ -47,11 +47,11 @@ class SystemEndToEndFlowCoverageTest {
         "07 | A5 | POST /api/v1/evaluations | NO EJECUTADO | Requiere sectionId del paso 05",
         "08 | A6 | POST /api/v1/grades | NO EJECUTADO | Requiere evaluationId del paso 07 y studentId del paso 04",
         "09 | B1/B2/B3/B5/B6 | GET /api/v1/analytics/sections/{id}/summary | NO EJECUTADO | Requiere las calificaciones del paso 08",
-        "10 | B4 | GET /api/v1/analytics/sections/{id}/trend | NO EJECUTADO | Requiere las calificaciones del paso 08",
+        "10 | B4 | GET /api/v1/analytics/sections/{id}/trends | NO EJECUTADO | Requiere las calificaciones del paso 08; la ruta real es /trends en plural, no /trend",
         "11 | B7 | POST /api/v1/alert/b7/evaluar | NO EJECUTADO | Requiere el analisis del paso 09 y la tendencia del paso 10",
-        "12 | C3 | GET /api/v1/alerts/{id} | NO EJECUTADO | Requiere la alerta generada en el paso 11",
+        "12 | C3 | GET /api/v1/alerts/{id} | NO DISPONIBLE | No hay recurso de alertas: C3 solo expone /api/v1/alert-rules y /api/v1/reports/alerts es un reporte de C5",
         "13 | C4 | POST /api/v1/alerts/{id}/interventions | NO EJECUTADO | Requiere alertId del paso 12",
-        "14 | C4 | POST /api/v1/interventions/{id}/follow-ups | NO EJECUTADO | Requiere interventionId del paso 13",
+        "14 | C4 | POST /api/v1/interventions/{id}/follow-ups | NO DISPONIBLE | FollowUpController existe pero es un esqueleto: declara el paquete y documenta los endpoints en comentarios, sin @RestController ni mappings",
         "C7 | C7 | GET /api/v1/system/readiness | BLOQUEADO | " + BLOQUEO_B3,
         "C7 | C7 | GET /api/v1/system/integration-status | BLOQUEADO | " + BLOQUEO_B3
     };
