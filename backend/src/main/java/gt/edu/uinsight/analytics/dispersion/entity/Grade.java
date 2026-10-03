@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity(name = "DispersionGrade")
+@Entity(name = "DispersionGradeLegacy")
 @Table(name = "grade")
 public class Grade {
 
