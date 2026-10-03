@@ -1,4 +1,3 @@
-```java
 package gt.edu.uinsight.analytics.dispersion.service;
 
 import java.math.BigDecimal;
@@ -154,4 +153,3 @@ public class DispersionService {
         return DispersionClassification.HIGH_DISPERSION;
     }
 }
-```
