@@ -1,63 +1,50 @@
-
 package gt.edu.uinsight.analytics.dispersion.exception;
-
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
-
+ 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+ 
+import java.time.LocalDateTime;
+import java.util.Map;
+ 
 @RestControllerAdvice
 public class DispersionExceptionHandler {
-
-    @ExceptionHandler(DispersionDatosInvalidosException.class)
-    public ResponseEntity<Map<String, Object>> handleDatosInvalidos(
-            DispersionDatosInvalidosException ex) {
-
-        return buildResponse(
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                "Datos inválidos",
-                ex.getMessage());
+ 
+    @ExceptionHandler(SeccionNoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> 
+manejarSeccionNoEncontrada(SeccionNoEncontradaException ex) {
+        return construirRespuesta(HttpStatus.NOT_FOUND, ex.getMessage());
     }
-
+ 
+    @ExceptionHandler(CursoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> 
+manejarCursoNoEncontrado(CursoNoEncontradoException ex) {
+        return construirRespuesta(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+ 
     @ExceptionHandler(DispersionDatosInsuficientesException.class)
-    public ResponseEntity<Map<String, Object>> handleDatosInsuficientes(
-            DispersionDatosInsuficientesException ex) {
-
-        return buildResponse(
-                HttpStatus.UNPROCESSABLE_ENTITY,
-                "Datos insuficientes",
-                ex.getMessage());
+    public ResponseEntity<Map<String, Object>> 
+manejarDatosInsuficientes(DispersionDatosInsuficientesException ex) {
+        return construirRespuesta(HttpStatus.UNPROCESSABLE_ENTITY, 
+ex.getMessage());
     }
-
-    @ExceptionHandler(DispersionRecursoNoEncontradoException.class)
-    public ResponseEntity<Map<String, Object>> handleRecursoNoEncontrado(
-            DispersionRecursoNoEncontradoException ex) {
-
-        return buildResponse(
-                HttpStatus.NOT_FOUND,
-                "Recurso no encontrado",
-                ex.getMessage());
+ 
+    @ExceptionHandler(DispersionDatosInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> 
+manejarDatosInvalidos(DispersionDatosInvalidosException ex) {
+        return construirRespuesta(HttpStatus.UNPROCESSABLE_ENTITY, 
+ex.getMessage());
     }
-
-    private ResponseEntity<Map<String, Object>> buildResponse(
-            HttpStatus status,
-            String error,
-            String message) {
-
-        Map<String, Object> body = Map.of(
-                "timestamp", LocalDateTime.now(),
+ 
+    private ResponseEntity<Map<String, Object>> construirRespuesta(HttpStatus 
+status, String mensaje) {
+        Map<String, Object> cuerpo = Map.of(
+                "timestamp", LocalDateTime.now().toString(),
                 "status", status.value(),
-                "error", error,
-                "message", message,
-                "traceId", UUID.randomUUID().toString()
+                "error", status.getReasonPhrase(),
+                "message", mensaje
         );
-
-        return ResponseEntity
-                .status(status)
-                .body(body);
+        return ResponseEntity.status(status).body(cuerpo);
     }
 }
