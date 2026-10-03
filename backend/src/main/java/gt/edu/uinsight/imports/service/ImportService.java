@@ -1,11 +1,15 @@
 package gt.edu.uinsight.imports.service;
 
+import gt.edu.uinsight.grade.dto.BatchGradeResult;
+import gt.edu.uinsight.grade.dto.GradeRequest;
+import gt.edu.uinsight.grade.service.GradeService;
 import gt.edu.uinsight.imports.config.CsvImportProperties;
 import gt.edu.uinsight.imports.dto.response.ImportErrorDetail;
 import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
 import gt.edu.uinsight.imports.dto.response.ImportValidateResponse;
 import gt.edu.uinsight.imports.entity.EstadoImportacion;
 import gt.edu.uinsight.imports.entity.EstadoValidacion;
+import gt.edu.uinsight.imports.entity.EstudianteValido;
 import gt.edu.uinsight.imports.entity.Importacion;
 import gt.edu.uinsight.imports.entity.RegistroImportacion;
 import gt.edu.uinsight.imports.exception.ImportNotConfirmableException;
@@ -44,15 +48,18 @@ public class ImportService {
     private final RegistroImportacionRepository registroImportacionRepository;
     private final EstudianteValidoRepository estudianteValidoRepository;
     private final CsvImportProperties csvImportProperties;
+    private final GradeService gradeService;
 
     public ImportService(ImportacionRepository importacionRepository,
                           RegistroImportacionRepository registroImportacionRepository,
                           EstudianteValidoRepository estudianteValidoRepository,
-                          CsvImportProperties csvImportProperties) {
+                          CsvImportProperties csvImportProperties,
+                          GradeService gradeService) {
         this.importacionRepository = importacionRepository;
         this.registroImportacionRepository = registroImportacionRepository;
         this.estudianteValidoRepository = estudianteValidoRepository;
         this.csvImportProperties = csvImportProperties;
+        this.gradeService = gradeService;
     }
 
     public ImportValidateResponse validar(MultipartFile file, Long usuarioId) {
@@ -218,6 +225,22 @@ public class ImportService {
             throw new ImportNotConfirmableException(importId, importacion.getEstado());
         }
 
+        List<RegistroImportacion> validos = registroImportacionRepository
+                .findByImportacionIdAndEstadoValidacion(importId, EstadoValidacion.VALIDO, Pageable.unpaged())
+                .getContent();
+
+        if (!validos.isEmpty()) {
+            List<GradeRequest> gradeRequests = validos.stream()
+                    .map(this::toGradeRequest)
+                    .collect(Collectors.toList());
+
+            BatchGradeResult resultado = gradeService.registerBatch(gradeRequests);
+
+            log.info("GRADES_PROCESSED importId={} enviados={} registrados={} rechazados={}",
+                    importId, resultado.getTotalRequested(), resultado.getTotalRegistered(),
+                    resultado.getTotalRejected());
+        }
+
         importacion.setEstado(EstadoImportacion.CONFIRMADO);
         importacion = importacionRepository.save(importacion);
 
@@ -232,6 +255,28 @@ public class ImportService {
                 importacion.getRegistrosInvalidos(),
                 importacion.getFechaCarga()
         );
+    }
+
+    private GradeRequest toGradeRequest(RegistroImportacion registro) {
+        EstudianteValido estudiante = estudianteValidoRepository.findByStudentCode(registro.getStudentCode())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Estudiante validado pero no encontrado en estudiante_valido: " + registro.getStudentCode()));
+
+        GradeRequest request = new GradeRequest();
+        request.setStudentId(estudiante.getId());
+        request.setEvaluationId(resolveEvaluationId(registro.getEvaluationCode()));
+        request.setScore(registro.getScore());
+        return request;
+    }
+
+    private Long resolveEvaluationId(String evaluationCode) {
+        String digits = evaluationCode == null ? "" : evaluationCode.replaceAll("\\D+", "");
+        if (digits.isEmpty()) {
+            throw new IllegalStateException(
+                    "No se pudo resolver un evaluationId numerico desde evaluationCode=" + evaluationCode
+                            + ". Contrato temporal mientras A5 define el codigo real de evaluacion.");
+        }
+        return Long.parseLong(digits);
     }
 
     public Page<ImportErrorDetail> consultarErrores(Long importId, Pageable pageable) {
