@@ -6,6 +6,7 @@ import gt.edu.uinsight.report.mock.model.MockAlert;
 import gt.edu.uinsight.report.mock.model.MockCourse;
 import gt.edu.uinsight.report.mock.model.MockSection;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
  * celula no responde, el reporte devuelve lo que si tiene.
  */
 @Component
+@ConditionalOnProperty(name = "c5.data-source", havingValue = "mock", matchIfMissing = true)
 public class MockDataGateway implements ReportDataGateway {
 
     private final List<MockCourse> courses = new ArrayList<>();
@@ -97,6 +99,12 @@ public class MockDataGateway implements ReportDataGateway {
     @Override
     public List<MockAlert> findAlertsByCourseId(Long courseId) {
         return alerts.stream().filter(a -> a.getCourseId().equals(courseId)).collect(Collectors.toList());
+    }
+
+    /** Referencia simulada acordada en Semana 4; no representa una matricula real. */
+    @Override
+    public int countEnrolledStudents(Long sectionId) {
+        return findSectionById(sectionId).map(MockSection::getStudentsAtRisk).orElse(0);
     }
 
     // Un filtro nulo o vacio significa "no filtrar"

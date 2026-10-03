@@ -10,6 +10,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class MockDataGatewayTest {
     private final ReportDataGateway gateway = new MockDataGateway();
 
+    @Test
+    void conteoSimuladoUsaLaReferenciaAcordadaYSinSeccionDevuelveCero() {
+        assertEquals(8, gateway.countEnrolledStudents(10L));
+        assertEquals(0, gateway.countEnrolledStudents(999L));
+    }
+
     private ReportFilter period(String period) {
         return new ReportFilter(period, null, null, null, null, null);
     }
