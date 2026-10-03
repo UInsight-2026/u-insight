@@ -1,8 +1,10 @@
+```java
 package gt.edu.uinsight.analytics.dispersion.service;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import gt.edu.uinsight.analytics.dispersion.calculator.DispersionCalculator;
@@ -21,6 +23,12 @@ public class DispersionService {
     private final DispersionCalculator calculator;
     private final DispersionMapper mapper;
     private final SectionRepository sectionRepository;
+
+    @Value("${uinsight.dispersion.low-max}")
+    private BigDecimal lowMax;
+
+    @Value("${uinsight.dispersion.moderate-max}")
+    private BigDecimal moderateMax;
 
     public DispersionService(
             DispersionGradeRepository gradeRepository,
@@ -135,14 +143,15 @@ public class DispersionService {
     private DispersionClassification classify(
             BigDecimal standardDeviation) {
 
-        /*
-         * Aquí se deben utilizar los umbrales configurables
-         * definidos en la especificación de B3.
-         *
-         * No se colocan valores arbitrarios.
-         */
-        throw new UnsupportedOperationException(
-                "Los umbrales de dispersión aún no están configurados."
-        );
+        if (standardDeviation.compareTo(lowMax) <= 0) {
+            return DispersionClassification.LOW_DISPERSION;
+        }
+
+        if (standardDeviation.compareTo(moderateMax) <= 0) {
+            return DispersionClassification.MODERATE_DISPERSION;
+        }
+
+        return DispersionClassification.HIGH_DISPERSION;
     }
 }
+```
