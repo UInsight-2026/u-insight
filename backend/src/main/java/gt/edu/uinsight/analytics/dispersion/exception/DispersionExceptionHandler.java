@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class DispersionExceptionHandler {
 
-    @ExceptionHandler(DatosInvalidosException.class)
+    @ExceptionHandler(DispersionDatosInvalidosException.class)
     public ResponseEntity<Map<String, Object>> handleDatosInvalidos(
-            DatosInvalidosException ex) {
+            DispersionDatosInvalidosException ex) {
 
         return buildResponse(
                 HttpStatus.UNPROCESSABLE_ENTITY,
@@ -23,9 +23,9 @@ public class DispersionExceptionHandler {
                 ex.getMessage());
     }
 
-    @ExceptionHandler(DatosInsuficientesException.class)
+    @ExceptionHandler(DispersionDatosInsuficientesException.class)
     public ResponseEntity<Map<String, Object>> handleDatosInsuficientes(
-            DatosInsuficientesException ex) {
+            DispersionDatosInsuficientesException ex) {
 
         return buildResponse(
                 HttpStatus.UNPROCESSABLE_ENTITY,
