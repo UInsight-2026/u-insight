@@ -10,6 +10,7 @@ import gt.edu.uinsight.analytics.dispersion.calculator.DispersionCalculator;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionRecursoNoEncontradoException;
 import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
 import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
@@ -46,7 +47,7 @@ public class DispersionService {
         validarId(sectionId, "sección");
 
         if (!sectionRepository.existsById(sectionId)) {
-            throw new DispersionDatosInvalidosException(
+            throw new DispersionRecursoNoEncontradoException(
                     "La sección con ID " + sectionId + " no existe."
             );
         }
@@ -90,7 +91,7 @@ public class DispersionService {
         validarId(courseId, "curso");
 
         if (sectionRepository.findByCourseId(courseId).isEmpty()) {
-            throw new DispersionDatosInvalidosException(
+            throw new DispersionRecursoNoEncontradoException(
                     "No existe un curso con ID " + courseId
                             + " asociado a una sección."
             );
