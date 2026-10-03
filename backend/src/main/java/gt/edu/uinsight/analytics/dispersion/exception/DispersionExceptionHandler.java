@@ -33,6 +33,16 @@ public class DispersionExceptionHandler {
                 ex.getMessage());
     }
 
+    @ExceptionHandler(DispersionRecursoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleRecursoNoEncontrado(
+            DispersionRecursoNoEncontradoException ex) {
+
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                "Recurso no encontrado",
+                ex.getMessage());
+    }
+
     private ResponseEntity<Map<String, Object>> buildResponse(
             HttpStatus status,
             String error,
