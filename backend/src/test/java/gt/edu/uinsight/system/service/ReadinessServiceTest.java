@@ -165,4 +165,115 @@ class ReadinessServiceTest {
                 .anyMatch(detail ->
                         detail.equals("SystemCheckLogRepository: DOWN")));
     }
+
+    /**
+     * Regresion. El perfil de test no declara server.port ni springdoc.swagger-ui.path:
+     * src/test/resources/application.properties tapa al de main y no los trae. Exigirlos
+     * declarados hacia que readiness devolviera 503 con la aplicacion sana, y la prueba
+     * E2E del flujo oficial, que espera 200, no podia pasar nunca.
+     */
+    @Test
+    void shouldStayReadyWhenPropertiesWithFrameworkDefaultAreNotDeclared() {
+
+        DatabaseHealthIndicator databaseHealthIndicator =
+                mock(DatabaseHealthIndicator.class);
+
+        Environment environment = mock(Environment.class);
+
+        SystemCheckLogRepository repository =
+                mock(SystemCheckLogRepository.class);
+
+        IntegrationStatusService integrationStatusService =
+                mock(IntegrationStatusService.class);
+
+        SystemEventLogger systemEventLogger =
+                mock(SystemEventLogger.class);
+
+        when(databaseHealthIndicator.check()).thenReturn(CheckStatus.UP);
+
+        when(environment.getProperty("spring.datasource.url"))
+                .thenReturn("jdbc:h2:mem:uinsight-test");
+
+        when(environment.getProperty("spring.datasource.username"))
+                .thenReturn("sa");
+
+        when(environment.getProperty("server.port"))
+                .thenReturn(null);
+
+        when(environment.getProperty("springdoc.swagger-ui.path"))
+                .thenReturn(null);
+
+        when(repository.count()).thenReturn(0L);
+
+        ReadinessService service = new ReadinessService(
+                databaseHealthIndicator,
+                environment,
+                repository,
+                integrationStatusService,
+                systemEventLogger
+        );
+
+        ReadinessResponse response = service.checkReadiness();
+
+        assertTrue(response.ready());
+        assertEquals(CheckStatus.UP, response.configuration());
+
+        assertTrue(response.configurationDetails().stream()
+                .anyMatch(detail ->
+                        detail.equals("server.port: OK (valor por defecto 8080)")));
+
+        assertTrue(response.configurationDetails().stream()
+                .anyMatch(detail -> detail.equals(
+                        "springdoc.swagger-ui.path: OK (valor por defecto /swagger-ui.html)")));
+    }
+
+    @Test
+    void shouldReturnDownConfigurationWhenServerPortIsOutOfRange() {
+
+        DatabaseHealthIndicator databaseHealthIndicator =
+                mock(DatabaseHealthIndicator.class);
+
+        Environment environment = mock(Environment.class);
+
+        SystemCheckLogRepository repository =
+                mock(SystemCheckLogRepository.class);
+
+        IntegrationStatusService integrationStatusService =
+                mock(IntegrationStatusService.class);
+
+        SystemEventLogger systemEventLogger =
+                mock(SystemEventLogger.class);
+
+        when(databaseHealthIndicator.check()).thenReturn(CheckStatus.UP);
+
+        when(environment.getProperty("spring.datasource.url"))
+                .thenReturn("jdbc:h2:mem:uinsight-test");
+
+        when(environment.getProperty("spring.datasource.username"))
+                .thenReturn("sa");
+
+        when(environment.getProperty("server.port"))
+                .thenReturn("99999");
+
+        when(environment.getProperty("springdoc.swagger-ui.path"))
+                .thenReturn("/swagger-ui.html");
+
+        when(repository.count()).thenReturn(0L);
+
+        ReadinessService service = new ReadinessService(
+                databaseHealthIndicator,
+                environment,
+                repository,
+                integrationStatusService,
+                systemEventLogger
+        );
+
+        ReadinessResponse response = service.checkReadiness();
+
+        assertFalse(response.ready());
+        assertEquals(CheckStatus.DOWN, response.configuration());
+
+        assertTrue(response.configurationDetails().stream()
+                .anyMatch(detail -> detail.startsWith("server.port: INVALIDO")));
+    }
 }
