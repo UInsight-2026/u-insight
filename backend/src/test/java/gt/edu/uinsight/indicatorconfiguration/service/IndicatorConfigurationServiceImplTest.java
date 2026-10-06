@@ -48,8 +48,7 @@ class IndicatorConfigurationServiceImplTest {
         CreateIndicatorConfigurationRequest request = createRequest(
                 "HIGH_RISK_PERCENTAGE",
                 "50",
-                "Porcentaje de riesgo"
-        );
+                "Porcentaje de riesgo");
 
         IndicatorConfiguration entity = entity(null, "HIGH_RISK_PERCENTAGE", "50", "Porcentaje de riesgo");
         IndicatorConfiguration saved = entity(1L, "HIGH_RISK_PERCENTAGE", "50", "Porcentaje de riesgo");
@@ -71,8 +70,7 @@ class IndicatorConfigurationServiceImplTest {
         CreateIndicatorConfigurationRequest request = createRequest(
                 "HIGH_RISK_PERCENTAGE",
                 "50",
-                null
-        );
+                null);
 
         when(repository.existsByKey("HIGH_RISK_PERCENTAGE")).thenReturn(true);
 
@@ -119,8 +117,7 @@ class IndicatorConfigurationServiceImplTest {
 
         assertThrows(
                 IndicatorConfigurationNotFoundException.class,
-                () -> service.findByKey("DOES_NOT_EXIST")
-        );
+                () -> service.findByKey("DOES_NOT_EXIST"));
     }
 
     @Test
@@ -135,8 +132,7 @@ class IndicatorConfigurationServiceImplTest {
                 "HIGH_RISK_PERCENTAGE",
                 "55",
                 "Valor actualizado",
-                entity.getUpdatedAt()
-        );
+                entity.getUpdatedAt());
 
         when(repository.findByKey("HIGH_RISK_PERCENTAGE")).thenReturn(Optional.of(entity));
         when(repository.save(entity)).thenReturn(entity);
@@ -156,8 +152,7 @@ class IndicatorConfigurationServiceImplTest {
 
         assertThrows(
                 IndicatorConfigurationBadRequestException.class,
-                () -> service.update("HIGH_RISK_PERCENTAGE", request)
-        );
+                () -> service.update("HIGH_RISK_PERCENTAGE", request));
 
         verify(repository, never()).findByKey(any(String.class));
     }
@@ -169,10 +164,54 @@ class IndicatorConfigurationServiceImplTest {
 
         assertThrows(
                 IndicatorConfigurationBadRequestException.class,
-                () -> service.update("HIGH_RISK_PERCENTAGE", request)
-        );
+                () -> service.update("HIGH_RISK_PERCENTAGE", request));
 
         verify(repository, never()).save(any(IndicatorConfiguration.class));
+    }
+
+    @Test
+    void update_debeLanzarExcepcion_cuandoLaConfiguracionNoExiste() {
+        UpdateIndicatorConfigurationRequest request = new UpdateIndicatorConfigurationRequest();
+        request.setValue("70");
+
+        when(repository.findByKey("DOES_NOT_EXIST")).thenReturn(Optional.empty());
+
+        assertThrows(
+                IndicatorConfigurationNotFoundException.class,
+                () -> service.update("DOES_NOT_EXIST", request));
+
+        verify(repository, never()).save(any(IndicatorConfiguration.class));
+    }
+
+    @Test
+    void update_debeConservarValor_cuandoSoloSeActualizaDescripcion() {
+        UpdateIndicatorConfigurationRequest request = new UpdateIndicatorConfigurationRequest();
+        request.setDescription("Nueva descripcion");
+
+        IndicatorConfiguration entity = entity(
+                1L,
+                "HIGH_RISK_PERCENTAGE",
+                "50",
+                "Descripcion anterior");
+
+        IndicatorConfigurationResponse expected = new IndicatorConfigurationResponse(
+                1L,
+                "HIGH_RISK_PERCENTAGE",
+                "50",
+                "Nueva descripcion",
+                entity.getUpdatedAt());
+
+        when(repository.findByKey("HIGH_RISK_PERCENTAGE")).thenReturn(Optional.of(entity));
+        when(repository.save(entity)).thenReturn(entity);
+        when(mapper.toResponse(entity)).thenReturn(expected);
+
+        IndicatorConfigurationResponse actual = service.update("HIGH_RISK_PERCENTAGE", request);
+
+        assertEquals("50", entity.getValue());
+        assertEquals("Nueva descripcion", entity.getDescription());
+        assertEquals(expected, actual);
+
+        verify(repository).save(entity);
     }
 
     private CreateIndicatorConfigurationRequest createRequest(String key, String value, String description) {
@@ -199,7 +238,6 @@ class IndicatorConfigurationServiceImplTest {
                 entity.getKey(),
                 entity.getValue(),
                 entity.getDescription(),
-                entity.getUpdatedAt()
-        );
+                entity.getUpdatedAt());
     }
 }
