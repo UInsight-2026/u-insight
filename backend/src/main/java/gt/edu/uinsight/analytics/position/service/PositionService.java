@@ -70,6 +70,14 @@ public class PositionService {
         return new SectionPositionResponse(sectionId, ordenados.size(), quartiles, percentiles);
     }
 
+    /**
+     * Sobrecarga de compatibilidad para llamadores existentes (p.ej. B5) que
+     * todavia no pasan sectionId explicito.
+     */
+    public StudentPositionResponse getStudentPosition(Long studentId) {
+        return getStudentPosition(studentId, null);
+    }
+
     public StudentPositionResponse getStudentPosition(Long studentId, Long sectionId) {
         log.info("Iniciando calculo de posicion individual para el estudiante ID: {}", studentId);
 
