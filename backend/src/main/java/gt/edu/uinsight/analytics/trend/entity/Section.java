@@ -9,13 +9,16 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "section")
 public class Section {
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     Long periodId, courseId, teacherId;
     String sectionCode;
     String status;
+
+    protected Section() {
+    }
 
     public Section(Long periodId, Long courseId, Long teacherId, String sectionCode, String status) {
         this.periodId = periodId;
@@ -40,6 +43,7 @@ public class Section {
     public Long getTeacherId() {
         return teacherId;
     }
+
     public String getSectionCode() {
         return sectionCode;
     }
@@ -51,19 +55,21 @@ public class Section {
     public void setPeriodId(Long periodId) {
         this.periodId = periodId;
     }
+
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }
+
     public void setTeacherId(Long teacherId) {
         this.teacherId = teacherId;
     }
+
     public void setSectionCode(String sectionCode) {
         this.sectionCode = sectionCode;
     }
+
     public void setStatus(String status) {
         this.status = status;
     }
-    
 
-    
 }

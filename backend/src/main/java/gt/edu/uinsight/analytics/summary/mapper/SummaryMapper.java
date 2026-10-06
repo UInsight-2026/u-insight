@@ -1,7 +1,6 @@
 package gt.edu.uinsight.analytics.summary.mapper;
 
-
-import gt.edu.uinsight.analytics.position.dto.PositionResponse;
+import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.summary.dto.response.SectionSummaryResponse;
@@ -37,22 +36,22 @@ public class SummaryMapper {
     /**
      * Construye la respuesta consolidada de la sección.
      *
-     * @param sectionId        id de la sección consultada
-     * @param centralTendency  resultado de B1, vacío si falló/timeout
-     * @param position         resultado de B2, vacío si falló/timeout
-     * @param dispersion       resultado de B3, vacío si falló/timeout
-     * @param trend            resultado de B4, vacío si falló/timeout
-     * @param studentsAtRisk   conteo de estudiantes en riesgo (de B5 / riskevaluation)
+     * @param sectionId       id de la sección consultada
+     * @param centralTendency resultado de B1, vacío si falló/timeout
+     * @param position        resultado de B2, vacío si falló/timeout
+     * @param dispersion      resultado de B3, vacío si falló/timeout
+     * @param trend           resultado de B4, vacío si falló/timeout
+     * @param studentsAtRisk  conteo de estudiantes en riesgo (de B5 /
+     *                        riskevaluation)
      * @return SectionSummaryResponse listo para devolver en el controller
      */
     public SectionSummaryResponse toSectionSummaryResponse(
             Long sectionId,
             Optional<CentralTendencyResponse> centralTendency,
-            Optional<PositionResponse> position,
+            Optional<PositionData> position,
             Optional<DispersionResponse> dispersion,
             Optional<TrendResponse> trend,
-            Integer studentsAtRisk
-    ) {
+            Integer studentsAtRisk) {
         List<String> unavailableComponents = new ArrayList<>();
 
         if (centralTendency.isEmpty()) {

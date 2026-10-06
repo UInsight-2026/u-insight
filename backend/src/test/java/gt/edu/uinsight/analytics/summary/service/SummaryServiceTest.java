@@ -15,13 +15,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import gt.edu.uinsight.analytics.summary.dto.external.CentralTendencyData;
-import gt.edu.uinsight.analytics.summary.dto.external.DispersionData;
+import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
+import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
-import gt.edu.uinsight.analytics.summary.dto.external.StudentComparisonData;
-import gt.edu.uinsight.analytics.summary.dto.external.TrendData;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
+import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 
 @ExtendWith(MockitoExtension.class)
 class SummaryServiceTest {
@@ -42,11 +42,21 @@ class SummaryServiceTest {
     @Test
     @DisplayName("1. Todo disponible: retorna el resumen completo sin componentes no disponibles")
     void getSummary_AllAvailable_Success() {
-        when(analyticsClientRepository.getCentralTendency(sectionId)).thenReturn(mock(CentralTendencyData.class));
-        when(analyticsClientRepository.getPosition(sectionId)).thenReturn(mock(PositionData.class));
-        when(analyticsClientRepository.getDispersion(sectionId)).thenReturn(mock(DispersionData.class));
-        when(analyticsClientRepository.getTrend(sectionId)).thenReturn(mock(TrendData.class));
-        when(analyticsClientRepository.getStudentComparison(sectionId)).thenReturn(mock(StudentComparisonData.class));
+
+        when(analyticsClientRepository.getCentralTendency(sectionId))
+                .thenReturn(mock(CentralTendencyResponse.class));
+
+        when(analyticsClientRepository.getPosition(sectionId))
+                .thenReturn(mock(PositionData.class));
+
+        when(analyticsClientRepository.getDispersion(sectionId))
+                .thenReturn(mock(DispersionResponse.class));
+
+        when(analyticsClientRepository.getTrend(sectionId))
+                .thenReturn(mock(TrendResponse.class));
+
+        when(analyticsClientRepository.getStudentComparison(sectionId))
+                .thenReturn(mock(StudentComparisonResponse.class));
 
         SectionSummary result = summaryService.getSummary(sectionId);
 
@@ -58,11 +68,21 @@ class SummaryServiceTest {
     @Test
     @DisplayName("2. Fallo parcial: cuando un componente falla, se agrega a unavailableComponents sin romper la respuesta")
     void getSummary_PartialFailure_SuccessWithUnavailableComponent() {
-        when(analyticsClientRepository.getCentralTendency(sectionId)).thenReturn(mock(CentralTendencyData.class));
-        when(analyticsClientRepository.getPosition(sectionId)).thenReturn(mock(PositionData.class));
-        when(analyticsClientRepository.getDispersion(sectionId)).thenReturn(mock(DispersionData.class));
-        when(analyticsClientRepository.getTrend(sectionId)).thenThrow(new RuntimeException("Error de conexión"));
-        when(analyticsClientRepository.getStudentComparison(sectionId)).thenReturn(mock(StudentComparisonData.class));
+
+        when(analyticsClientRepository.getCentralTendency(sectionId))
+                .thenReturn(mock(CentralTendencyResponse.class));
+
+        when(analyticsClientRepository.getPosition(sectionId))
+                .thenReturn(mock(PositionData.class));
+
+        when(analyticsClientRepository.getDispersion(sectionId))
+                .thenReturn(mock(DispersionResponse.class));
+
+        when(analyticsClientRepository.getTrend(sectionId))
+                .thenThrow(new RuntimeException("Error de conexión"));
+
+        when(analyticsClientRepository.getStudentComparison(sectionId))
+                .thenReturn(mock(StudentComparisonResponse.class));
 
         SectionSummary result = summaryService.getSummary(sectionId);
 
@@ -74,15 +94,25 @@ class SummaryServiceTest {
     @Test
     @DisplayName("3. Fallo total / Datos insuficientes: cuando todos devuelven null o error")
     void getSummary_TotalFailure_ReturnsSummaryWithAllUnavailable() {
-        when(analyticsClientRepository.getCentralTendency(anyLong())).thenReturn(null);
-        when(analyticsClientRepository.getPosition(anyLong())).thenReturn(null);
-        when(analyticsClientRepository.getDispersion(anyLong())).thenThrow(new RuntimeException("Error"));
-        when(analyticsClientRepository.getTrend(anyLong())).thenThrow(new RuntimeException("Error"));
-        when(analyticsClientRepository.getStudentComparison(anyLong())).thenThrow(new RuntimeException("Error"));
+
+        when(analyticsClientRepository.getCentralTendency(anyLong()))
+                .thenReturn(null);
+
+        when(analyticsClientRepository.getPosition(anyLong()))
+                .thenReturn(null);
+
+        when(analyticsClientRepository.getDispersion(anyLong()))
+                .thenThrow(new RuntimeException("Error"));
+
+        when(analyticsClientRepository.getTrend(anyLong()))
+                .thenThrow(new RuntimeException("Error"));
+
+        when(analyticsClientRepository.getStudentComparison(anyLong()))
+                .thenThrow(new RuntimeException("Error"));
 
         SectionSummary result = summaryService.getSummary(sectionId);
 
         assertNotNull(result);
         assertEquals(5, result.getUnavailableComponents().size());
     }
-}   
+}
