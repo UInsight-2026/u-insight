@@ -5,8 +5,8 @@ import java.util.List;
 /**
  * Respuesta de GET /api/v1/reports/courses/{id}.
  *
- * Semana 3: se agrega el desglose de las secciones
- * pertenecientes al curso.
+ * Semana 4: permite entregar el reporte aun cuando alguna
+ * fuente externa no se encuentre disponible.
  */
 public class CourseReportResponse {
 
@@ -16,6 +16,7 @@ public class CourseReportResponse {
     private final int studentsAtRisk;
     private final int activeAlerts;
     private final List<CourseSectionItemResponse> sections;
+    private final List<String> unavailableSources;
 
     public CourseReportResponse(
             Long courseId,
@@ -23,7 +24,8 @@ public class CourseReportResponse {
             int students,
             int studentsAtRisk,
             int activeAlerts,
-            List<CourseSectionItemResponse> sections) {
+            List<CourseSectionItemResponse> sections,
+            List<String> unavailableSources) {
 
         this.courseId = courseId;
         this.courseName = courseName;
@@ -31,6 +33,7 @@ public class CourseReportResponse {
         this.studentsAtRisk = studentsAtRisk;
         this.activeAlerts = activeAlerts;
         this.sections = sections;
+        this.unavailableSources = unavailableSources;
     }
 
     public Long getCourseId() {
@@ -55,5 +58,9 @@ public class CourseReportResponse {
 
     public List<CourseSectionItemResponse> getSections() {
         return sections;
+    }
+
+    public List<String> getUnavailableSources() {
+        return unavailableSources;
     }
 }

@@ -1,12 +1,12 @@
 package gt.edu.uinsight.report.dto.response;
 
+import java.util.List;
+
 /**
  * Respuesta de GET /api/v1/reports/sections/{id}.
  *
- * Semana 3: se agregan studentsAtRisk y el bloque analytics,
- * que contiene los indicadores calculados por la Celula B6.
- * Si B6 no responde, analytics llega con available = false
- * y el resto del reporte se entrega igual.
+ * Semana 4: expone los datos reales de periodo, docente y curso,
+ * ademas del origen del riesgo y las fuentes no disponibles.
  */
 public class SectionReportResponse {
 
@@ -17,13 +17,24 @@ public class SectionReportResponse {
     private final int activeAlerts;
     private final AnalyticsSnapshot analytics;
 
+    private final String periodCode;
+    private final String teacherCode;
+    private final Long courseId;
+    private final String riskSource;
+    private final List<String> unavailableSources;
+
     public SectionReportResponse(
             Long sectionId,
             String sectionName,
             String riskLevel,
             int studentsAtRisk,
             int activeAlerts,
-            AnalyticsSnapshot analytics) {
+            AnalyticsSnapshot analytics,
+            String periodCode,
+            String teacherCode,
+            Long courseId,
+            String riskSource,
+            List<String> unavailableSources) {
 
         this.sectionId = sectionId;
         this.sectionName = sectionName;
@@ -31,6 +42,11 @@ public class SectionReportResponse {
         this.studentsAtRisk = studentsAtRisk;
         this.activeAlerts = activeAlerts;
         this.analytics = analytics;
+        this.periodCode = periodCode;
+        this.teacherCode = teacherCode;
+        this.courseId = courseId;
+        this.riskSource = riskSource;
+        this.unavailableSources = unavailableSources;
     }
 
     public Long getSectionId() {
@@ -55,5 +71,25 @@ public class SectionReportResponse {
 
     public AnalyticsSnapshot getAnalytics() {
         return analytics;
+    }
+
+    public String getPeriodCode() {
+        return periodCode;
+    }
+
+    public String getTeacherCode() {
+        return teacherCode;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public String getRiskSource() {
+        return riskSource;
+    }
+
+    public List<String> getUnavailableSources() {
+        return unavailableSources;
     }
 }
