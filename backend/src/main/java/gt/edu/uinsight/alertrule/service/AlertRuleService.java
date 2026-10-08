@@ -1,11 +1,11 @@
-package gt.edu.uinsight.alertrule.service;
 
+package gt.edu.uinsight.alertrule.service;
 import gt.edu.uinsight.alertrule.dto.request.CreateAlertRuleRequest;
 import gt.edu.uinsight.alertrule.dto.response.AlertRuleResponse;
 import gt.edu.uinsight.alertrule.entity.AlertRule;
 import gt.edu.uinsight.alertrule.repository.AlertRuleRepository;
+import gt.edu.uinsight.intervention.service.AlertRuleNotFoundException;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,13 +30,26 @@ public class AlertRuleService {
     }
 
     public List<AlertRuleResponse> getRules(Boolean active) {
-        List<AlertRule> rules = (active != null) ? repository.findByActive(active) : repository.findAll();
-        return rules.stream().map(this::mapToResponse).collect(Collectors.toList());
+        List<AlertRule> rules = (active != null)
+                ? repository.findByActive(active)
+                : repository.findAll();
+
+        return rules.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Permite consultar todas las reglas sin especificar el estado.
+    public List<AlertRuleResponse> getRules() {
+        return getRules(null);
     }
 
     public AlertRuleResponse getRuleById(Long id) {
         AlertRule rule = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Regla no encontrada con id: " + id));
+                .orElseThrow(() -> new AlertRuleNotFoundException(
+                        "Regla no encontrada con id: " + id
+                ));
+
         return mapToResponse(rule);
     }
 
@@ -49,6 +62,7 @@ public class AlertRuleService {
         response.setSeverity(rule.getSeverity());
         response.setActive(rule.getActive());
         response.setCreatedAt(rule.getCreatedAt());
+
         return response;
     }
 }
