@@ -27,13 +27,12 @@ public class TrendController {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);
          if(trendResponse == null){
-            //error aca si algo fallo y la seccion no existe
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                Map.of(
-                    "mensaje","La seccion con id"+id+" no existe",
-                    "codigo",404
-                )
-            );
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                 Map.of(
+                     "mensaje","La sección con id "+id+" no existe",
+                     "codigo",404
+                 )
+             );
          }
          return ResponseEntity.ok(trendResponse);
      }
