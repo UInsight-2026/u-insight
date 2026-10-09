@@ -2,7 +2,6 @@ package gt.edu.uinsight.alert.engine;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import gt.edu.uinsight.alert.dto.section.SectionIndicatorsDto;
 
 public class RiskEngine {
