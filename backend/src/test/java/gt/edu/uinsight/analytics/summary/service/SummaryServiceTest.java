@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
-import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
@@ -86,16 +85,9 @@ class SummaryServiceTest {
         private final boolean unavailable;
         private final boolean trendFails;
 
-<<<<<<< HEAD
-    private void stubPositionAvailable() {
-        SectionPositionResponse data = mock(SectionPositionResponse.class);
-        when(analyticsClientRepository.getPosition(SECTION_ID)).thenReturn(data);
-    }
-=======
         private FixtureAnalyticsClientRepository() {
             this(false, false);
         }
->>>>>>> develop
 
         private FixtureAnalyticsClientRepository(boolean unavailable, boolean trendFails) {
             this.unavailable = unavailable;
