@@ -1,7 +1,11 @@
 package gt.edu.uinsight.teacher.controller;
 
+import gt.edu.uinsight.teacher.dto.TeacherRequest;
+import gt.edu.uinsight.teacher.dto.TeacherSectionResponse;
+import gt.edu.uinsight.teacher.dto.TeacherStatusRequest;
 import gt.edu.uinsight.teacher.model.Teacher;
-import gt.edu.uinsight.teacher.repository.TeacherRepository;
+import gt.edu.uinsight.teacher.service.TeacherService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,33 +17,53 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class TeacherController {
 
-    private final TeacherRepository teacherRepository;
+    private final TeacherService teacherService;
 
-    public TeacherController(TeacherRepository teacherRepository) {
-        this.teacherRepository = teacherRepository;
+    public TeacherController(TeacherService teacherService) {
+        this.teacherService = teacherService;
     }
 
     @PostMapping
-    public ResponseEntity<Teacher> createTeacher(@RequestBody Teacher teacher) {
-        if (teacher.getStatus() == null || teacher.getStatus().isEmpty()) {
-            teacher.setStatus("ACTIVE");
-        }
-        Teacher savedTeacher = teacherRepository.save(teacher);
-        return new ResponseEntity<>(savedTeacher, HttpStatus.CREATED);
+    public ResponseEntity<Teacher> createTeacher(@Valid @RequestBody TeacherRequest request) {
+        return new ResponseEntity<>(teacherService.create(request), HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<List<Teacher>> getAllTeachers() {
-        List<Teacher> teachers = teacherRepository.findAll();
-        return ResponseEntity.ok(teachers);
+        return ResponseEntity.ok(teacherService.findAll());
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<Teacher> getTeacherById(@PathVariable Long id) {
-        Teacher teacher = teacherRepository.findById(id).orElse(null);
-        if (teacher != null) {
-    return ResponseEntity.ok(teacher);
-    } else {
-    return ResponseEntity.notFound().build();
-  }
- }
+        return ResponseEntity.ok(teacherService.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Teacher> updateTeacher(@PathVariable Long id,
+                                                 @Valid @RequestBody TeacherRequest request) {
+        return ResponseEntity.ok(teacherService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Teacher> updateTeacherStatus(@PathVariable Long id,
+                                                       @Valid @RequestBody TeacherStatusRequest request) {
+        return ResponseEntity.ok(teacherService.changeStatus(id, request.getStatus()));
+    }
+
+    @GetMapping("/{id}/sections")
+    public ResponseEntity<List<TeacherSectionResponse>> getTeacherSections(@PathVariable Long id) {
+        return ResponseEntity.ok(teacherService.findSectionsByTeacher(id));
+    }
+
+    @PutMapping("/{id}/sections/{sectionId}")
+    public ResponseEntity<TeacherSectionResponse> assignSection(@PathVariable Long id,
+                                                                @PathVariable Long sectionId) {
+        return ResponseEntity.ok(teacherService.assignToSection(id, sectionId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTeacher(@PathVariable Long id) {
+        teacherService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
