@@ -1,6 +1,7 @@
 package gt.edu.uinsight.report.mock;
 
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
+import gt.edu.uinsight.report.gateway.ReportDataGateway;
 import gt.edu.uinsight.report.mock.model.MockAlert;
 import gt.edu.uinsight.report.mock.model.MockCourse;
 import gt.edu.uinsight.report.mock.model.MockSection;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  * celula no responde, el reporte devuelve lo que si tiene.
  */
 @Component
-public class MockDataGateway {
+public class MockDataGateway implements ReportDataGateway {
 
     private final List<MockCourse> courses = new ArrayList<>();
     private final List<MockSection> sections = new ArrayList<>();
@@ -37,6 +38,7 @@ public class MockDataGateway {
 
     // Cursos (simulan a la Celula A1)
 
+    @Override
     public List<MockCourse> findCourses(ReportFilter filter) {
         return courses.stream()
                 .filter(c -> matches(filter.getPeriod(), c.getPeriod()))
@@ -45,12 +47,14 @@ public class MockDataGateway {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Optional<MockCourse> findCourseById(Long id) {
         return courses.stream().filter(c -> c.getId().equals(id)).findFirst();
     }
 
     // Secciones (simulan a A4 + el riesgo calculado por B7)
 
+    @Override
     public List<MockSection> findSections(ReportFilter filter) {
         return sections.stream()
                 .filter(s -> matches(filter.getPeriod(), s.getPeriod()))
@@ -61,16 +65,19 @@ public class MockDataGateway {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Optional<MockSection> findSectionById(Long id) {
         return sections.stream().filter(s -> s.getId().equals(id)).findFirst();
     }
 
+    @Override
     public List<MockSection> findSectionsByCourseId(Long courseId) {
         return sections.stream().filter(s -> s.getCourseId().equals(courseId)).collect(Collectors.toList());
     }
 
     // Alertas (simulan a C2 + C3)
 
+    @Override
     public List<MockAlert> findAlerts(ReportFilter filter) {
         return alerts.stream()
                 .filter(a -> matches(filter.getPeriod(), a.getPeriod()))
@@ -82,10 +89,12 @@ public class MockDataGateway {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public List<MockAlert> findAlertsBySectionId(Long sectionId) {
         return alerts.stream().filter(a -> a.getSectionId().equals(sectionId)).collect(Collectors.toList());
     }
 
+    @Override
     public List<MockAlert> findAlertsByCourseId(Long courseId) {
         return alerts.stream().filter(a -> a.getCourseId().equals(courseId)).collect(Collectors.toList());
     }
@@ -96,7 +105,7 @@ public class MockDataGateway {
         return filterValue == null || filterValue.isBlank() || actualValue.equalsIgnoreCase(filterValue);
     }
 
-    // Datos simulados: los numeros de /overview sin filtros (12 alertas
+    // Datos simulados: los numeros de /overview?period=2026-2 (12 alertas
     // activas, 4 secciones en alto riesgo, 36 estudiantes en riesgo,
     // tendencia NEGATIVE) coinciden a proposito con el ejemplo del
     // documento de diseno de la Semana 1.
@@ -105,6 +114,7 @@ public class MockDataGateway {
         courses.add(new MockCourse(1L, "PROG2", "Programacion II", "DOC-101", "Cristopher Munoz", "2026-2", 120));
         courses.add(new MockCourse(2L, "BD1", "Bases de Datos I", "DOC-102", "Ana Paredes", "2026-2", 95));
         courses.add(new MockCourse(3L, "EST1", "Estadistica I", "DOC-103", "Marco Ramirez", "2026-2", 110));
+        courses.add(new MockCourse(4L, "PROG1", "Programacion I", "DOC-101", "Cristopher Munoz", "2026-1", 100));
     }
 
     private void seedSections() {
@@ -120,6 +130,10 @@ public class MockDataGateway {
         sections.add(new MockSection(30L, "A", 3L, "EST1", "DOC-103", "2026-2", "HIGH", 5));
         sections.add(new MockSection(31L, "B", 3L, "EST1", "DOC-103", "2026-2", "MEDIUM", 2));
         sections.add(new MockSection(32L, "C", 3L, "EST1", "DOC-103", "2026-2", "LOW", 0));
+        // Periodo historico: los filtros deben separar ambos conjuntos.
+        sections.add(new MockSection(40L, "A", 4L, "PROG1", "DOC-101", "2026-1", "LOW", 1));
+        sections.add(new MockSection(41L, "B", 4L, "PROG1", "DOC-101", "2026-1", "LOW", 0));
+        sections.add(new MockSection(42L, "C", 4L, "PROG1", "DOC-101", "2026-1", "MEDIUM", 2));
     }
 
     private void seedAlerts() {
@@ -180,5 +194,11 @@ public class MockDataGateway {
         alerts.add(new MockAlert(1014L, 31L, "B", 3L, "EST1", "DOC-103", "2026-2",
                 "DISPERSION", "MEDIUM", "DISMISSED",
                 "Alerta descartada tras revision del docente", "2026-09-04T11:20:00"));
+        alerts.add(new MockAlert(1015L, 40L, "A", 4L, "PROG1", "DOC-101", "2026-1",
+                "PERFORMANCE", "LOW", "RESOLVED",
+                "Riesgo de rendimiento resuelto al cierre del periodo", "2026-05-12T10:00:00"));
+        alerts.add(new MockAlert(1016L, 42L, "C", 4L, "PROG1", "DOC-101", "2026-1",
+                "DISPERSION", "MEDIUM", "NEW",
+                "Dispersion alta detectada al cierre del periodo", "2026-05-20T16:45:00"));
     }
 }

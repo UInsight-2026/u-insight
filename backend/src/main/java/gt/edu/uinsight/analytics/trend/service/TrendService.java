@@ -7,19 +7,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.entity.Evaluation;
-import gt.edu.uinsight.analytics.trend.entity.Grade;
 import gt.edu.uinsight.analytics.trend.exception.TrendCalculationException;
 import gt.edu.uinsight.analytics.trend.mapper.TrendMapper;
 import gt.edu.uinsight.analytics.trend.repository.EvaluationRepository;
-import gt.edu.uinsight.analytics.trend.repository.SectionRepository;
-import gt.edu.uinsight.analytics.trend.repository.StudentRepository;
-import gt.edu.uinsight.analytics.trend.repository.TrendRepository;
+import gt.edu.uinsight.analytics.trend.repository.GradeRepository;
+import gt.edu.uinsight.analytics.trend.entity.Grade;
 import jakarta.persistence.EntityNotFoundException;
+
 
 /**
  * Orquesta el cálculo de tendencia: obtiene los datos crudos del
@@ -29,11 +30,10 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class TrendService {
 
-    private final EvaluationRepository evaluationRepository;
-    private final SectionRepository sectionRepository;
-    private final StudentRepository studentRepository;
-    private final TrendRepository trendRepository;
+    private static final Logger log = LoggerFactory.getLogger(TrendService.class);
+    private final GradeRepository gradeRepository;
     private final TrendMapper trendMapper;
+    private final EvaluationRepository evaluationRepository;
 
     // TODO(B4): estos valores deben venir de la célula C1
     // (indicator_configuration) cuando su API esté disponible.
@@ -45,38 +45,55 @@ public class TrendService {
     @Value("${uinsight.trend.positive-threshold:3}")
     private BigDecimal positiveThreshold;
 
-    public TrendService(EvaluationRepository evaluationRepository, SectionRepository sectionRepository,
-            StudentRepository studentRepository, TrendRepository trendRepository, TrendMapper trendMapper) {
-        this.evaluationRepository = evaluationRepository;
-        this.sectionRepository = sectionRepository;
-        this.studentRepository = studentRepository;
-        this.trendRepository = trendRepository;
+    public TrendService( TrendMapper trendMapper, EvaluationRepository evaluationRepository,
+                         GradeRepository gradeRepository) {
         this.trendMapper = trendMapper;
+        this.evaluationRepository = evaluationRepository;
+        this.gradeRepository = gradeRepository;
     }
 
     public TrendResponse getTrendBySectionId(Long sectionId) {
-        sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new EntityNotFoundException("Sección con ID " + sectionId + " no encontrada."));
+        log.info("TREND_CALCULATION_STARTED scope=SECTION sectionId={}", sectionId);
 
-        List<Grade> grades = trendRepository.findSectionGradesOrdered(sectionId);
+        
+        List<Grade> grades = gradeRepository.findBySectionId(sectionId);
+        if (grades.isEmpty()) {
+            log.warn("TREND_CALCULATION_NO_DATA scope=SECTION sectionId={}", sectionId);
+            return null;
+        }
+        try {
+            // Se construye la serie de promedios por evaluación y se calcula la tendencia
+            List<TrendCalculator.ScorePoint> points = buildSectionAverageSeries(grades);
+            TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
 
-        // Se construye la serie de promedios por evaluación y se calcula la tendencia
-        List<TrendCalculator.ScorePoint> points = buildSectionAverageSeries(grades);
-        TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
-        return trendMapper.toTrendResponse(result, points);        
+            if (result.classification() == TrendClassification.INSUFFICIENT_DATA) {
+                log.warn("TREND_INSUFFICIENT_DATA scope=SECTION sectionId={} evaluacionesEncontradas={}",
+                        sectionId, points.size());
+            } else {
+                log.info("TREND_CALCULATION_SUCCESS scope=SECTION sectionId={} classification={} averageChange={}",
+                        sectionId, result.classification(), result.averageChange());
+            }
+
+            return trendMapper.toTrendResponse(result, points);
+        } catch (TrendCalculationException ex) {
+            log.error("TREND_CALCULATION_ERROR scope=SECTION sectionId={} motivo={}", sectionId, ex.getMessage());
+            throw ex;
+        }
     }
 
+    public TrendResponse getTrendByStudentId(Long studentId) {
+        log.info("TREND_CALCULATION_STARTED scope=STUDENT studentId={}", studentId);
 
-public TrendResponse getTrendByStudentId(Long studentId) {
-        studentRepository.findById(studentId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Estudiante con ID " + studentId + " no encontrado."));
-
-        List<Grade> grades = trendRepository.findStudentGradesOrdered(studentId);
-         List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
+    
+        List<Grade> grades = gradeRepository.findByStudentId(studentId);
+        if (grades.isEmpty()) {
+            log.warn("TREND_CALCULATION_NO_DATA scope=STUDENT studentId={}", studentId);
+            return null;
+        }
+        List<TrendCalculator.ScorePoint> points = buildStudentSeries(grades);
         TrendCalculator.Result result = TrendCalculator.calculate(points, negativeThreshold, positiveThreshold);
-        return trendMapper.toTrendResponse(result, points); 
-}
+        return trendMapper.toTrendResponse(result, points);
+    }
 
     /**
      * Regla de negocio 3: normaliza cada nota a escala 0-100
@@ -84,10 +101,8 @@ public TrendResponse getTrendByStudentId(Long studentId) {
      * con distinta nota máxima.
      */
     private BigDecimal normalize(Grade grade) {
-        Evaluation evaluation = evaluationRepository.findById(grade.getEvaluationId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Evaluación con ID " + grade.getEvaluationId() + " no encontrada."));
-                        
+        Evaluation evaluation = evaluationRepository.findByEvaluationId(grade.getEvaluationId());
+
         if (evaluation.getMaximumScore() == null
                 || evaluation.getMaximumScore().compareTo(BigDecimal.ZERO) <= 0) {
             throw new TrendCalculationException(
@@ -123,7 +138,7 @@ public TrendResponse getTrendByStudentId(Long studentId) {
     private List<TrendCalculator.ScorePoint> buildSectionAverageSeries(List<Grade> grades) {
         Map<Long, List<Grade>> gradesByEvaluation = grades.stream()
                 .collect(java.util.stream.Collectors.groupingBy(Grade::getEvaluationId));
-
+        int index = 1;
         List<TrendCalculator.ScorePoint> points = new ArrayList<>();
         for (Map.Entry<Long, List<Grade>> entry : gradesByEvaluation.entrySet()) {
             Long evaluationId = entry.getKey();
@@ -134,19 +149,13 @@ public TrendResponse getTrendByStudentId(Long studentId) {
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     .divide(BigDecimal.valueOf(evaluationGrades.size()), 4, RoundingMode.HALF_UP);
 
-            Evaluation evaluation = evaluationRepository.findById(evaluationId)
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Evaluación con ID " + evaluationId + " no encontrada."));
-
             points.add(new TrendCalculator.ScorePoint(
-                    evaluation.getName(), evaluationId, averageNormalizedScore));
+                    "E"+index++, evaluationId, averageNormalizedScore));
         }
 
         return points.stream()
                 .sorted(Comparator.comparing(p -> {
-                    Evaluation evaluation = evaluationRepository.findById(p.evaluationId())
-                            .orElseThrow(() -> new EntityNotFoundException(
-                                    "Evaluación con ID " + p.evaluationId() + " no encontrada."));
+                    Evaluation evaluation = evaluationRepository.findByEvaluationId(p.evaluationId());
                     return evaluation.getEvaluationDate();
                 }))
                 .toList();
