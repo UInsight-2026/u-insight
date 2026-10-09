@@ -1,25 +1,25 @@
+
 package gt.edu.uinsight.analytics.dispersion.dto.response;
+
+import java.math.BigDecimal;
 
 /**
  * DTO de respuesta para los endpoints de dispersión.
  *
- * Se usa tanto para /sections/{id}/dispersion como para
- * /courses/{id}/dispersion. Solo uno de los dos identificadores
- * (sectionId o courseId) vendrá poblado según el endpoint que
- * lo genere; el otro queda en null.
+ * Se utiliza tanto para el análisis de secciones como de cursos.
+ * Solo uno de los identificadores estará informado según
+ * el endpoint solicitado.
  *
- * Nota: aquí solo se define la forma del dato. El cálculo real
- * (min, max, varianza, etc.) lo hace el calculator/service más
- * adelante — este DTO no contiene lógica matemática.
+ * No contiene lógica matemática.
  */
 public record DispersionResponse(
         Long sectionId,
         Long courseId,
-        Double min,
-        Double max,
-        Double range,
-        Double variance,
-        Double standardDeviation,
+        BigDecimal min,
+        BigDecimal max,
+        BigDecimal range,
+        BigDecimal variance,
+        BigDecimal standardDeviation,
         DispersionClassification classification
 ) {
 }
