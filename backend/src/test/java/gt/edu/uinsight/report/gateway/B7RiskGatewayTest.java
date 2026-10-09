@@ -26,7 +26,7 @@ class B7RiskGatewayTest {
 
     /** Analitica completa de B6: media baja y tendencia negativa. */
     private static AnalyticsSnapshot analiticaCompleta() {
-        return new AnalyticsSnapshot(SECCION, 55.0, 54.0, 30, 3.0, "NEGATIVE", -2.5, true);
+        return new AnalyticsSnapshot(SECCION, 55.0, 54.0, 30, 3.0, "NEGATIVE", -2.5, "B3_FIXED", true);
     }
 
     private static B7RiskGateway gatewayCon(AnalyticsGateway analytics, RiskEngineService motor) {
@@ -126,7 +126,8 @@ class B7RiskGatewayTest {
     void deberiaTolerarQueB6EntregueLaAnaliticaIncompleta() {
         // B6 captura errores por componente: puede traer media y faltarle el resto.
         AnalyticsSnapshot soloMedia =
-                new AnalyticsSnapshot(SECCION, 48.0, null, 12, null, null, null, true);
+                new AnalyticsSnapshot(SECCION, 48.0, null, 12, null, null, null,
+                        AnalyticsSnapshot.DISPERSION_NO_DISPONIBLE, true);
         RiskEngineService motor = mock(RiskEngineService.class);
         when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("ALTO"));
 
