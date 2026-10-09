@@ -1,61 +1,34 @@
 
-package gt.edu.uinsight.analytics.dispersion.exception;
+package gt.edu.uinsight.analytics.dispersion.repository;
 
-import java.time.LocalDateTime;
-import java.util.Map;
+import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
+import java.math.BigDecimal;
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+@Repository("dispersionGradeRepository")
+public interface DispersionGradeRepository
+        extends JpaRepository<DispersionGrade, Long> {
 
-@RestControllerAdvice
-public class DispersionExceptionHandler {
+    @Query(value = """
+            SELECT g.score
+            FROM grade g
+            INNER JOIN evaluation e ON g.evaluation_id = e.id
+            WHERE e.section_id = :sectionId
+            """, nativeQuery = true)
+    List<BigDecimal> findScoresBySectionId(
+            @Param("sectionId") Long sectionId);
 
-    @ExceptionHandler(SeccionNoEncontradaException.class)
-    public ResponseEntity<Map<String, Object>> manejarSeccionNoEncontrada(
-            SeccionNoEncontradaException ex) {
-        return construirRespuesta(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(CursoNoEncontradoException.class)
-    public ResponseEntity<Map<String, Object>> manejarCursoNoEncontrado(
-            CursoNoEncontradoException ex) {
-        return construirRespuesta(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(DispersionRecursoNoEncontradoException.class)
-    public ResponseEntity<Map<String, Object>> manejarRecursoNoEncontrado(
-            DispersionRecursoNoEncontradoException ex) {
-        return construirRespuesta(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(DispersionDatosInsuficientesException.class)
-    public ResponseEntity<Map<String, Object>> manejarDatosInsuficientes(
-            DispersionDatosInsuficientesException ex) {
-        return construirRespuesta(
-                HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()
-        );
-    }
-
-    @ExceptionHandler(DispersionDatosInvalidosException.class)
-    public ResponseEntity<Map<String, Object>> manejarDatosInvalidos(
-            DispersionDatosInvalidosException ex) {
-        return construirRespuesta(
-                HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()
-        );
-    }
-
-    private ResponseEntity<Map<String, Object>> construirRespuesta(
-            HttpStatus status, String mensaje) {
-
-        Map<String, Object> cuerpo = Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "status", status.value(),
-                "error", status.getReasonPhrase(),
-                "message", mensaje
-        );
-
-        return ResponseEntity.status(status).body(cuerpo);
-    }
+    @Query(value = """
+            SELECT g.score
+            FROM grade g
+            INNER JOIN evaluation e ON g.evaluation_id = e.id
+            INNER JOIN section s ON e.section_id = s.id
+            WHERE s.course_id = :courseId
+            """, nativeQuery = true)
+    List<BigDecimal> findScoresByCourseId(
+            @Param("courseId") Long courseId);
 }
