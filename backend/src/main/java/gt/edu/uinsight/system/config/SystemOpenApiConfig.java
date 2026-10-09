@@ -8,7 +8,6 @@ import io.swagger.v3.oas.models.tags.Tag;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 import java.util.List;
 
@@ -21,13 +20,14 @@ import java.util.List;
  * descripcion, sin version de API y con los tags ordenados alfabeticamente y sin texto mas
  * alla de la anotacion de cada controlador.
  *
- * <p>El bean solo aporta {@code Info}, {@code tags} y {@code externalDocs}. No declara
- * {@code paths} ni {@code components} a proposito: los endpoints de las demas celulas los
- * sigue descubriendo springdoc por reflexion, y nada de lo que esta clase hace los altera.
+ * <p>Solo aporta {@code Info}, {@code tags} y {@code externalDocs}, y solo sobre el grupo
+ * {@code C7 - system}. No declara {@code paths} ni {@code components} a proposito: los
+ * endpoints de las demas celulas los sigue descubriendo springdoc por reflexion, y nada de
+ * lo que esta clase hace los altera ni aparece en sus grupos.
  *
  * <p>Los nombres de los tags coinciden exactamente con los de las anotaciones
- * {@code @Tag} de los controladores del modulo. Si no coincidieran, springdoc mostraria el
- * tag dos veces: el declarado aqui, vacio, y el del controlador.
+ * {@code @Tag} de los controladores del modulo, y la prueba del contrato lo verifica. Si no
+ * coincidieran, el tag del controlador quedaria sin descripcion al reemplazarse la lista.
  */
 @Configuration
 public class SystemOpenApiConfig {
@@ -43,28 +43,19 @@ public class SystemOpenApiConfig {
     private static final String REPOSITORIO = "https://github.com/UInsight-2026/u-insight";
 
     /**
-     * {@code @Primary} porque la celula A1 declara otro bean {@link OpenAPI} en
-     * {@code gt.edu.uinsight.config.OpenApiConfig} (PR #133). Con dos candidatos del mismo
-     * tipo springdoc no sabe cual usar. Se marca este porque es el mas completo de los dos:
-     * aporta el mismo {@code Info} mas los tags del modulo y el {@code externalDocs}.
-     */
-    @Bean
-    @Primary
-    public OpenAPI uinsightOpenAPI() {
-
-        return new OpenAPI()
-                .info(info())
-                .externalDocs(new ExternalDocumentation()
-                        .description("Repositorio oficial del proyecto")
-                        .url(REPOSITORIO))
-                .tags(tagsDelModuloC7());
-    }
-
-    /**
      * Grupo de Swagger del modulo. Las celulas A1, A5 y C1 declaran beans
      * {@link GroupedOpenApi}, y en cuanto existe al menos un grupo springdoc deja de servir
      * el contrato completo y el selector de Swagger UI solo lista los grupos declarados.
      * Sin este bean los cuatro endpoints de C7 desaparecen de la interfaz.
+     *
+     * <p>La documentacion del modulo se aplica como {@code OpenApiCustomizer} de este grupo
+     * y <strong>no</strong> como un bean {@link OpenAPI} global. Un bean global es la base
+     * de la que springdoc parte para construir <em>todos</em> los grupos, asi que sus
+     * {@code tags} terminaban listados tambien en los grupos de A1, A5 y C1, donde no hay
+     * ninguna operacion que los use: Swagger UI los pintaba como secciones vacias. El
+     * {@code Info} comun del proyecto es el de la celula A1
+     * ({@code gt.edu.uinsight.config.OpenApiConfig}, PR #133) y aqui solo se afina para
+     * este grupo.
      */
     @Bean
     public GroupedOpenApi systemApi() {
@@ -72,7 +63,28 @@ public class SystemOpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("C7 - system")
                 .pathsToMatch("/api/v1/system/**")
+                .addOpenApiCustomizer(this::documentarModulo)
                 .build();
+    }
+
+    /**
+     * Pone el {@code Info}, el {@code externalDocs} y los cuatro tags del modulo sobre el
+     * documento del grupo.
+     *
+     * <p>{@code setTags} <strong>reemplaza</strong> la lista en lugar de agregarse a ella, y
+     * eso es deliberado: springdoc ya derivo un tag por cada anotacion {@code @Tag} de los
+     * controladores, con la descripcion corta de la anotacion. Al agregar los nuestros
+     * aparecia cada tag dos veces en Swagger UI -el corto del controlador y el largo de
+     * aqui-. Reemplazando queda uno solo por endpoint, con la descripcion completa.
+     */
+    void documentarModulo(OpenAPI openApi) {
+
+        openApi.info(info())
+                .externalDocs(new ExternalDocumentation()
+                        .description("Repositorio oficial del proyecto")
+                        .url(REPOSITORIO));
+
+        openApi.setTags(tagsDelModuloC7());
     }
 
     private Info info() {

@@ -18,15 +18,23 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Valida el contrato OpenAPI sin levantar el contexto de Spring.
+ * Valida el contrato OpenAPI del grupo C7 sin levantar el contexto de Spring.
  *
- * <p>Es a proposito: la aplicacion no arranca por el PR #104 de la celula B3, asi que no se
- * puede capturar Swagger UI a mano. Estas pruebas son la evidencia del requisito 3 que si
- * se puede producir hoy.
+ * <p>Se afirma sobre el documento que produce el {@code OpenApiCustomizer} del grupo, que
+ * es exactamente lo que sirve {@code /v3/api-docs/C7 - system}, y no sobre un bean global:
+ * la documentacion del modulo no debe aparecer en los grupos de las demas celulas.
  */
-class OpenApiConfigTest {
+class SystemOpenApiConfigTest {
 
-    private final OpenAPI openAPI = new SystemOpenApiConfig().uinsightOpenAPI();
+    private final OpenAPI openAPI = documentoDelGrupo();
+
+    /** El contrato tal como lo sirve el grupo {@code C7 - system} de Swagger UI. */
+    private static OpenAPI documentoDelGrupo() {
+
+        OpenAPI openApi = new OpenAPI();
+        new SystemOpenApiConfig().documentarModulo(openApi);
+        return openApi;
+    }
 
     @Test
     void elInfoDelProyectoEstaCompleto() {
