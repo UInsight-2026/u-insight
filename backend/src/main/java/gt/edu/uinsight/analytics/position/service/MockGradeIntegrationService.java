@@ -37,8 +37,15 @@ public class MockGradeIntegrationService implements GradeIntegrationService {
     }
 
     @Override
-    public Long getSectionIdByStudent(Long studentId) {
-        log.info("Simulando llamada a Celula A6 para obtener la seccion del estudiante {}", studentId);
-        return 1L;
+    public List<Long> getSectionIdsByStudent(Long studentId) {
+        log.info("Simulando llamada a Celula A6 para obtener las secciones del estudiante {}", studentId);
+        return List.of(1L);
+    }
+
+    @Override
+    public boolean isStudentEnrolledInSection(Long studentId, Long sectionId) {
+        log.info("Simulando llamada a Celula A6 para validar matricula del estudiante {} en la seccion {}",
+                studentId, sectionId);
+        return getSectionIdsByStudent(studentId).contains(sectionId);
     }
 }
