@@ -5,8 +5,10 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.tags.Tag;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ import java.util.List;
  * tag dos veces: el declarado aqui, vacio, y el del controlador.
  */
 @Configuration
-public class OpenApiConfig {
+public class SystemOpenApiConfig {
 
     public static final String TAG_HEALTH = "System - Health";
     public static final String TAG_READINESS = "System - Readiness";
@@ -40,7 +42,14 @@ public class OpenApiConfig {
 
     private static final String REPOSITORIO = "https://github.com/UInsight-2026/u-insight";
 
+    /**
+     * {@code @Primary} porque la celula A1 declara otro bean {@link OpenAPI} en
+     * {@code gt.edu.uinsight.config.OpenApiConfig} (PR #133). Con dos candidatos del mismo
+     * tipo springdoc no sabe cual usar. Se marca este porque es el mas completo de los dos:
+     * aporta el mismo {@code Info} mas los tags del modulo y el {@code externalDocs}.
+     */
     @Bean
+    @Primary
     public OpenAPI uinsightOpenAPI() {
 
         return new OpenAPI()
@@ -49,6 +58,21 @@ public class OpenApiConfig {
                         .description("Repositorio oficial del proyecto")
                         .url(REPOSITORIO))
                 .tags(tagsDelModuloC7());
+    }
+
+    /**
+     * Grupo de Swagger del modulo. Las celulas A1, A5 y C1 declaran beans
+     * {@link GroupedOpenApi}, y en cuanto existe al menos un grupo springdoc deja de servir
+     * el contrato completo y el selector de Swagger UI solo lista los grupos declarados.
+     * Sin este bean los cuatro endpoints de C7 desaparecen de la interfaz.
+     */
+    @Bean
+    public GroupedOpenApi systemApi() {
+
+        return GroupedOpenApi.builder()
+                .group("C7 - system")
+                .pathsToMatch("/api/v1/system/**")
+                .build();
     }
 
     private Info info() {

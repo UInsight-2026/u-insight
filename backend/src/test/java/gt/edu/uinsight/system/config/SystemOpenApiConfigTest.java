@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class OpenApiConfigTest {
 
-    private final OpenAPI openAPI = new OpenApiConfig().uinsightOpenAPI();
+    private final OpenAPI openAPI = new SystemOpenApiConfig().uinsightOpenAPI();
 
     @Test
     void elInfoDelProyectoEstaCompleto() {
@@ -85,7 +85,7 @@ class OpenApiConfigTest {
                 .collect(Collectors.toSet());
 
         assertEquals(enLosControladores, enElBean,
-                "Los tags declarados en OpenApiConfig deben ser exactamente los que anotan "
+                "Los tags declarados en SystemOpenApiConfig deben ser exactamente los que anotan "
                 + "los controladores del modulo");
     }
 
@@ -98,10 +98,10 @@ class OpenApiConfigTest {
 
         assertEquals(
                 List.of(
-                        OpenApiConfig.TAG_HEALTH,
-                        OpenApiConfig.TAG_READINESS,
-                        OpenApiConfig.TAG_INTEGRATION,
-                        OpenApiConfig.TAG_CHECKS),
+                        SystemOpenApiConfig.TAG_HEALTH,
+                        SystemOpenApiConfig.TAG_READINESS,
+                        SystemOpenApiConfig.TAG_INTEGRATION,
+                        SystemOpenApiConfig.TAG_CHECKS),
                 orden,
                 "El orden declarado es el que Swagger UI respeta; alfabetico no dice nada");
     }
