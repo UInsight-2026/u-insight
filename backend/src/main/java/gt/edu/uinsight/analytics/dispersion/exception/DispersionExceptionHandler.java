@@ -1,34 +1,55 @@
 
-package gt.edu.uinsight.analytics.dispersion.repository;
+package gt.edu.uinsight.analytics.dispersion.exception;
 
-import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
-import java.math.BigDecimal;
-import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
-@Repository("dispersionGradeRepository")
-public interface DispersionGradeRepository
-        extends JpaRepository<DispersionGrade, Long> {
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-    @Query(value = """
-            SELECT g.score
-            FROM grade g
-            INNER JOIN evaluation e ON g.evaluation_id = e.id
-            WHERE e.section_id = :sectionId
-            """, nativeQuery = true)
-    List<BigDecimal> findScoresBySectionId(
-            @Param("sectionId") Long sectionId);
+@RestControllerAdvice
+public class DispersionExceptionHandler {
 
-    @Query(value = """
-            SELECT g.score
-            FROM grade g
-            INNER JOIN evaluation e ON g.evaluation_id = e.id
-            INNER JOIN section s ON e.section_id = s.id
-            WHERE s.course_id = :courseId
-            """, nativeQuery = true)
-    List<BigDecimal> findScoresByCourseId(
-            @Param("courseId") Long courseId);
+    @ExceptionHandler(SeccionNoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> handleSeccionNoEncontrada(
+            SeccionNoEncontradaException exception) {
+        return crearRespuesta(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(CursoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleCursoNoEncontrado(
+            CursoNoEncontradoException exception) {
+        return crearRespuesta(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(DispersionDatosInsuficientesException.class)
+    public ResponseEntity<Map<String, Object>> handleDatosInsuficientes(
+            DispersionDatosInsuficientesException exception) {
+        return crearRespuesta(
+                HttpStatus.UNPROCESSABLE_ENTITY, exception.getMessage());
+    }
+
+    @ExceptionHandler(DispersionDatosInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> handleDatosInvalidos(
+            DispersionDatosInvalidosException exception) {
+        return crearRespuesta(
+                HttpStatus.UNPROCESSABLE_ENTITY, exception.getMessage());
+    }
+
+    private ResponseEntity<Map<String, Object>> crearRespuesta(
+            HttpStatus status, String mensaje) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("status", status.value());
+        body.put("error", status.getReasonPhrase());
+        body.put(
+                "message",
+                mensaje != null ? mensaje : "Error en el módulo de dispersión.");
+
+        return ResponseEntity.status(status).body(body);
+    }
 }
