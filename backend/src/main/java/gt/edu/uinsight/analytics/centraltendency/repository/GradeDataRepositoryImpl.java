@@ -32,11 +32,11 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
     private final RestClient sectionsClient;
     private final RestClient academicClient;
 
-    @Autowired
+       @Autowired
     public GradeDataRepositoryImpl(
-            @Value("${uinsight.integration.a6.base-url}") String a6BaseUrl,
-            @Value("${uinsight.integration.a4.base-url}") String a4BaseUrl,
-            @Value("${uinsight.integration.a1.base-url}") String a1BaseUrl) {
+            @Value("${uinsight.integration.a6.base-url:http://localhost:8080}") String a6BaseUrl,
+            @Value("${uinsight.integration.a4.base-url:http://localhost:8080}") String a4BaseUrl,
+            @Value("${uinsight.integration.a1.base-url:http://localhost:8080}") String a1BaseUrl) {
         this(RestClient.builder().baseUrl(a6BaseUrl).build(),
                 RestClient.builder().baseUrl(a4BaseUrl).build(),
                 RestClient.builder().baseUrl(a1BaseUrl).build());
