@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
-import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
+import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
@@ -95,7 +95,7 @@ class SummaryServiceTest {
     }
 
     private void stubPositionAvailable() {
-        PositionData data = mock(PositionData.class);
+        SectionPositionResponse data = mock(SectionPositionResponse.class);
         when(analyticsClientRepository.getPosition(SECTION_ID)).thenReturn(data);
     }
 

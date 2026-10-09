@@ -7,8 +7,14 @@ public interface GradeIntegrationService {
     List<Double> getGradesByStudent(Long studentId);
 
     /**
-     * Resuelve la seccion a la que pertenece un estudiante, necesaria para
-     * comparar su promedio contra las notas de toda la seccion.
+     * Secciones en las que esta matriculado el estudiante. Un estudiante
+     * puede estar matriculado en mas de una (una por curso), por lo que
+     * no se puede asumir una unica seccion "del" estudiante.
      */
-    Long getSectionIdByStudent(Long studentId);
+    List<Long> getSectionIdsByStudent(Long studentId);
+
+    /**
+     * Verifica que el estudiante este matriculado en la seccion indicada.
+     */
+    boolean isStudentEnrolledInSection(Long studentId, Long sectionId);
 }
