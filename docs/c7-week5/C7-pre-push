@@ -1,0 +1,68 @@
+#!/bin/sh
+# Guardia de la celula C7. Nace del PR #97, que subio parches de archivos de B4 y
+# dejo develop sin compilar.
+#
+# Bloquea el push si la rama trae cambios fuera de gt/edu/uinsight/system.
+# Las ramas bugfix/* y fix/* quedan exentas.
+#
+# Para saltarlo a proposito:  C7_SKIP_GUARD=1 git push
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+case "$branch" in
+  bugfix/*|fix/*) exit 0 ;;
+esac
+
+[ -n "$C7_SKIP_GUARD" ] && exit 0
+
+git fetch -q origin develop 2>/dev/null
+
+# EXCEPCION TEMPORAL -- semana 5, commit bf47249.
+#
+# alert/model/Alert.java es de la celula B7 e importa @Id del paquete equivocado:
+# sin el arreglo no arranca ninguna aplicacion del proyecto. Se subio a la rama
+# feature/C7-week5-base a proposito, para que los cuatro integrantes trabajen con
+# solo traer la rama y sin aplicar parches a mano.
+#
+# La guardia lo deja pasar para no bloquear el push de nadie. NO autoriza tocar
+# ningun otro archivo de B7 ni de otra celula.
+#
+# RETIRAR esta excepcion y el commit bf47249 cuando:
+#   - B7 corrija el bug en develop, o
+#   - se vaya a abrir el PR a develop
+EXCEPCION_B7='^backend/src/main/java/gt/edu/uinsight/alert/model/Alert\.java$'
+
+intrusos=$(git diff --name-only origin/develop...HEAD \
+  | grep -v '^backend/src/main/java/gt/edu/uinsight/system/' \
+  | grep -v '^backend/src/test/java/gt/edu/uinsight/system/' \
+  | grep -v '^docs/c7-' \
+  | grep -vE "$EXCEPCION_B7")
+
+if [ -n "$intrusos" ]; then
+  echo ""
+  echo "  PUSH BLOQUEADO -- rama $branch"
+  echo ""
+  echo "  Estos archivos no son del modulo system:"
+  echo ""
+  echo "$intrusos" | sed 's/^/      /'
+  echo ""
+  echo "  C7 solo entrega gt/edu/uinsight/system. Para devolver un archivo"
+  echo "  al estado de develop:"
+  echo ""
+  echo "      git checkout origin/develop -- <archivo>"
+  echo ""
+  echo "  Si es un arreglo de otra celula, va en una rama bugfix/* aparte."
+  echo "  Si de verdad quieres subirlo:  C7_SKIP_GUARD=1 git push"
+  echo ""
+  exit 1
+fi
+
+# Aviso, no bloqueo: recuerda que la excepcion temporal sigue viva.
+if git diff --name-only origin/develop...HEAD | grep -qE "$EXCEPCION_B7"; then
+  echo ""
+  echo "  AVISO -- la rama lleva el arreglo de Alert.java (celula B7)."
+  echo "  Es la excepcion temporal del commit bf47249. Retirarla antes del PR."
+  echo ""
+fi
+
+exit 0

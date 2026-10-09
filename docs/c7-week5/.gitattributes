@@ -1,0 +1,5 @@
+# El hook es un script sh: con CRLF falla con "bad interpreter".
+C7-pre-push text eol=lf
+
+# Sin conversion: git apply es sensible a los finales de linea.
+*.patch -text
