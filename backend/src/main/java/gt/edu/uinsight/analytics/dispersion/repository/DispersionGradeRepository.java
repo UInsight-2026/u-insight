@@ -1,3 +1,4 @@
+
 package gt.edu.uinsight.analytics.dispersion.repository;
 
 import java.math.BigDecimal;
@@ -20,7 +21,6 @@ public interface DispersionGradeRepository
         INNER JOIN evaluation e
             ON g.evaluation_id = e.id
         WHERE e.section_id = :sectionId
-        AND g.score IS NOT NULL
         """, nativeQuery = true)
     List<BigDecimal> findScoresBySectionId(
             @Param("sectionId") Long sectionId
@@ -34,7 +34,6 @@ public interface DispersionGradeRepository
         INNER JOIN section s
             ON e.section_id = s.id
         WHERE s.course_id = :courseId
-        AND g.score IS NOT NULL
         """, nativeQuery = true)
     List<BigDecimal> findScoresByCourseId(
             @Param("courseId") Long courseId
