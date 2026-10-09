@@ -23,6 +23,7 @@ import gt.edu.uinsight.analytics.trend.repository.SectionRepository;
 import gt.edu.uinsight.analytics.trend.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;
 
+
 /**
  * Orquesta el cálculo de tendencia: obtiene los datos crudos del
  * repositorio, los normaliza y ordena, delega la clasificación a

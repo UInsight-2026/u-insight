@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
 package gt.edu.uinsight.analytics.dispersion.entity;
 
 import jakarta.persistence.*;
@@ -24,7 +28,16 @@ public class DispersionEvaluation {
     @Column(name = "evaluation_date", nullable = false)
     private LocalDate evaluationDate;
 
+<<<<<<< HEAD
     @Column(name = "maximum_score", nullable = false, precision = 5, scale = 2)
+=======
+    @Column(
+        name = "maximum_score",
+        nullable = false,
+        precision = 5,
+        scale = 2
+    )
+>>>>>>> develop
     private BigDecimal maximumScore;
 
     @Column(precision = 5, scale = 2)

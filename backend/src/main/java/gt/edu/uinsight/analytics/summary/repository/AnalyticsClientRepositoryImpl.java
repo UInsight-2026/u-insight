@@ -1,15 +1,15 @@
 package gt.edu.uinsight.analytics.summary.repository;
 
-import java.util.Map;
-
 import org.springframework.stereotype.Repository;
 
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.centraltendency.service.CentralTendencyService;
-import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.dispersion.service.DispersionService;
+<<<<<<< HEAD
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
+=======
+>>>>>>> develop
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.position.service.PositionService;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
@@ -48,18 +48,7 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
 
     @Override
     public DispersionResponse getDispersion(Long sectionId) {
-        // B3 devuelve Map<String, Object> por ahora — convertimos manualmente
-        Map<String, Object> raw = dispersionService.getSectionDispersion(sectionId);
-        return new DispersionResponse(
-                sectionId,
-                null,
-                toDouble(raw.get("min")),
-                toDouble(raw.get("max")),
-                toDouble(raw.get("range")),
-                toDouble(raw.get("variance")),
-                toDouble(raw.get("standardDeviation")),
-                toClassification(raw.get("classification"))
-        );
+        return dispersionService.getSectionDispersion(sectionId);
     }
 
     @Override
@@ -68,6 +57,7 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
         return trendService.getTrendBySectionId(sectionId);
     }
 
+<<<<<<< HEAD
     @Override
     public StudentComparisonResponse getStudentComparison(Long sectionId) {
         // B5 solo ofrece comparación por estudiante; sectionId no es un studentId.
@@ -90,4 +80,6 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
             return null;
         }
     }
+=======
+>>>>>>> develop
 }

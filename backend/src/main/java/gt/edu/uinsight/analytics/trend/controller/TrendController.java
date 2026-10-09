@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.constraints.Positive;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Positive;
 
 @RestController 
 @RequestMapping("/api/v1/analytics")
