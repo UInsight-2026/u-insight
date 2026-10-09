@@ -2,115 +2,130 @@ package gt.edu.uinsight.analytics.summary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
-import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
+import gt.edu.uinsight.analytics.trend.dto.response.TrendPoint;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
+import gt.edu.uinsight.analytics.trend.service.TrendClassification;
 
-@ExtendWith(MockitoExtension.class)
 class SummaryServiceTest {
 
     private static final Long SECTION_ID = 101L;
 
-    @Mock
-    private AnalyticsClientRepository analyticsClientRepository;
-
-    @InjectMocks
-    private SummaryService summaryService;
-
-    // ------------------------------------------------------------------
-    // Tests
-    // ------------------------------------------------------------------
-
     @Test
-    @DisplayName("1. Todo disponible: retorna el resumen completo sin componentes no disponibles")
-    void getSummary_AllAvailable_Success() {
-        stubCentralTendencyAvailable();
-        stubPositionAvailable();
-        stubDispersionAvailable();
-        stubTrendAvailable();
-        stubStudentComparisonAvailable();
+    @DisplayName("Retorna analíticas disponibles y reporta el conteo de riesgo aún no integrado")
+    void getSummary_sectionAnalyticsAvailable_reportsRiskCountAsUnavailable() {
+        SummaryService summaryService = new SummaryService(new FixtureAnalyticsClientRepository());
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
         assertNotNull(result);
         assertEquals(SECTION_ID, result.getSectionId());
-        assertTrue(result.getUnavailableComponents().isEmpty());
+        assertNotNull(result.getCentralTendencyData());
+        assertNotNull(result.getPositionData());
+        assertNotNull(result.getDispersionData());
+        assertNotNull(result.getTrendData());
+        assertEquals(List.of("studentsAtRisk"), result.getUnavailableComponents());
+        assertNull(result.getStudentsAtRisk());
+        assertNull(result.getStudentComparisonData());
     }
 
     @Test
-    @DisplayName("2. Fallo parcial: cuando un componente falla, se agrega a unavailableComponents sin romper la respuesta")
-    void getSummary_PartialFailure_SuccessWithUnavailableComponent() {
-        stubCentralTendencyAvailable();
-        stubPositionAvailable();
-        stubDispersionAvailable();
-        stubStudentComparisonAvailable();
-        when(analyticsClientRepository.getTrend(SECTION_ID))
-                .thenThrow(new RuntimeException("Error de conexión"));
+    @DisplayName("Un componente fallido no impide incluir los demás")
+    void getSummary_trendFails_returnsPartialSummary() {
+        SummaryService summaryService = new SummaryService(
+                new FixtureAnalyticsClientRepository(false, true));
+
+        SectionSummary result = summaryService.getSummary(SECTION_ID);
+
+        assertNotNull(result.getCentralTendencyData());
+        assertNotNull(result.getPositionData());
+        assertNotNull(result.getDispersionData());
+        assertNull(result.getTrendData());
+        assertEquals(List.of("trend", "studentsAtRisk"), result.getUnavailableComponents());
+    }
+
+    @Test
+    @DisplayName("Componentes vacíos o fallidos se reportan sin perder el resumen")
+    void getSummary_allComponentsUnavailable_returnsAllUnavailable() {
+        SummaryService summaryService = new SummaryService(
+                new FixtureAnalyticsClientRepository(true, false));
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
         assertNotNull(result);
-        assertEquals(1, result.getUnavailableComponents().size());
-        assertTrue(result.getUnavailableComponents().contains("trend"));
+        assertEquals(List.of("centralTendency", "position", "dispersion", "trend", "studentsAtRisk"),
+                result.getUnavailableComponents());
     }
 
     @Test
-    @DisplayName("3. Fallo total / Datos insuficientes: cuando todos devuelven null o error")
-    void getSummary_TotalFailure_ReturnsSummaryWithAllUnavailable() {
-        when(analyticsClientRepository.getCentralTendency(SECTION_ID)).thenReturn(null);
-        when(analyticsClientRepository.getPosition(SECTION_ID)).thenReturn(null);
-        when(analyticsClientRepository.getDispersion(SECTION_ID)).thenThrow(new RuntimeException("Error"));
-        when(analyticsClientRepository.getTrend(SECTION_ID)).thenThrow(new RuntimeException("Error"));
-        when(analyticsClientRepository.getStudentComparison(SECTION_ID)).thenThrow(new RuntimeException("Error"));
+    @DisplayName("Rechaza identificadores de sección inválidos")
+    void getSummary_invalidSectionId_throwsIllegalArgumentException() {
+        SummaryService summaryService = new SummaryService(new FixtureAnalyticsClientRepository());
 
-        SectionSummary result = summaryService.getSummary(SECTION_ID);
-
-        assertNotNull(result);
-        assertEquals(5, result.getUnavailableComponents().size());
+        assertThrows(IllegalArgumentException.class, () -> summaryService.getSummary(0L));
     }
 
-    // ------------------------------------------------------------------
-    // Helpers: cada uno crea el mock antes del stubbing para evitar
-    // mock() dentro de thenReturn() (UnfinishedStubbingException).
-    // ------------------------------------------------------------------
+    private static final class FixtureAnalyticsClientRepository implements AnalyticsClientRepository {
 
-    private void stubCentralTendencyAvailable() {
-        CentralTendencyResponse response = mock(CentralTendencyResponse.class);
-        when(analyticsClientRepository.getCentralTendency(SECTION_ID)).thenReturn(response);
-    }
+        private final boolean unavailable;
+        private final boolean trendFails;
 
-    private void stubPositionAvailable() {
-        SectionPositionResponse data = mock(SectionPositionResponse.class);
-        when(analyticsClientRepository.getPosition(SECTION_ID)).thenReturn(data);
-    }
+        private FixtureAnalyticsClientRepository() {
+            this(false, false);
+        }
 
-    private void stubDispersionAvailable() {
-        DispersionResponse response = mock(DispersionResponse.class);
-        when(analyticsClientRepository.getDispersion(SECTION_ID)).thenReturn(response);
-    }
+        private FixtureAnalyticsClientRepository(boolean unavailable, boolean trendFails) {
+            this.unavailable = unavailable;
+            this.trendFails = trendFails;
+        }
 
-    private void stubTrendAvailable() {
-        TrendResponse response = mock(TrendResponse.class);
-        when(analyticsClientRepository.getTrend(SECTION_ID)).thenReturn(response);
-    }
+        @Override
+        public CentralTendencyResponse getCentralTendency(Long sectionId) {
+            return unavailable ? null
+                    : new CentralTendencyResponse(4, 75.0, 74.0, List.of(75.0));
+        }
 
-    private void stubStudentComparisonAvailable() {
-        StudentComparisonResponse response = mock(StudentComparisonResponse.class);
-        when(analyticsClientRepository.getStudentComparison(SECTION_ID)).thenReturn(response);
+        @Override
+        public SectionPositionResponse getPosition(Long sectionId) {
+            return unavailable ? null : new SectionPositionResponse(
+                    sectionId, 4,
+                    Map.of("Q1", 68.0, "Q2", 74.0, "Q3", 82.0),
+                    Map.of());
+        }
+
+        @Override
+        public DispersionResponse getDispersion(Long sectionId) {
+            if (unavailable) {
+                throw new IllegalStateException("No se pudo calcular la dispersión");
+            }
+            return new DispersionResponse(sectionId, null,
+                    new BigDecimal("60"), new BigDecimal("90"),
+                    new BigDecimal("30"), new BigDecimal("100"),
+                    new BigDecimal("10"), DispersionClassification.MODERATE_DISPERSION);
+        }
+
+        @Override
+        public TrendResponse getTrend(Long sectionId) {
+            if (unavailable || trendFails) {
+                throw new IllegalStateException("No se pudo calcular la tendencia");
+            }
+            return new TrendResponse(TrendClassification.STABLE, BigDecimal.ZERO,
+                    List.<TrendPoint>of());
+        }
     }
 }
