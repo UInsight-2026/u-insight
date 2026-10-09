@@ -41,7 +41,6 @@ public class DispersionService {
     }
 
     public DispersionResponse getSectionDispersion(Long sectionId) {
-
         validarId(sectionId, "sección");
 
         if (!sectionRepository.existsById(sectionId)) {
@@ -53,11 +52,10 @@ public class DispersionService {
         List<BigDecimal> scores =
                 gradeRepository.findScoresBySectionId(sectionId);
 
-        return calcularDispersionSeccion(sectionId, scores);
+        return calcularYMapearSeccion(sectionId, scores);
     }
 
     public DispersionResponse getCourseDispersion(Long courseId) {
-
         validarId(courseId, "curso");
 
         if (sectionRepository.findByCourseId(courseId).isEmpty()) {
@@ -83,17 +81,12 @@ public class DispersionService {
                 classifier.clasificar(standardDeviation);
 
         return mapper.toCourseResponse(
-                courseId,
-                min,
-                max,
-                range,
-                variance,
-                standardDeviation,
-                classification
+                courseId, min, max, range, variance,
+                standardDeviation, classification
         );
     }
 
-    private DispersionResponse calcularDispersionSeccion(
+    private DispersionResponse calcularYMapearSeccion(
             Long sectionId,
             List<BigDecimal> scores) {
 
@@ -110,20 +103,15 @@ public class DispersionService {
                 classifier.clasificar(standardDeviation);
 
         return mapper.toSectionResponse(
-                sectionId,
-                min,
-                max,
-                range,
-                variance,
-                standardDeviation,
-                classification
+                sectionId, min, max, range, variance,
+                standardDeviation, classification
         );
     }
 
     private void validarId(Long id, String tipo) {
         if (id == null || id <= 0) {
             throw new DispersionDatosInvalidosException(
-                    "El ID del " + tipo + " debe ser válido."
+                    "El ID de la " + tipo + " debe ser válido."
             );
         }
     }
