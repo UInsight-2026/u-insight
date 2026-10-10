@@ -1,25 +1,104 @@
 package gt.edu.uinsight.analytics.dispersion.service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import gt.edu.uinsight.analytics.dispersion.calculator.DispersionCalculator;
+import gt.edu.uinsight.analytics.dispersion.config.DispersionClassifier;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
+import gt.edu.uinsight.analytics.dispersion.exception.CursoNoEncontradoException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
+import gt.edu.uinsight.analytics.dispersion.exception.SeccionNoEncontradaException;
+import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
+import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
+import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
+import gt.edu.uinsight.section.repository.SectionRepository;
 
 @Service
 public class DispersionService {
 
-    public Map<String, Object> getSectionDispersion(Long sectionId) {
+    private final DispersionGradeRepository dispersionGradeRepository;
+    private final DispersionCalculator dispersionCalculator;
+    private final DispersionClassifier dispersionClassifier;
+    private final DispersionMapper dispersionMapper;
+    private final SectionRepository sectionRepository;
 
-        Map<String, Object> response = new HashMap<>();
+    public DispersionService(
+            DispersionGradeRepository dispersionGradeRepository,
+            DispersionCalculator dispersionCalculator,
+            DispersionClassifier dispersionClassifier,
+            DispersionMapper dispersionMapper,
+            SectionRepository sectionRepository) {
+        this.dispersionGradeRepository = dispersionGradeRepository;
+        this.dispersionCalculator = dispersionCalculator;
+        this.dispersionClassifier = dispersionClassifier;
+        this.dispersionMapper = dispersionMapper;
+        this.sectionRepository = sectionRepository;
+    }
 
-        response.put("sectionId", sectionId);
-        response.put("min", 45);
-        response.put("max", 98);
-        response.put("range", 53);
-        response.put("variance", 124.6);
-        response.put("standardDeviation", 11.16);
-        response.put("classification", "MODERATE_DISPERSION");
+    @Transactional(readOnly = true)
+    public DispersionResponse getSectionDispersion(Long sectionId) {
+        validarId(sectionId, "sección");
 
-        return response;
+        if (!sectionRepository.existsById(sectionId)) {
+            throw new SeccionNoEncontradaException(sectionId);
+        }
+
+        List<BigDecimal> scores =
+                dispersionGradeRepository.findScoresBySectionId(sectionId);
+
+        DispersionValidator.validar(scores);
+
+        BigDecimal min = dispersionCalculator.calculateMin(scores);
+        BigDecimal max = dispersionCalculator.calculateMax(scores);
+        BigDecimal range = dispersionCalculator.calculateRange(scores);
+        BigDecimal variance = dispersionCalculator.calculateVariance(scores);
+        BigDecimal standardDeviation =
+                dispersionCalculator.calculateStandardDeviation(scores);
+
+        var classification =
+                dispersionClassifier.clasificar(standardDeviation);
+
+        return dispersionMapper.toSectionResponse(
+                sectionId, min, max, range, variance,
+                standardDeviation, classification);
+    }
+
+    @Transactional(readOnly = true)
+    public DispersionResponse getCourseDispersion(Long courseId) {
+        validarId(courseId, "curso");
+
+        if (sectionRepository.findByCourseId(courseId).isEmpty()) {
+            throw new CursoNoEncontradoException(courseId);
+        }
+
+        List<BigDecimal> scores =
+                dispersionGradeRepository.findScoresByCourseId(courseId);
+
+        DispersionValidator.validar(scores);
+
+        BigDecimal min = dispersionCalculator.calculateMin(scores);
+        BigDecimal max = dispersionCalculator.calculateMax(scores);
+        BigDecimal range = dispersionCalculator.calculateRange(scores);
+        BigDecimal variance = dispersionCalculator.calculateVariance(scores);
+        BigDecimal standardDeviation =
+                dispersionCalculator.calculateStandardDeviation(scores);
+
+        var classification =
+                dispersionClassifier.clasificar(standardDeviation);
+
+        return dispersionMapper.toCourseResponse(
+                courseId, min, max, range, variance,
+                standardDeviation, classification);
+    }
+
+    private void validarId(Long id, String tipo) {
+        if (id == null || id <= 0) {
+            throw new DispersionDatosInvalidosException(
+                    "El ID de " + tipo + " debe ser válido.");
+        }
     }
 }

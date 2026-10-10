@@ -1,8 +1,11 @@
 package gt.edu.uinsight.evaluation.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Schema(description = "Evaluación registrada",
+        example = "{\"id\":1,\"sectionId\":1,\"name\":\"Examen Parcial 1\",\"type\":\"EXAM\",\"evaluationDate\":\"2026-10-15\",\"maximumScore\":100.00,\"weight\":30.00,\"status\":\"DRAFT\"}")
 public class EvaluationResponse {
     
     private Long id;

@@ -43,4 +43,15 @@ public class PositionExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
+
+    @ExceptionHandler(AmbiguousSectionException.class)
+    public ResponseEntity<Map<String, Object>> handleAmbiguousSection(AmbiguousSectionException ex) {
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "AMBIGUOUS_SECTION",
+                "message", ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 }
