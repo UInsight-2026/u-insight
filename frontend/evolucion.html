@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="src/styles/global.css" />
   <link rel="stylesheet" href="src/styles/layout.css" />
   <link rel="stylesheet" href="src/styles/components.css" />
+  <!-- Reusa el estilo de #selector-seccion que ya tiene detalle-seccion.css -->
+  <link rel="stylesheet" href="src/css/detalle-seccion.css" />
 </head>
 <body>
   <header class="site-header">
@@ -26,7 +28,17 @@
   <main class="main-container">
     <h1>Evolución</h1>
     <p>Serie histórica de evolución académica de una sección.</p>
-    <div id="evolucion-container"></div>
+
+    <section class="panel-selector">
+      <label for="selector-seccion">Sección</label>
+      <select id="selector-seccion">
+        <option value="">Cargando secciones...</option>
+      </select>
+    </section>
+
+    <div id="evolucion-container">
+      <p class="mensaje-estado">Cargando evolución...</p>
+    </div>
   </main>
   
   <script src="src/js/components/grafico.js"></script>
