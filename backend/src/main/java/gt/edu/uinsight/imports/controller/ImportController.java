@@ -37,8 +37,9 @@ public class ImportController {
 
     @Operation(
             summary = "Validar un archivo CSV de calificaciones",
-            description = "Recibe el archivo, aplica las 6 reglas de negocio fila por fila, "
-                    + "persiste el detalle de cada fila y devuelve el resumen de la validación."
+            description = "Recibe el archivo, aplica las reglas de negocio fila por fila "
+                    + "(estudiante, evaluación, inscripción, rango de nota y duplicados), "
+                    + "guarda el archivo original y el detalle de cada fila, y devuelve el resumen de la validación."
     )
     @ApiResponse(responseCode = "200", description = "Archivo procesado (puede incluir filas rechazadas)")
     @ApiResponse(responseCode = "400",

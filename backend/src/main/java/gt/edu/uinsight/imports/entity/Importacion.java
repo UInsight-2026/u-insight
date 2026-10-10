@@ -7,18 +7,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 
-/**
- * Cabecera de una carga de calificaciones por CSV.
- * Entidad diseñada por Adolfo Gonzales (célula A7, sección 5 de la cédula).
- *
- * Sigue la convención del esquema maestro: llave primaria BIGINT autoincremental
- * y relaciones expresadas como columnas FK planas (sin @ManyToOne), igual que el
- * resto de tablas del proyecto.
- */
 @Entity
 @Table(name = "importacion")
 public class Importacion {
@@ -27,100 +23,109 @@ public class Importacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nombre_archivo", nullable = false, length = 255)
+    @Column(name = "nombre_archivo", nullable = false)
     private String nombreArchivo;
 
     @Column(name = "fecha_carga", nullable = false)
     private LocalDateTime fechaCarga;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false, length = 20)
+    @Column(nullable = false)
     private EstadoImportacion estado;
 
-    @Column(name = "total_registros", nullable = false)
-    private Integer totalRegistros;
+    @Column(name = "total_registros")
+    private Integer totalRegistros = 0;
 
-    @Column(name = "registros_validos", nullable = false)
-    private Integer registrosValidos;
+    @Column(name = "registros_validos")
+    private Integer registrosValidos = 0;
 
-    @Column(name = "registros_invalidos", nullable = false)
-    private Integer registrosInvalidos;
+    @Column(name = "registros_invalidos")
+    private Integer registrosInvalidos = 0;
 
-    @Column(name = "usuario_id", nullable = false)
+    @Column(name = "usuario_id")
     private Long usuarioId;
 
+    // ---- Control propio de A7: archivo original y trazabilidad ----
+
+    @Lob
+    @Column(name = "contenido_archivo", columnDefinition = "LONGBLOB")
+    private byte[] contenidoArchivo;
+
+    @Column(name = "tamano_bytes")
+    private Long tamanoBytes;
+
+    @Column(name = "content_type", length = 100)
+    private String contentType;
+
+    @Column(name = "hash_sha256", length = 64)
+    private String hashSha256;
+
+    @Column(name = "fecha_confirmacion")
+    private LocalDateTime fechaConfirmacion;
+
+    @Column(name = "notas_enviadas")
+    private Integer notasEnviadas;
+
+    @Column(name = "notas_registradas")
+    private Integer notasRegistradas;
+
     protected Importacion() {
-        // constructor requerido por JPA
     }
 
     public Importacion(String nombreArchivo, LocalDateTime fechaCarga,
-                        EstadoImportacion estado, Long usuarioId) {
+                       EstadoImportacion estado, Long usuarioId) {
         this.nombreArchivo = nombreArchivo;
         this.fechaCarga = fechaCarga;
         this.estado = estado;
         this.usuarioId = usuarioId;
-        this.totalRegistros = 0;
-        this.registrosValidos = 0;
-        this.registrosInvalidos = 0;
     }
 
-    public Long getId() {
-        return id;
+    public void adjuntarArchivo(byte[] contenido, String contentType) {
+        this.contenidoArchivo = contenido;
+        this.contentType = contentType;
+        this.tamanoBytes = contenido == null ? 0L : (long) contenido.length;
+        this.hashSha256 = contenido == null ? null : sha256(contenido);
     }
 
-    public String getNombreArchivo() {
-        return nombreArchivo;
+    public void registrarConfirmacion(int notasEnviadas, int notasRegistradas) {
+        this.fechaConfirmacion = LocalDateTime.now();
+        this.notasEnviadas = notasEnviadas;
+        this.notasRegistradas = notasRegistradas;
     }
 
-    public void setNombreArchivo(String nombreArchivo) {
-        this.nombreArchivo = nombreArchivo;
+    private static String sha256(byte[] contenido) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(contenido));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 no disponible", e);
+        }
     }
 
-    public LocalDateTime getFechaCarga() {
-        return fechaCarga;
-    }
+    public Long getId() { return id; }
 
-    public void setFechaCarga(LocalDateTime fechaCarga) {
-        this.fechaCarga = fechaCarga;
-    }
+    public String getNombreArchivo() { return nombreArchivo; }
 
-    public EstadoImportacion getEstado() {
-        return estado;
-    }
+    public LocalDateTime getFechaCarga() { return fechaCarga; }
 
-    public void setEstado(EstadoImportacion estado) {
-        this.estado = estado;
-    }
+    public EstadoImportacion getEstado() { return estado; }
+    public void setEstado(EstadoImportacion estado) { this.estado = estado; }
 
-    public Integer getTotalRegistros() {
-        return totalRegistros;
-    }
+    public Integer getTotalRegistros() { return totalRegistros; }
+    public void setTotalRegistros(Integer totalRegistros) { this.totalRegistros = totalRegistros; }
 
-    public void setTotalRegistros(Integer totalRegistros) {
-        this.totalRegistros = totalRegistros;
-    }
+    public Integer getRegistrosValidos() { return registrosValidos; }
+    public void setRegistrosValidos(Integer registrosValidos) { this.registrosValidos = registrosValidos; }
 
-    public Integer getRegistrosValidos() {
-        return registrosValidos;
-    }
+    public Integer getRegistrosInvalidos() { return registrosInvalidos; }
+    public void setRegistrosInvalidos(Integer registrosInvalidos) { this.registrosInvalidos = registrosInvalidos; }
 
-    public void setRegistrosValidos(Integer registrosValidos) {
-        this.registrosValidos = registrosValidos;
-    }
+    public Long getUsuarioId() { return usuarioId; }
 
-    public Integer getRegistrosInvalidos() {
-        return registrosInvalidos;
-    }
-
-    public void setRegistrosInvalidos(Integer registrosInvalidos) {
-        this.registrosInvalidos = registrosInvalidos;
-    }
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
-    }
+    public byte[] getContenidoArchivo() { return contenidoArchivo; }
+    public Long getTamanoBytes() { return tamanoBytes; }
+    public String getContentType() { return contentType; }
+    public String getHashSha256() { return hashSha256; }
+    public LocalDateTime getFechaConfirmacion() { return fechaConfirmacion; }
+    public Integer getNotasEnviadas() { return notasEnviadas; }
+    public Integer getNotasRegistradas() { return notasRegistradas; }
 }
