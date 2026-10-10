@@ -100,3 +100,74 @@ La entrega agrega 19 pruebas de C5 (14 del gateway JPA, 4 de configuracion y
   trabajo de integracion de los reportes de la celula.
 - Los reportes de curso/seccion degradados, validacion contra catalogo, CORS y
   lectura JDBC de alertas corresponden a las entregas de Adrianna y Allan.
+
+## Origen de datos (semana 5)
+
+| Propiedad | Valores previstos | Por omision | Efecto |
+|-----------|-------------------|-------------|--------|
+| `c5.data-source` | `mock`, `jpa` | `mock` | `jpa` consulta los repositorios reales de periodos A1, docentes A2, secciones e inscripciones A4. |
+| `c5.alert-source` | `none`, `jdbc` | `none` | `jdbc` seleccionara la lectura de la tabla `alert` de C3 cuando se integre el adaptador de Allan. |
+
+El gateway de esta rama no consulta directamente A3 ni el catalogo de cursos.
+`c5.alert-source` documenta el contrato de integracion: no activa por si sola un
+adaptador que aun no esta incluido. Sin `AlertQueryPort`, el gateway JPA devuelve
+listas de alertas vacias. En modo `mock`, las alertas vienen del gateway simulado;
+`none` no elimina esas alertas de prueba. La seleccion de origen de C5 tampoco
+elimina la dependencia de base de datos de los demas modulos del backend.
+
+Para probar el origen real, configurar una base local y usar
+`--c5.data-source=jpa --c5.alert-source=none`. Tras integrar el adaptador JDBC,
+usar `--c5.data-source=jpa --c5.alert-source=jdbc` y cargar el seed descrito arriba
+solo en un esquema de pruebas vacio.
+
+## Pruebas de integracion (semana 5)
+
+`JpaReportDataGatewayIntegrationTest` utiliza H2 y los repositorios reales de
+A1, A2 y A4. Persiste datos, ejecuta `flush` y limpia el contexto de persistencia
+antes de consultar: las verificaciones leen la base, no objetos en memoria.
+Cada prueba se revierte al terminar mediante una transaccion.
+
+Los siete casos cubren una seccion completa, periodo inexistente, docente
+inexistente, seccion inexistente, ausencia de C3, filtrado entre dos semestres y
+conteo de inscripciones de distintas secciones. El caso de filtro exige una
+coincidencia concreta para evitar que una lista vacia pase la prueba. Los huecos
+usan IDs sin registro, porque las columnas de seccion no admiten valores nulos.
+B7 se sustituye por `RiskSnapshot.unavailable()`; no se presenta como una prueba
+del motor de riesgo, de C3 ni de MySQL.
+
+Se usa `@SpringJUnitConfig` con auto-configuracion JPA y escaneo limitado a las
+entidades/repositorios consumidos. El ejemplo de la guia usa el import de
+`@DataJpaTest` de Spring Boot 3; Boot 4 requiere otro modulo de pruebas que no
+esta en el POM. Este contexto prueba las mismas consultas sin agregar una
+dependencia ni escanear entidades ajenas a la entrega de C5.
+
+Desde `backend`, con JDK 25:
+
+```powershell
+.\mvnw.cmd -o test "-Dtest=JpaReportDataGatewayIntegrationTest"
+.\mvnw.cmd -o clean test "-Dtest=gt.edu.uinsight.report.**,gt.edu.uinsight.academicperiod.**,SummaryControllerWebMvcTest"
+```
+
+Las correcciones de integracion de Semana 4 se conservan como antecedente:
+`AcademicExceptionHandler` usa `org.springframework.data.core.PropertyReferenceException`;
+`AcademicPeriodControllerTest` y `SummaryControllerWebMvcTest` usan los imports
+de `WebMvcTest` de Boot 4 y `MockitoBean`. Al actualizar con `origin/develop`,
+los conflictos de B7 y del controlador de B6 se resolvieron conservando las
+versiones ya integradas en `develop`. No se alteran sus comportamientos desde
+esta entrega. La fusion del PR y la evidencia conjunta corresponden al cierre
+de integracion de la celula; un push no demuestra que el PR este fusionado.
+
+Verificacion del 09/10/2026 con JDK 25: las siete pruebas nuevas de H2 pasan.
+La ejecucion conjunta de C5, A1 y `SummaryControllerWebMvcTest` compila desde
+cero y ejecuta 119 pruebas: 0 fallos de asercion, 1 error, 0 omitidas. El error
+es `SummaryControllerWebMvcTest.getSummary_responde500CuandoOcurreError` de B6:
+la `RuntimeException` del escenario de prueba sale como `ServletException`.
+Ese archivo se conserva igual que en `origin/develop`; no se corrige desde C5
+ni se presenta la ejecucion conjunta como exitosa. Evidencia local:
+`tmp/c5-week5-verification.log` y los reportes de Maven en `backend/target/surefire-reports`.
+
+La comprobacion separada de C5 y A1 termina con **BUILD SUCCESS: 115 pruebas,
+0 fallos, 0 errores, 0 omitidas** (76 de C5 y 39 de A1). Comando:
+`.\mvnw.cmd -o test "-Dtest=gt.edu.uinsight.report.**,gt.edu.uinsight.academicperiod.**"`.
+Evidencia local: `tmp/c5-week5-c5-a1.log`. El PR de Luis es el #129 y su destino
+se corrige de `main` a `develop`, la rama de integracion del proyecto.
