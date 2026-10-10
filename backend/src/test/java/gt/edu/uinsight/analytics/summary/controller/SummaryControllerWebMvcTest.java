@@ -18,8 +18,8 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import gt.edu.uinsight.analytics.centraltendency.exception.GlobalAnalyticsExceptionHandler;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
+import gt.edu.uinsight.analytics.summary.exception.SummaryExceptionHandler;
 import gt.edu.uinsight.analytics.summary.service.SectionValidationService;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 
@@ -30,7 +30,7 @@ import gt.edu.uinsight.analytics.summary.service.SummaryService;
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {
                         SummaryController.class,
-                        GlobalAnalyticsExceptionHandler.class
+                        SummaryExceptionHandler.class
                 }
         )
 )
