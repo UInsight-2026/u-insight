@@ -10,6 +10,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class B6AnalyticsGateway implements AnalyticsGateway {
     private static final Logger log = LoggerFactory.getLogger(B6AnalyticsGateway.class);
+
+    /**
+     * El modulo de dispersion devolvia valores constantes y C5 los marcaba como no
+     * calculados. Desde la integracion de B3 el valor se calcula sobre las notas de
+     * la seccion, asi que el dato se declara por lo que ahora es.
+     *
+     * Se conserva el campo, y no se elimina al volverse correcto el dato, porque es
+     * el consumidor quien decide cuanto confiar: una respuesta que no dice de donde
+     * sale un numero obliga a suponerlo.
+     */
+    private static final String ORIGEN_DISPERSION = "B3";
+
     private final SummaryService summaryService;
 
     public B6AnalyticsGateway(SummaryService summaryService) {
@@ -43,6 +55,7 @@ public class B6AnalyticsGateway implements AnalyticsGateway {
                     trend != null && trend.classification() != null ? trend.classification().name() : null,
                     trend != null && trend.averageChange() != null
                             ? trend.averageChange().doubleValue() : null,
+                    dispersion != null ? ORIGEN_DISPERSION : AnalyticsSnapshot.DISPERSION_NO_DISPONIBLE,
                     true);
             // available indica que hay al menos un componente; no garantiza
             // que la tendencia u otro indicador concreto este disponible.
