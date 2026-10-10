@@ -1,0 +1,13 @@
+{
+  "name": "u-insight-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Pruebas unitarias de la célula C6 (frontend). El sitio en sí sigue siendo HTML/CSS/JS puro servido como archivos estáticos (ver nginx.conf) — este package.json es solo para correr Vitest en desarrollo, no cambia cómo se sirve ni se despliega el frontend.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.4"
+  }
+}

@@ -16,27 +16,26 @@ public class DispersionController {
 
     private final DispersionService dispersionService;
 
-    public DispersionController(
-            DispersionService dispersionService) {
+    public DispersionController(DispersionService dispersionService) {
         this.dispersionService = dispersionService;
     }
 
     @GetMapping("/sections/{id}/dispersion")
     public ResponseEntity<DispersionResponse> getSectionDispersion(
-            @PathVariable("id") Long id) {
+            @PathVariable("id") Long sectionId) {
 
         DispersionResponse response =
-                dispersionService.getSectionDispersion(id);
+                dispersionService.getSectionDispersion(sectionId);
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/courses/{id}/dispersion")
     public ResponseEntity<DispersionResponse> getCourseDispersion(
-            @PathVariable("id") Long id) {
+            @PathVariable("id") Long courseId) {
 
         DispersionResponse response =
-                dispersionService.getCourseDispersion(id);
+                dispersionService.getCourseDispersion(courseId);
 
         return ResponseEntity.ok(response);
     }
