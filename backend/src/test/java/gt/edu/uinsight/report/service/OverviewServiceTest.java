@@ -11,12 +11,15 @@ import gt.edu.uinsight.report.dto.response.OverviewResponse;
 import gt.edu.uinsight.report.exception.InvalidFilterException;
 import gt.edu.uinsight.report.gateway.AnalyticsGateway;
 import gt.edu.uinsight.report.gateway.B6AnalyticsGateway;
+import gt.edu.uinsight.report.gateway.ReportDataGateway;
 import gt.edu.uinsight.report.mock.MockDataGateway;
+import gt.edu.uinsight.report.mock.model.MockSection;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -129,5 +132,52 @@ class OverviewServiceTest {
 
         assertThrows(InvalidFilterException.class,
                 () -> servicioCon(analyticsReal).getOverview(riskLevelInvalido));
+    }
+
+    // ----- Semana 4: lo que el gateway no pudo resolver se declara, no se rellena -----
+
+    /**
+     * Simula lo que devuelve el gateway real cuando una fuente no responde: la
+     * seccion llega, pero con los campos de esa fuente en null.
+     */
+    private static MockSection seccionConHuecos() {
+        return new MockSection(10L, "A", 5L, null,
+                null,    // teacherCode: A2 no respondio
+                null,    // period: A1 no respondio
+                null,    // riskLevel: B7 no respondio
+                0);      // studentsAtRisk: necesita A3
+    }
+
+    private OverviewService servicioCon(ReportDataGateway datos) {
+        return new OverviewService(datos, analyticsCaido, filterValidator, reportLogger);
+    }
+
+    @Test
+    void deberiaDeclararLasFuentesQueNoRespondieron() {
+        ReportDataGateway gatewayDegradado = mock(ReportDataGateway.class);
+        when(gatewayDegradado.findSections(any())).thenReturn(List.of(seccionConHuecos()));
+        when(gatewayDegradado.findAlerts(any())).thenReturn(List.of());
+
+        OverviewResponse response =
+                servicioCon(gatewayDegradado).getOverview(filtroDePeriodo(null));
+
+        assertTrue(response.getUnavailableSources().contains("A1"), "falta declarar el periodo");
+        assertTrue(response.getUnavailableSources().contains("A2"), "falta declarar el docente");
+        assertTrue(response.getUnavailableSources().contains("B7"), "falta declarar el riesgo");
+        assertTrue(response.getUnavailableSources().contains("A3"), "falta declarar los estudiantes");
+    }
+
+    @Test
+    void noDeberiaContarComoSinRiesgoLasSeccionesQueB7NoPudoEvaluar() {
+        ReportDataGateway gatewayDegradado = mock(ReportDataGateway.class);
+        when(gatewayDegradado.findSections(any())).thenReturn(List.of(seccionConHuecos()));
+        when(gatewayDegradado.findAlerts(any())).thenReturn(List.of());
+
+        OverviewResponse response =
+                servicioCon(gatewayDegradado).getOverview(filtroDePeriodo(null));
+
+        assertEquals(0, response.getHighRiskSections());
+        assertEquals(1, response.getUnknownRiskSections(),
+                "una seccion sin nivel no es una seccion sin riesgo");
     }
 }
