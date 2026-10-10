@@ -89,4 +89,5 @@ public class RiskEvaluationResponse {
     public void setActivatedRules(List<String> activatedRules) {
         this.activatedRules = activatedRules;
     }
+    
 }

@@ -95,4 +95,5 @@ public class Alert {
     public void setAlertsGenerated(Integer alertsGenerated) {
         this.alertsGenerated = alertsGenerated;
     }
+    
 }
