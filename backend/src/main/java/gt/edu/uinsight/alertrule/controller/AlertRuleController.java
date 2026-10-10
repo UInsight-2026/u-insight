@@ -1,8 +1,10 @@
 package gt.edu.uinsight.alertrule.controller;
 
 import gt.edu.uinsight.alertrule.dto.request.CreateAlertRuleRequest;
+import gt.edu.uinsight.alertrule.dto.request.UpdateStatusRequest;
 import gt.edu.uinsight.alertrule.dto.response.AlertRuleResponse;
 import gt.edu.uinsight.alertrule.service.AlertRuleService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

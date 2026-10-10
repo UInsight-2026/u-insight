@@ -1,7 +1,11 @@
 package gt.edu.uinsight.teacher.controller;
 
+import gt.edu.uinsight.teacher.dto.TeacherRequest;
+import gt.edu.uinsight.teacher.dto.TeacherSectionResponse;
+import gt.edu.uinsight.teacher.dto.TeacherStatusRequest;
 import gt.edu.uinsight.teacher.model.Teacher;
-import gt.edu.uinsight.teacher.repository.TeacherRepository;
+import gt.edu.uinsight.teacher.service.TeacherService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,25 +17,20 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class TeacherController {
 
-    private final TeacherRepository teacherRepository;
+    private final TeacherService teacherService;
 
-    public TeacherController(TeacherRepository teacherRepository) {
-        this.teacherRepository = teacherRepository;
+    public TeacherController(TeacherService teacherService) {
+        this.teacherService = teacherService;
     }
 
     @PostMapping
-    public ResponseEntity<Teacher> createTeacher(@RequestBody Teacher teacher) {
-        if (teacher.getStatus() == null || teacher.getStatus().isEmpty()) {
-            teacher.setStatus("ACTIVE");
-        }
-        Teacher savedTeacher = teacherRepository.save(teacher);
-        return new ResponseEntity<>(savedTeacher, HttpStatus.CREATED);
+    public ResponseEntity<Teacher> createTeacher(@Valid @RequestBody TeacherRequest request) {
+        return new ResponseEntity<>(teacherService.create(request), HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<List<Teacher>> getAllTeachers() {
-        List<Teacher> teachers = teacherRepository.findAll();
-        return ResponseEntity.ok(teachers);
+        return ResponseEntity.ok(teacherService.findAll());
     }
 
 }

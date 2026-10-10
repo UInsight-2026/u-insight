@@ -30,14 +30,17 @@ const ESTADO_ETIQUETA = {
 };
 
 /**
- * Arma el HTML de una tarjeta de alerta a partir de un objeto con
- * la forma de alertas.mock.json (id, sectionCode, courseName, type,
- * severity, status, message, createdAt).
+ * Arma el HTML de una tarjeta de alerta a partir de un AlertItemResponse
+ * real de GET /api/v1/reports/alerts (célula C5): id, sectionId,
+ * courseCode, type, riskLevel, status, title, generatedAt.
+ *
+ * Nota: el endpoint real no trae sectionCode (solo sectionId numérico),
+ * ni un campo "message" — el texto visible es "title".
  */
 function crearTarjetaAlerta(alerta) {
-  const severidadClase = `severidad-${(alerta.severity || "").toLowerCase()}`;
+  const severidadClase = `severidad-${(alerta.riskLevel || "").toLowerCase()}`;
   const estadoClase = `estado-alerta-${(alerta.status || "").toLowerCase()}`;
-  const severidadTexto = SEVERIDAD_ETIQUETA[alerta.severity] || alerta.severity;
+  const severidadTexto = SEVERIDAD_ETIQUETA[alerta.riskLevel] || alerta.riskLevel;
   const estadoTexto = ESTADO_ETIQUETA[alerta.status] || alerta.status;
 
   return `
@@ -46,8 +49,8 @@ function crearTarjetaAlerta(alerta) {
         <span class="badge ${severidadClase}">${severidadTexto}</span>
         <span class="badge ${estadoClase}">${estadoTexto}</span>
       </div>
-      <h3>${alerta.courseName || ""} · Sección ${alerta.sectionCode || ""}</h3>
-      <p>${alerta.message || ""}</p>
+      <h3>${alerta.courseCode || ""} · Sección ${alerta.sectionId ?? ""}</h3>
+      <p>${alerta.title || ""}</p>
     </div>
   `;
 }

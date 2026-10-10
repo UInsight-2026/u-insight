@@ -1,5 +1,8 @@
 package gt.edu.uinsight.analytics.trend.controller;
 
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,20 +16,39 @@ import gt.edu.uinsight.analytics.trend.service.TrendService;
 @RequestMapping("/api/v1/analytics")
 public class TrendController {
     
-     //servicio
-     private final TrendService trendService = null; // Inyectar el servicio real en un escenario de producción
+    private final TrendService trendService;
 
-     @GetMapping("/sections/{id}/trend")
-     public ResponseEntity<TrendResponse> getTrendBySectionId(@PathVariable Long id) {
+    public TrendController(TrendService trendService) {
+        this.trendService = trendService;
+    }
+
+     @GetMapping("/sections/{id}/trends")
+     public ResponseEntity<?> getTrendBySectionId(@PathVariable Long id) {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);
+         if(trendResponse == null){
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                 Map.of(
+                     "mensaje","La sección con id "+id+" no existe",
+                     "codigo",404
+                 )
+             );
+         }
          return ResponseEntity.ok(trendResponse);
      }
 
-    @GetMapping("/students/{id}/trend")
-    public ResponseEntity<TrendResponse> getTrendByStudentId(@PathVariable Long id) {
+    @GetMapping("/students/{id}/trends")
+    public ResponseEntity<?> getTrendByStudentId(@PathVariable Long id) {
         // Lógica para obtener la tendencia por ID de estudiante
         TrendResponse trendResponse = trendService.getTrendByStudentId(id);
+        if(trendResponse == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of(
+                    "mensaje","El estudiante con id "+id+" no existe",
+                    "codigo",404
+                )
+            );
+        }
         return ResponseEntity.ok(trendResponse);
     }
 

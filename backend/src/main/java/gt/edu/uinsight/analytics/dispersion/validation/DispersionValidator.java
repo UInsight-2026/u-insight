@@ -1,0 +1,50 @@
+
+package gt.edu.uinsight.analytics.dispersion.validation;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInsuficientesException;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
+
+public final class DispersionValidator {
+
+    private static final int MINIMO_DATOS_REQUERIDOS = 2;
+
+    private static final BigDecimal MINIMO_SCORE = BigDecimal.ZERO;
+    private static final BigDecimal MAXIMO_SCORE = new BigDecimal("100");
+
+    private DispersionValidator() {
+    }
+
+    public static void validar(List<BigDecimal> scores) {
+
+        if (scores == null || scores.isEmpty()) {
+            throw new DispersionDatosInsuficientesException(
+                    "No hay calificaciones registradas para calcular la dispersión.");
+        }
+
+        if (scores.size() < MINIMO_DATOS_REQUERIDOS) {
+            throw new DispersionDatosInsuficientesException(
+                    "Se requieren al menos "
+                            + MINIMO_DATOS_REQUERIDOS
+                            + " calificaciones para calcular la dispersión. "
+                            + "Encontradas: "
+                            + scores.size() + ".");
+        }
+
+        for (BigDecimal score : scores) {
+
+            if (score == null) {
+                throw new DispersionDatosInvalidosException(
+                        "Existe una calificación sin score registrado.");
+            }
+
+            if (score.compareTo(MINIMO_SCORE) < 0
+                    || score.compareTo(MAXIMO_SCORE) > 0) {
+                throw new DispersionDatosInvalidosException(
+                        "Las calificaciones deben estar entre 0 y 100.");
+            }
+        }
+    }
+}

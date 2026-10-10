@@ -1,3 +1,5 @@
+const API_BASE = "http://localhost:8080/api/v1";
+
 const elementos = {
   contador: document.getElementById("contador-resultados"),
   contenedorResultados: document.getElementById("contenedor-resultados"),
@@ -9,22 +11,26 @@ const elementos = {
 
 let registros = [];
 
-async function cargarDatosMock() {
+async function cargarAlertas() {
   try {
-    const respuesta = await fetch("src/data/alertas.mock.json");
+    console.info("ALERTAS_CARGA_INICIADA");
+    // size=100: el endpoint pagina (default 20), y para esta vista simple
+    // todavia no implementamos controles de pagina en el UI.
+    const respuesta = await fetch(`${API_BASE}/reports/alerts?size=100`);
     if (!respuesta.ok) {
-      throw new Error(`No se pudo cargar el archivo mock (HTTP ${respuesta.status})`);
+      throw new Error(`La API respondió un error (HTTP ${respuesta.status})`);
     }
-    registros = await respuesta.json();
+    const datos = await respuesta.json();
+    registros = datos.alerts || [];
     renderizarAlertas(registros);
-    console.log("Datos simulados cargados:", registros);
+    console.info("ALERTAS_CARGA_EXITOSA", registros.length, "alertas");
   } catch (error) {
-    console.error("Error al cargar datos simulados:", error);
+    console.error("ALERTAS_CARGA_ERROR", error);
     elementos.contenedorResultados.innerHTML = `
       <div class="mensaje-estado">
-        No se pudieron cargar los datos simulados. Verifica que el archivo
-        src/data/alertas.mock.json exista y que la página se esté sirviendo
-        desde un servidor local (no abierta directamente como archivo).
+        No se pudieron cargar las alertas. Verifica que el backend esté
+        corriendo en ${API_BASE} y que no esté bloqueando la petición por CORS
+        (revisa la consola del navegador).
       </div>`;
     elementos.contador.textContent = "Error al cargar datos.";
   }
@@ -53,7 +59,7 @@ function filtrarAlertas() {
     const estadoSeleccionado = elementos.filtroEstado.value;
     const alertasFiltradas = registros.filter((alerta) => {
         return (
-            (severidadSeleccionada === "" || alerta.severity === severidadSeleccionada) &&
+            (severidadSeleccionada === "" || alerta.riskLevel === severidadSeleccionada) &&
             (estadoSeleccionado === "" || alerta.status === estadoSeleccionado)
         );
     });
@@ -68,4 +74,4 @@ function limpiarFiltros() {
 
 elementos.btnBuscar.addEventListener("click", filtrarAlertas);
 elementos.btnLimpiar.addEventListener("click", limpiarFiltros);
-document.addEventListener("DOMContentLoaded", cargarDatosMock);
+document.addEventListener("DOMContentLoaded", cargarAlertas);

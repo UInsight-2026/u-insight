@@ -5,14 +5,14 @@ import java.util.List;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
-import gt.edu.uinsight.analytics.summary.dto.external.PositionData;
+import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 
 public class SectionSummary {
 
     private Long sectionId;
     private CentralTendencyResponse centralTendency;
-    private PositionData position;
+    private SectionPositionResponse position;
     private DispersionResponse dispersion;
     private TrendResponse trend;
     private StudentComparisonResponse studentComparison;
@@ -25,8 +25,8 @@ public class SectionSummary {
     public CentralTendencyResponse getCentralTendencyData() { return centralTendency; }
     public void setCentralTendencyData(CentralTendencyResponse ct) { this.centralTendency = ct; }
 
-    public PositionData getPositionData() { return position; }
-    public void setPositionData(PositionData pd) { this.position = pd; }
+    public SectionPositionResponse getPositionData() { return position; }
+    public void setPositionData(SectionPositionResponse position) { this.position = position; }
 
     public DispersionResponse getDispersionData() { return dispersion; }
     public void setDispersionData(DispersionResponse dd) { this.dispersion = dd; }
