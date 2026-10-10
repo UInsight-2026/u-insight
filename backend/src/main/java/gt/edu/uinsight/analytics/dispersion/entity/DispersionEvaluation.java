@@ -1,4 +1,3 @@
-
 package gt.edu.uinsight.analytics.dispersion.entity;
 
 import java.math.BigDecimal;
@@ -29,7 +28,11 @@ public class DispersionEvaluation {
     @Column(name = "evaluation_date")
     private LocalDate evaluationDate;
 
+<<<<<<< HEAD
     @Column(name = "maximum_score")
+=======
+    @Column(name = "maximum_score", nullable = false, precision = 5, scale = 2)
+>>>>>>> 1ee7dac03082d19815951d48f50eb659e87dae52
     private BigDecimal maximumScore;
 
     private BigDecimal weight;
