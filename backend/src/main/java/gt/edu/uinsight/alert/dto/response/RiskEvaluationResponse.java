@@ -4,7 +4,7 @@ import java.util.List;
 
 public class RiskEvaluationResponse {
 
-    private Integer sectionId;
+    private Long sectionId;
     private String riskLevel;
     private double score;
 
@@ -17,7 +17,7 @@ public class RiskEvaluationResponse {
     }
 
     public RiskEvaluationResponse(
-            Integer sectionId,
+            Long sectionId,
             String riskLevel,
             Double score,
             Integer rulesEvaluated,
@@ -34,11 +34,11 @@ public class RiskEvaluationResponse {
         this.activatedRules = activatedRules;
     }
 
-    public Integer getSectionId() {
+    public Long getSectionId() {
         return sectionId;
     }
 
-    public void setSectionId(Integer sectionId) {
+    public void setSectionId(Long sectionId) {
         this.sectionId = sectionId;
     }
 
