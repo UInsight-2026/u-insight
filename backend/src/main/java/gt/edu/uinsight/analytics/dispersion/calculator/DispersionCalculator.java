@@ -5,11 +5,8 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.List;
 
-import org.springframework.stereotype.Component;
-
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
 
-@Component
 public class DispersionCalculator {
 
     private static final MathContext MC =
@@ -72,5 +69,11 @@ public class DispersionCalculator {
         }
 
         return sum.divide(BigDecimal.valueOf(scores.size()), MC);
+    }
+
+    private void validateScores(List<BigDecimal> scores) {
+        if (scores == null || scores.isEmpty()) {
+            throw new IllegalArgumentException("La lista de calificaciones no puede estar vacía o nula");
+        }
     }
 }
