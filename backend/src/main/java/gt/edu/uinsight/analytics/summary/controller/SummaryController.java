@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/v1/analytics/sections")
 @Tag(
     name = "B6 - Consolidación analítica",
-    description = "Combina los resultados de B1 a B5 en un solo resumen por sección"
+    description = "Combina resultados analíticos de sección de B1 a B4"
 )
 public class SummaryController {
 
@@ -40,7 +40,9 @@ public class SummaryController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resumen generado correctamente"),
-        @ApiResponse(responseCode = "404", description = "Sección no encontrada")
+        @ApiResponse(responseCode = "206", description = "Resumen generado parcialmente; uno o más componentes no están disponibles"),
+        @ApiResponse(responseCode = "404", description = "Sección no encontrada"),
+        @ApiResponse(responseCode = "500", description = "Error inesperado en el servidor")
     })
     @GetMapping("/{sectionId}/summary")
     public ResponseEntity<SectionSummary> getSummary(@PathVariable Long sectionId) {
@@ -50,6 +52,11 @@ public class SummaryController {
         }
 
         SectionSummary summary = summaryService.getSummary(sectionId);
+
+        if (summary.getUnavailableComponents() != null
+                && !summary.getUnavailableComponents().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(summary);
+        }
 
         return ResponseEntity.ok(summary);
     }
