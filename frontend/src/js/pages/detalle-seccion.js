@@ -2,8 +2,10 @@
 // GET {API_BASE}/analytics/sections/{id}/summary (celula de analytics) reemplaza
 // a detalle-seccion.mock.json. Las alertas de la seccion se siguen tomando de
 // alertas.mock.json (eso no fue parte de este cambio).
-// Usa los componentes compartidos tarjeta.js (crearTarjeta / crearTarjetaAlerta)
-// y tabla.js (crearTablaResultados).
+// Usa los componentes compartidos tarjeta.js (crearTarjeta / crearTarjetaAlerta),
+// tabla.js (crearTablaResultados) y utils/formatters.js (valorODisponible,
+// formatearModa, formatearDispersion, formatearTendencia — Semana 5: se movieron
+// ahí para poder probarlas con Vitest sin depender del DOM).
 
 const API_BASE = "http://localhost:8080/api/v1";
 const RUTA_MOCK_ALERTAS = "src/data/alertas.mock.json";
@@ -18,19 +20,6 @@ const CATALOGO_SECCIONES = [
   { sectionId: 22, courseName: "Estadística", sectionCode: "A" },
 ];
 
-const CLASIFICACION_DISPERSION = {
-  LOW_DISPERSION: "Dispersión baja",
-  MODERATE_DISPERSION: "Dispersión moderada",
-  HIGH_DISPERSION: "Dispersión alta",
-};
-
-const CLASIFICACION_TENDENCIA = {
-  POSITIVE: "Ascendente",
-  NEGATIVE: "Descendente",
-  STABLE: "Estable",
-  INSUFFICIENT_DATA: "Datos insuficientes",
-};
-
 const elementos = {
   selectorSeccion: document.getElementById("selector-seccion"),
   contenedorIndicadores: document.getElementById("contenedor-indicadores"),
@@ -40,36 +29,6 @@ const elementos = {
 };
 
 let alertas = [];
-
-function valorODisponible(valor) {
-  return valor === null || valor === undefined ? "No disponible" : valor;
-}
-
-function formatearModa(moda) {
-  if (!moda || !moda.length) {
-    return "No disponible";
-  }
-  return moda.join(", ");
-}
-
-function formatearDispersion(dispersion) {
-  if (!dispersion) {
-    return "No disponible";
-  }
-  const clasificacion = CLASIFICACION_DISPERSION[dispersion.classification] || dispersion.classification;
-  return `${dispersion.standardDeviation} (${clasificacion})`;
-}
-
-function formatearTendencia(tendencia) {
-  if (!tendencia) {
-    return "No disponible";
-  }
-  const clasificacion = CLASIFICACION_TENDENCIA[tendencia.classification] || tendencia.classification;
-  if (tendencia.averageChange === null || tendencia.averageChange === undefined) {
-    return clasificacion;
-  }
-  return `${clasificacion} (${tendencia.averageChange} pts promedio)`;
-}
 
 async function inicializar() {
   poblarSelectorSecciones(CATALOGO_SECCIONES);
@@ -118,7 +77,7 @@ async function cargarYRenderizarSeccion(sectionId) {
     console.info("DETALLE_SECCION_CARGA_EXITOSA", sectionId, resumen);
 
     renderizarIndicadores(resumen);
-    renderizarEvaluaciones(resumen.trend);
+    renderizarEvaluaciones(resumen.trendData);
     renderizarAlertas(sectionId);
   } catch (error) {
     console.error("DETALLE_SECCION_CARGA_ERROR", error);
@@ -130,7 +89,9 @@ function renderizarIndicadores(resumen) {
   // Cualquiera de estos componentes puede venir null si esa celula fallo o
   // no respondio; valorODisponible/formatearModa/formatearDispersion/
   // formatearTendencia ya manejan ese caso sin leer propiedades de null.
-  const { centralTendency, dispersion, trend } = resumen || {};
+  // Semana 4: la API real anida estos datos como centralTendencyData /
+  // dispersionData / trendData (no centralTendency/dispersion/trend).
+  const { centralTendencyData: centralTendency, dispersionData: dispersion, trendData: trend } = resumen || {};
 
   elementos.contenedorIndicadores.innerHTML = [
     crearTarjeta("Media", valorODisponible(centralTendency?.mean)),
