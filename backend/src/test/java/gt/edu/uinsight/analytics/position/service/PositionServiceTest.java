@@ -2,6 +2,7 @@ package gt.edu.uinsight.analytics.position.service;
 
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.position.dto.response.StudentPositionResponse;
+import gt.edu.uinsight.analytics.position.exception.AmbiguousSectionException;
 import gt.edu.uinsight.analytics.position.exception.InvalidPercentileException;
 import gt.edu.uinsight.analytics.position.exception.NoGradesAvailableException;
 import gt.edu.uinsight.analytics.position.exception.PositionNotFoundException;
@@ -68,14 +69,15 @@ public class PositionServiceTest {
     }
 
     // Prueba 4: Cálculo de percentil de estudiante (promedio real vs. notas de TODA la sección)
+    // sin sectionId explicito: se resuelve automaticamente porque el estudiante tiene una sola seccion
     @Test
     void getStudentPosition_Success() {
         List<Double> notasEstudiante = Arrays.asList(70.0, 80.0, 90.0); // promedio real = 80.0
         when(gradeIntegrationService.getGradesByStudent(5L)).thenReturn(notasEstudiante);
-        when(gradeIntegrationService.getSectionIdByStudent(5L)).thenReturn(10L);
+        when(gradeIntegrationService.getSectionIdsByStudent(5L)).thenReturn(List.of(10L));
         when(gradeIntegrationService.getGradesBySection(10L)).thenReturn(mockGrades);
 
-        StudentPositionResponse response = positionService.getStudentPosition(5L);
+        StudentPositionResponse response = positionService.getStudentPosition(5L, null);
 
         assertNotNull(response);
         assertEquals("EST-0005", response.getStudentCode());
@@ -88,7 +90,54 @@ public class PositionServiceTest {
     @Test
     void getStudentPosition_InvalidId_ThrowsException() {
         assertThrows(PositionNotFoundException.class, () -> {
-            positionService.getStudentPosition(0L);
+            positionService.getStudentPosition(0L, null);
+        });
+    }
+
+    // Prueba 10: sectionId explicito y el estudiante SI esta matriculado -> se usa esa seccion
+    @Test
+    void getStudentPosition_WithExplicitSectionId_Success() {
+        List<Double> notasEstudiante = Arrays.asList(70.0, 80.0, 90.0); // promedio real = 80.0
+        when(gradeIntegrationService.getGradesByStudent(5L)).thenReturn(notasEstudiante);
+        when(gradeIntegrationService.isStudentEnrolledInSection(5L, 20L)).thenReturn(true);
+        when(gradeIntegrationService.getGradesBySection(20L)).thenReturn(mockGrades);
+
+        StudentPositionResponse response = positionService.getStudentPosition(5L, 20L);
+
+        assertEquals(80.0, response.getStudentAverage(), 0.0001);
+        assertEquals(60, response.getPercentile());
+    }
+
+    // Prueba 11: sectionId explicito pero el estudiante NO esta matriculado ahi -> 404
+    @Test
+    void getStudentPosition_WithExplicitSectionId_NotEnrolled_ThrowsException() {
+        when(gradeIntegrationService.getGradesByStudent(5L)).thenReturn(mockGrades);
+        when(gradeIntegrationService.isStudentEnrolledInSection(5L, 99L)).thenReturn(false);
+
+        assertThrows(PositionNotFoundException.class, () -> {
+            positionService.getStudentPosition(5L, 99L);
+        });
+    }
+
+    // Prueba 12: sin sectionId y el estudiante esta en MAS de una seccion -> se exige especificarla
+    @Test
+    void getStudentPosition_MultipleSections_ThrowsAmbiguousSectionException() {
+        when(gradeIntegrationService.getGradesByStudent(5L)).thenReturn(mockGrades);
+        when(gradeIntegrationService.getSectionIdsByStudent(5L)).thenReturn(Arrays.asList(10L, 20L));
+
+        assertThrows(AmbiguousSectionException.class, () -> {
+            positionService.getStudentPosition(5L, null);
+        });
+    }
+
+    // Prueba 13: sin sectionId y el estudiante no esta matriculado en ninguna seccion -> 404
+    @Test
+    void getStudentPosition_NoSections_ThrowsException() {
+        when(gradeIntegrationService.getGradesByStudent(5L)).thenReturn(mockGrades);
+        when(gradeIntegrationService.getSectionIdsByStudent(5L)).thenReturn(Collections.emptyList());
+
+        assertThrows(PositionNotFoundException.class, () -> {
+            positionService.getStudentPosition(5L, null);
         });
     }
 
@@ -106,7 +155,7 @@ public class PositionServiceTest {
     void getStudentPosition_EmptyGrades_ThrowsNoGradesAvailableException() {
         when(gradeIntegrationService.getGradesByStudent(5L)).thenReturn(Collections.emptyList());
         assertThrows(NoGradesAvailableException.class, () -> {
-            positionService.getStudentPosition(5L);
+            positionService.getStudentPosition(5L, null);
         });
     }
 

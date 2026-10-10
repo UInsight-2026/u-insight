@@ -19,7 +19,9 @@ import java.util.List;
  *   -> Q1, Q2, Q3 de la seccion, y percentiles adicionales via ?percentiles=25,50,75,90
  *
  * GET /api/v1/analytics/students/{id}/position
- *   -> percentil del estudiante respecto a su seccion
+ *   -> percentil del estudiante respecto a su seccion. Si el estudiante
+ *      esta matriculado en mas de una seccion, debe especificarse con
+ *      ?sectionId= cual de ellas usar.
  */
 @RestController
 @RequestMapping("/api/v1/analytics")
@@ -39,7 +41,9 @@ public class PositionController {
     }
 
     @GetMapping("/students/{id}/position")
-    public StudentPositionResponse getStudentPosition(@PathVariable Long id) {
-        return positionService.getStudentPosition(id);
+    public StudentPositionResponse getStudentPosition(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long sectionId) {
+        return positionService.getStudentPosition(id, sectionId);
     }
 }

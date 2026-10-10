@@ -2,6 +2,7 @@ package gt.edu.uinsight.analytics.position.service;
 
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.position.dto.response.StudentPositionResponse;
+import gt.edu.uinsight.analytics.position.exception.AmbiguousSectionException;
 import gt.edu.uinsight.analytics.position.exception.InvalidPercentileException;
 import gt.edu.uinsight.analytics.position.exception.NoGradesAvailableException;
 import gt.edu.uinsight.analytics.position.exception.PositionNotFoundException;
@@ -69,7 +70,15 @@ public class PositionService {
         return new SectionPositionResponse(sectionId, ordenados.size(), quartiles, percentiles);
     }
 
+    /**
+     * Sobrecarga de compatibilidad para llamadores existentes (p.ej. B5) que
+     * todavia no pasan sectionId explicito.
+     */
     public StudentPositionResponse getStudentPosition(Long studentId) {
+        return getStudentPosition(studentId, null);
+    }
+
+    public StudentPositionResponse getStudentPosition(Long studentId, Long sectionId) {
         log.info("Iniciando calculo de posicion individual para el estudiante ID: {}", studentId);
 
         if (studentId == null || studentId <= 0) {
@@ -88,11 +97,11 @@ public class PositionService {
         double studentAverage = notasEstudiante.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
 
         // El percentil se calcula contra TODA la seccion del estudiante, no contra sus propias notas
-        Long sectionId = gradeIntegrationService.getSectionIdByStudent(studentId);
-        List<Double> notasSeccion = gradeIntegrationService.getGradesBySection(sectionId);
+        Long resolvedSectionId = resolveSectionId(studentId, sectionId);
+        List<Double> notasSeccion = gradeIntegrationService.getGradesBySection(resolvedSectionId);
         if (notasSeccion == null || notasSeccion.isEmpty()) {
             log.error("Regla de negocio rechazada: la seccion {} del estudiante {} no tiene notas registradas",
-                    sectionId, studentId);
+                    resolvedSectionId, studentId);
             throw new NoGradesAvailableException(
                     "No hay notas registradas para la seccion del estudiante con id: " + studentId);
         }
@@ -103,6 +112,43 @@ public class PositionService {
 
         log.info("Calculo exitoso de percentil para el estudiante ID: {}", studentId);
         return new StudentPositionResponse(studentCode, studentAverage, percentile);
+    }
+
+    /**
+     * Resuelve la seccion contra la que se debe comparar al estudiante.
+     *
+     * Un estudiante puede estar matriculado en mas de una seccion (una por
+     * curso), por lo que no se puede asumir una unica seccion "del"
+     * estudiante. Si el cliente especifica sectionId se valida la matricula;
+     * si no lo especifica, solo se resuelve automaticamente cuando el
+     * estudiante tiene una unica seccion -- de lo contrario se exige que el
+     * cliente la especifique explicitamente.
+     */
+    private Long resolveSectionId(Long studentId, Long sectionId) {
+        if (sectionId != null) {
+            if (sectionId <= 0 || !gradeIntegrationService.isStudentEnrolledInSection(studentId, sectionId)) {
+                log.error("Regla de negocio rechazada: el estudiante {} no esta matriculado en la seccion {}",
+                        studentId, sectionId);
+                throw new PositionNotFoundException(
+                        "El estudiante con id: " + studentId + " no esta matriculado en la seccion con id: " + sectionId);
+            }
+            return sectionId;
+        }
+
+        List<Long> secciones = gradeIntegrationService.getSectionIdsByStudent(studentId);
+        if (secciones == null || secciones.isEmpty()) {
+            log.error("Regla de negocio rechazada: el estudiante {} no esta matriculado en ninguna seccion", studentId);
+            throw new PositionNotFoundException(
+                    "El estudiante con id: " + studentId + " no esta matriculado en ninguna seccion");
+        }
+        if (secciones.size() > 1) {
+            log.error("Regla de negocio rechazada: el estudiante {} esta matriculado en {} secciones, se requiere sectionId",
+                    studentId, secciones.size());
+            throw new AmbiguousSectionException(
+                    "El estudiante con id: " + studentId + " esta matriculado en mas de una seccion ("
+                            + secciones.size() + "). Especifique el parametro sectionId.");
+        }
+        return secciones.get(0);
     }
 
     /**

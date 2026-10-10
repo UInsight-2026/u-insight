@@ -6,8 +6,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice
+/**
+ * Acotado a los controllers de B1: un manejador global con catch-all
+ * convertiria en 500 los errores de los demas modulos y las rutas inexistentes
+ * (confirmado en el informe de pruebas de integracion de A5, 2-oct-2026:
+ * capturaba tambien errores de A2, A4 y A6).
+ */
+@RestControllerAdvice(basePackages = "gt.edu.uinsight.analytics.centraltendency")
 public class GlobalAnalyticsExceptionHandler {
 private static final Logger log = LoggerFactory.getLogger(GlobalAnalyticsExceptionHandler.class);
 
@@ -16,6 +23,14 @@ private static final Logger log = LoggerFactory.getLogger(GlobalAnalyticsExcepti
     public ResponseEntity<ErrorResponse> handleBadRequest(InvalidAnalyticsRequestException ex) {
         log.warn("ANALYTICS_RULE_REJECTED - {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // Error 400: un id o parametro no numerico (por ejemplo /sections/abc/...)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("ANALYTICS_INVALID_PARAMETER - {}", ex.getName());
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "El parametro '" + ex.getName() + "' no tiene un formato valido");
     }
 
     // Error 404: Sección o curso inexistente

@@ -1,0 +1,30 @@
+package gt.edu.uinsight.alert.controller;
+
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import gt.edu.uinsight.alert.dto.response.RiskEvaluationResponse;
+import gt.edu.uinsight.alert.dto.section.SectionIndicatorsDto;
+import gt.edu.uinsight.alert.service.RiskEvaluationService;
+
+@RestController
+@RequestMapping("/api/v1/risk-evaluation")
+public class RiskEvaluationController {
+
+    private final RiskEvaluationService riskEvaluationService;
+
+    public RiskEvaluationController(RiskEvaluationService riskEvaluationService) {
+        this.riskEvaluationService = riskEvaluationService;
+    }
+
+    @PostMapping("/sections/{sectionId}")
+    public RiskEvaluationResponse evaluateSectionRisk(
+            @PathVariable Integer sectionId,
+            @RequestBody SectionIndicatorsDto indicatorsDto
+    ) {
+        return riskEvaluationService.evaluateSectionRisk(sectionId, indicatorsDto);
+    }
+}

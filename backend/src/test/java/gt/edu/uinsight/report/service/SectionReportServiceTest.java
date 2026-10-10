@@ -43,7 +43,10 @@ class SectionReportServiceTest {
         when(repository.getCentralTendency(10L))
                 .thenReturn(new CentralTendencyResponse(30, 72.5, 73.0, List.of()));
         when(repository.getDispersion(10L))
-                .thenReturn(new DispersionResponse(10L, null, 40.0, 95.0, 55.0, 124.55, 11.16, null));
+                .thenReturn(new DispersionResponse(10L, null,
+                        new BigDecimal("40.0"), new BigDecimal("95.0"),
+                        new BigDecimal("55.0"), new BigDecimal("124.55"),
+                        new BigDecimal("11.16"), null));
         when(repository.getTrend(10L)).thenReturn(new TrendResponse(
                 TrendClassification.NEGATIVE, new BigDecimal("-2.5"), List.of()));
         return repository;
