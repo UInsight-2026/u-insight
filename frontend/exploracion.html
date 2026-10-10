@@ -32,7 +32,9 @@
       <h2>Filtros</h2>
 
       <p class="nota-mock">
-        Vista de mockup: los filtros aún no ejecutan la búsqueda real. Esa lógica se implementa en la Semana 3.
+        Datos reales de secciones (A4), cursos (A1), docentes (A2) y períodos (A1). Las columnas
+        de estudiante, carnet y nota todavía no están disponibles: el módulo de estudiante (A3)
+        aún no expone API.
       </p>
 
       <div class="grid-filtros">
@@ -82,15 +84,12 @@
             <th>Curso</th>
             <th>Docente</th>
             <th>Sección</th>
-            <th>Estudiante</th>
-            <th>Carnet</th>
-            <th>Nota</th>
             <th>Estado</th>
           </tr>
         </thead>
         <tbody id="cuerpo-tabla">
           <tr>
-            <td colspan="8" class="mensaje-estado">Cargando...</td>
+            <td colspan="5" class="mensaje-estado">Cargando...</td>
           </tr>
         </tbody>
       </table>

@@ -1,31 +1,48 @@
 // Celula B5 - Analisis Individual | Pruebas unitarias de StudentAnalyticsService
 package gt.edu.uinsight.analytics.individual.service;
 
+import gt.edu.uinsight.analytics.centraltendency.service.CentralTendencyService;
+import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
+import gt.edu.uinsight.analytics.position.service.PositionService;
+import gt.edu.uinsight.analytics.position.dto.response.StudentPositionResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentSummaryResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentTrendResponse;
 import gt.edu.uinsight.analytics.individual.exception.StudentNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class StudentAnalyticsServiceTest {
 
-    private StudentAnalyticsService service;
+    @Mock
+    private CentralTendencyService centralTendencyService;
 
-    @BeforeEach
-    void setUp() {
-        service = new StudentAnalyticsService();
-    }
+    @Mock
+    private PositionService positionService;
+
+    @InjectMocks
+    private StudentAnalyticsService service;
 
     // Prueba 1: getSummary con un id valido devuelve el resumen correcto
     @Test
     void getSummary_debeRetornarResumen_cuandoIdEsValido() {
+        when(centralTendencyService.getSectionCentralTendency(anyLong(), eq(null)))
+                .thenReturn(new CentralTendencyResponse(5, 72.0, 70.0, List.of(65.0)));
+
         StudentSummaryResponse response = service.getSummary(1L);
 
         assertNotNull(response);
@@ -38,6 +55,11 @@ class StudentAnalyticsServiceTest {
     // Prueba 2: getComparison con un id valido devuelve la comparacion y el percentil
     @Test
     void getComparison_debeRetornarComparacion_cuandoIdEsValido() {
+        when(centralTendencyService.getSectionCentralTendency(anyLong(), eq(null)))
+                .thenReturn(new CentralTendencyResponse(5, 72.0, 70.0, List.of(65.0)));
+        when(positionService.getStudentPosition(25L))
+                .thenReturn(new StudentPositionResponse("EST-0025", 58.0, 20));
+
         StudentComparisonResponse response = service.getComparison(25L);
 
         assertNotNull(response);

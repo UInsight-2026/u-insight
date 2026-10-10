@@ -1,24 +1,24 @@
-// Logica de la vista Detalle de seccion (Semana 3)
-// Consume detalle-seccion.mock.json (indicadores por seccion) y
-// alertas.mock.json (para filtrar las alertas de la seccion seleccionada).
-// Usa los componentes compartidos tarjeta.js (crearTarjeta / crearTarjetaAlerta)
-// y tabla.js (crearTablaResultados).
+// Logica de la vista Detalle de seccion (Semana 4: conexion a la API real)
+// GET {API_BASE}/analytics/sections/{id}/summary (celula de analytics) reemplaza
+// a detalle-seccion.mock.json. Las alertas de la seccion se siguen tomando de
+// alertas.mock.json (eso no fue parte de este cambio).
+// Usa los componentes compartidos tarjeta.js (crearTarjeta / crearTarjetaAlerta),
+// tabla.js (crearTablaResultados) y utils/formatters.js (valorODisponible,
+// formatearModa, formatearDispersion, formatearTendencia — Semana 5: se movieron
+// ahí para poder probarlas con Vitest sin depender del DOM).
 
-const RUTA_MOCK_DETALLE = "src/data/detalle-seccion.mock.json";
+const API_BASE = "http://localhost:8080/api/v1";
 const RUTA_MOCK_ALERTAS = "src/data/alertas.mock.json";
 
-const CLASIFICACION_DISPERSION = {
-  LOW_DISPERSION: "Dispersión baja",
-  MODERATE_DISPERSION: "Dispersión moderada",
-  HIGH_DISPERSION: "Dispersión alta",
-};
-
-const CLASIFICACION_TENDENCIA = {
-  POSITIVE: "Ascendente",
-  NEGATIVE: "Descendente",
-  STABLE: "Estable",
-  INSUFFICIENT_DATA: "Datos insuficientes",
-};
+// TODO: todavia no existe un endpoint de catalogo de secciones para poblar
+// el selector. Mientras tanto se deja este listado minimo (mismos ids que
+// ya se usaban en detalle-seccion.mock.json). Reemplazar cuando haya un
+// GET de secciones disponible.
+const CATALOGO_SECCIONES = [
+  { sectionId: 10, courseName: "Programación II", sectionCode: "A" },
+  { sectionId: 15, courseName: "Cálculo II", sectionCode: "B" },
+  { sectionId: 22, courseName: "Estadística", sectionCode: "A" },
+];
 
 const elementos = {
   selectorSeccion: document.getElementById("selector-seccion"),
@@ -28,69 +28,29 @@ const elementos = {
   contenedorAlertas: document.getElementById("contenedor-alertas"),
 };
 
-let secciones = [];
 let alertas = [];
 
-function valorODisponible(valor) {
-  return valor === null || valor === undefined ? "No disponible" : valor;
+async function inicializar() {
+  poblarSelectorSecciones(CATALOGO_SECCIONES);
+  await cargarAlertas();
+
+  if (CATALOGO_SECCIONES.length) {
+    const primeraSeccion = CATALOGO_SECCIONES[0].sectionId;
+    elementos.selectorSeccion.value = primeraSeccion;
+    await cargarYRenderizarSeccion(primeraSeccion);
+  }
 }
 
-function formatearModa(moda) {
-  if (!moda || !moda.length) {
-    return "No disponible";
-  }
-  return moda.join(", ");
-}
-
-function formatearDispersion(dispersion) {
-  if (!dispersion) {
-    return "No disponible";
-  }
-  const clasificacion = CLASIFICACION_DISPERSION[dispersion.classification] || dispersion.classification;
-  return `${dispersion.standardDeviation} (${clasificacion})`;
-}
-
-function formatearTendencia(tendencia) {
-  if (!tendencia) {
-    return "No disponible";
-  }
-  const clasificacion = CLASIFICACION_TENDENCIA[tendencia.classification] || tendencia.classification;
-  if (tendencia.averageChange === null || tendencia.averageChange === undefined) {
-    return clasificacion;
-  }
-  return `${clasificacion} (${tendencia.averageChange} pts promedio)`;
-}
-
-async function cargarDatos() {
-  mostrarEstadoCarga();
-
+async function cargarAlertas() {
   try {
-    const [respuestaDetalle, respuestaAlertas] = await Promise.all([
-      fetch(RUTA_MOCK_DETALLE),
-      fetch(RUTA_MOCK_ALERTAS),
-    ]);
-
-    if (!respuestaDetalle.ok) {
-      throw new Error(`No se pudo cargar el detalle de secciones (HTTP ${respuestaDetalle.status})`);
+    const respuesta = await fetch(RUTA_MOCK_ALERTAS);
+    if (!respuesta.ok) {
+      throw new Error(`No se pudo cargar el listado de alertas (HTTP ${respuesta.status})`);
     }
-    if (!respuestaAlertas.ok) {
-      throw new Error(`No se pudo cargar el listado de alertas (HTTP ${respuestaAlertas.status})`);
-    }
-
-    secciones = await respuestaDetalle.json();
-    alertas = await respuestaAlertas.json();
-
-    console.info(`Detalle de secciones cargado: ${secciones.length} seccion(es) disponibles.`);
-
-    poblarSelectorSecciones(secciones);
-
-    if (secciones.length) {
-      elementos.selectorSeccion.value = secciones[0].sectionId;
-      renderizarSeccion(secciones[0].sectionId);
-    }
+    alertas = await respuesta.json();
   } catch (error) {
-    console.error("Error al cargar el detalle de seccion:", error);
-    mostrarEstadoError();
+    console.error("DETALLE_SECCION_ALERTAS_ERROR", error);
+    alertas = [];
   }
 }
 
@@ -103,24 +63,35 @@ function poblarSelectorSecciones(lista) {
     .join("");
 }
 
-function renderizarSeccion(sectionId) {
-  const seccion = secciones.find((item) => item.sectionId === Number(sectionId));
+async function cargarYRenderizarSeccion(sectionId) {
+  mostrarEstadoCarga();
+  console.info("DETALLE_SECCION_CARGA_INICIADA", sectionId);
 
-  if (!seccion) {
-    console.error(`No se encontro la seccion con id ${sectionId} en los datos simulados.`);
+  try {
+    const respuesta = await fetch(`${API_BASE}/analytics/sections/${sectionId}/summary`);
+    if (!respuesta.ok) {
+      throw new Error(`La API respondió un error (HTTP ${respuesta.status})`);
+    }
+
+    const resumen = await respuesta.json();
+    console.info("DETALLE_SECCION_CARGA_EXITOSA", sectionId, resumen);
+
+    renderizarIndicadores(resumen);
+    renderizarEvaluaciones(resumen.trendData);
+    renderizarAlertas(sectionId);
+  } catch (error) {
+    console.error("DETALLE_SECCION_CARGA_ERROR", error);
     mostrarEstadoError();
-    return;
   }
-
-  console.info(`Mostrando detalle de la seccion ${seccion.sectionCode} (${seccion.courseName}).`);
-
-  renderizarIndicadores(seccion);
-  renderizarEvaluaciones(seccion.trend);
-  renderizarAlertas(seccion.sectionId);
 }
 
-function renderizarIndicadores(seccion) {
-  const { centralTendency, dispersion, trend } = seccion;
+function renderizarIndicadores(resumen) {
+  // Cualquiera de estos componentes puede venir null si esa celula fallo o
+  // no respondio; valorODisponible/formatearModa/formatearDispersion/
+  // formatearTendencia ya manejan ese caso sin leer propiedades de null.
+  // Semana 4: la API real anida estos datos como centralTendencyData /
+  // dispersionData / trendData (no centralTendency/dispersion/trend).
+  const { centralTendencyData: centralTendency, dispersionData: dispersion, trendData: trend } = resumen || {};
 
   elementos.contenedorIndicadores.innerHTML = [
     crearTarjeta("Media", valorODisponible(centralTendency?.mean)),
@@ -152,7 +123,7 @@ function renderizarEvaluaciones(tendencia) {
 }
 
 function renderizarAlertas(sectionId) {
-  const alertasSeccion = alertas.filter((alerta) => alerta.sectionId === sectionId);
+  const alertasSeccion = alertas.filter((alerta) => alerta.sectionId === Number(sectionId));
 
   if (!alertasSeccion.length) {
     elementos.contenedorAlertas.innerHTML = `<p class="mensaje-estado">No hay alertas asociadas a esta sección.</p>`;
@@ -168,8 +139,7 @@ function mostrarEstadoCarga() {
 }
 
 function mostrarEstadoError() {
-  const mensaje =
-    "No se pudieron cargar los datos de la sección. Verifica que los archivos mock existan y que la página se esté sirviendo desde un servidor local (no abierta directamente como archivo).";
+  const mensaje = `No se pudieron cargar los indicadores de la sección. Verifica que el backend esté corriendo en ${API_BASE} y que no esté bloqueando la petición por CORS (revisa la consola del navegador).`;
   elementos.contenedorIndicadores.innerHTML = `<p class="mensaje-estado">${mensaje}</p>`;
   elementos.contenedorAlertas.innerHTML = "";
 }
@@ -178,8 +148,8 @@ elementos.selectorSeccion.addEventListener("change", (evento) => {
   if (!evento.target.value) {
     return;
   }
-  console.info(`Selector de seccion cambiado a sectionId=${evento.target.value}`);
-  renderizarSeccion(evento.target.value);
+  console.info("DETALLE_SECCION_CAMBIO_SECCION", evento.target.value);
+  cargarYRenderizarSeccion(evento.target.value);
 });
 
-document.addEventListener("DOMContentLoaded", cargarDatos);
+document.addEventListener("DOMContentLoaded", inicializar);

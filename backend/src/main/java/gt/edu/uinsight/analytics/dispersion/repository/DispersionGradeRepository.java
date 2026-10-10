@@ -1,5 +1,6 @@
 package gt.edu.uinsight.analytics.dispersion.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,14 +8,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import gt.edu.uinsight.analytics.dispersion.entity.Grade;
+import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
 
 @Repository("dispersionGradeRepository")
-public interface DispersionGradeRepository extends JpaRepository<Grade, Long> {
+public interface DispersionGradeRepository
+        extends JpaRepository<DispersionGrade, Long> {
 
-    @Query(value = "SELECT g.* FROM grade g INNER JOIN evaluation e ON g.evaluation_id = e.id WHERE e.section_id = :sectionId", nativeQuery = true)
-    List<Grade> findGradesBySectionId(@Param("sectionId") Long sectionId);
+    @Query(value = """
+            SELECT g.score
+            FROM grades g
+            INNER JOIN grade_evaluation_ref e
+                ON g.evaluation_id = e.id
+            WHERE e.section_id = :sectionId
+            """, nativeQuery = true)
+    List<BigDecimal> findScoresBySectionId(
+            @Param("sectionId") Long sectionId);
 
-    @Query(value = "SELECT g.* FROM grade g INNER JOIN evaluation e ON g.evaluation_id = e.id INNER JOIN section s ON e.section_id = s.id WHERE s.course_id = :courseId", nativeQuery = true)
-    List<Grade> findGradesByCourseId(@Param("courseId") Long courseId);
+    @Query(value = """
+            SELECT g.score
+            FROM grades g
+            INNER JOIN grade_evaluation_ref e
+                ON g.evaluation_id = e.id
+            INNER JOIN section s
+                ON e.section_id = s.id
+            WHERE s.course_id = :courseId
+            """, nativeQuery = true)
+    List<BigDecimal> findScoresByCourseId(
+            @Param("courseId") Long courseId);
 }
