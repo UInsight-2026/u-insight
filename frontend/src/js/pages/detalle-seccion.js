@@ -118,7 +118,7 @@ async function cargarYRenderizarSeccion(sectionId) {
     console.info("DETALLE_SECCION_CARGA_EXITOSA", sectionId, resumen);
 
     renderizarIndicadores(resumen);
-    renderizarEvaluaciones(resumen.trend);
+    renderizarEvaluaciones(resumen.trendData);
     renderizarAlertas(sectionId);
   } catch (error) {
     console.error("DETALLE_SECCION_CARGA_ERROR", error);
@@ -130,7 +130,9 @@ function renderizarIndicadores(resumen) {
   // Cualquiera de estos componentes puede venir null si esa celula fallo o
   // no respondio; valorODisponible/formatearModa/formatearDispersion/
   // formatearTendencia ya manejan ese caso sin leer propiedades de null.
-  const { centralTendency, dispersion, trend } = resumen || {};
+  // Semana 4: la API real anida estos datos como centralTendencyData /
+  // dispersionData / trendData (no centralTendency/dispersion/trend).
+  const { centralTendencyData: centralTendency, dispersionData: dispersion, trendData: trend } = resumen || {};
 
   elementos.contenedorIndicadores.innerHTML = [
     crearTarjeta("Media", valorODisponible(centralTendency?.mean)),
