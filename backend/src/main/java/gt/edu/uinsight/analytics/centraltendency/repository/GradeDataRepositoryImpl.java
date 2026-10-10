@@ -7,15 +7,16 @@ import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.server.ResponseStatusException;
 
 import gt.edu.uinsight.analytics.centraltendency.dto.integration.GradeApiResponse;
 import gt.edu.uinsight.analytics.centraltendency.dto.integration.SectionApiResponse;
+import gt.edu.uinsight.analytics.centraltendency.exception.AnalyticsResourceNotFoundException;
+import gt.edu.uinsight.analytics.centraltendency.exception.GradeDataIntegrationException;
+import gt.edu.uinsight.analytics.centraltendency.exception.InvalidAnalyticsRequestException;
 import gt.edu.uinsight.analytics.centraltendency.model.GradeData;
 
 /**
@@ -31,7 +32,7 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
     private final RestClient sectionsClient;
     private final RestClient academicClient;
 
-    @Autowired
+       @Autowired
     public GradeDataRepositoryImpl(
             @Value("${uinsight.integration.a6.base-url:http://localhost:8080}") String a6BaseUrl,
             @Value("${uinsight.integration.a4.base-url:http://localhost:8080}") String a4BaseUrl,
@@ -49,36 +50,39 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
 
     @Override
     public List<GradeData> findBySectionId(Long sectionId, Long evaluationId) {
-        SectionApiResponse section = execute("A4", HttpStatus.NOT_FOUND,
-                "La seccion " + sectionId + " no existe",
+        SectionApiResponse section = execute("A4",
+                () -> new AnalyticsResourceNotFoundException("La seccion " + sectionId + " no existe"),
                 () -> sectionsClient.get()
                         .uri("/api/v1/sections/{id}", sectionId)
                         .retrieve()
                         .body(SectionApiResponse.class));
         if (section == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La seccion " + sectionId + " no existe");
+            throw new AnalyticsResourceNotFoundException("La seccion " + sectionId + " no existe");
         }
         return fetchGrades(section, evaluationId);
     }
 
     @Override
     public List<GradeData> findByCourseId(Long courseId, Long periodId) {
-        execute("A1", HttpStatus.NOT_FOUND, "El curso " + courseId + " no existe",
+        execute("A1",
+                () -> new AnalyticsResourceNotFoundException("El curso " + courseId + " no existe"),
                 () -> academicClient.get()
                         .uri("/api/v1/courses/{id}", courseId)
                         .retrieve()
                         .toBodilessEntity());
 
-                if (periodId != null) {
-                    execute("A1", HttpStatus.BAD_REQUEST, "El periodo academico " + periodId + " no es valido",
-                        () -> academicClient.get()
+        if (periodId != null) {
+            execute("A1",
+                    () -> new InvalidAnalyticsRequestException(
+                            "El periodo academico " + periodId + " no es valido"),
+                    () -> academicClient.get()
                             .uri("/api/v1/academic-periods/{id}", periodId)
                             .retrieve()
                             .toBodilessEntity());
-                }
+        }
 
-        List<SectionApiResponse> sections = execute("A4", HttpStatus.NOT_FOUND,
-                "No se pudo listar las secciones",
+        List<SectionApiResponse> sections = execute("A4",
+                () -> new GradeDataIntegrationException("No se pudo listar las secciones en A4"),
                 () -> sectionsClient.get()
                         .uri("/api/v1/sections")
                         .retrieve()
@@ -89,15 +93,16 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
 
         return sections.stream()
                 .filter(section -> Objects.equals(section.courseId(), courseId))
-            .filter(section -> periodId == null || Objects.equals(section.academicPeriodId(), periodId))
+                .filter(section -> periodId == null || Objects.equals(section.academicPeriodId(), periodId))
                 .filter(section -> ACTIVE.equalsIgnoreCase(section.status()))
                 .flatMap(section -> fetchGrades(section, null).stream())
                 .toList();
     }
 
     private List<GradeData> fetchGrades(SectionApiResponse section, Long evaluationId) {
-        List<GradeApiResponse> grades = execute("A6", HttpStatus.NOT_FOUND,
-                "No se encontraron calificaciones para la seccion " + section.id(),
+        List<GradeApiResponse> grades = execute("A6",
+                () -> new GradeDataIntegrationException(
+                        "A6 no expone las calificaciones de la seccion " + section.id()),
                 () -> gradesClient.get()
                         .uri("/api/v1/sections/{id}/grades", section.id())
                         .retrieve()
@@ -114,14 +119,13 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
                 .toList();
     }
 
-    private <T> T execute(String service, HttpStatus notFoundStatus, String notFoundMessage, Supplier<T> call) {
+    private <T> T execute(String service, Supplier<RuntimeException> onNotFound, Supplier<T> call) {
         try {
             return call.get();
         } catch (HttpClientErrorException.NotFound ex) {
-            throw new ResponseStatusException(notFoundStatus, notFoundMessage);
+            throw onNotFound.get();
         } catch (RestClientException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "No se pudo consultar el servicio " + service);
+            throw new GradeDataIntegrationException("No se pudo consultar el servicio " + service);
         }
     }
 }
