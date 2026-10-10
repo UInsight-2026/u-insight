@@ -1,8 +1,14 @@
 
 package gt.edu.uinsight.analytics.dispersion.entity;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "grade")
@@ -18,12 +24,7 @@ public class DispersionGrade {
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
-    @Column(
-        name = "score",
-        nullable = false,
-        precision = 5,
-        scale = 2
-    )
+    @Column(name = "score")
     private BigDecimal score;
 
     public DispersionGrade() {
