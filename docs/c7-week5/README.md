@@ -1,37 +1,24 @@
 # C7 -- Semana 5: parche y guardia
 
 Archivos de la Tarea 0 que antes solo vivian en la carpeta `Context/` local del
-coordinador. Se suben a la rama para que los cuatro integrantes los tengan con
+coordinador. Se subieron a la rama para que los cuatro integrantes los tuvieran con
 solo traer `feature/C7-week5-base`.
 
-## No hace falta aplicar el parche
+## Estado al cierre de la semana 5 (2026-10-09)
 
-`C7-parche-local-B7-Alert-id.patch` esta aqui **solo como referencia**. El arreglo
-ya viene en la rama, en el commit `bf47249`. Si acabas de hacer `git pull` de
-`feature/C7-week5-base`, tu `Alert.java` ya esta correcto y `git apply` fallara con
-`patch does not apply` -- eso es lo esperado, no un error tuyo.
+El bug de B7 **ya esta corregido en develop**: commit `4825cff`, PR #147. El import
+de `@Id` en `alert/model/Alert.java` apunta a `jakarta.persistence` como debe.
 
-Comprobarlo asi:
+En consecuencia:
 
-```powershell
-git log --oneline -1 bf47249
-grep "import jakarta.persistence.Id" backend/src/main/java/gt/edu/uinsight/alert/model/Alert.java
-```
+- El arreglo temporal que C7 habia subido (commit `bf47249`) **se revirtio** en el
+  commit `eb58c1a`. La rama de C7 ya no modifica ningun archivo de B7.
+- El parche `C7-parche-local-B7-Alert-id.patch` **ya no hace falta**. Se conserva
+  solo como registro de lo que se hizo durante la semana.
+- La excepcion `EXCEPCION_B7` se retiro de la guardia. `C7-pre-push` volvio a ser
+  estricto: bloquea cualquier cambio fuera de `gt/edu/uinsight/system` y `docs/c7-`.
 
-Si la segunda linea devuelve el import, no toques nada y sigue con el paso 3 de la
-Tarea 0 (`docker compose -f docker-compose.dev.yml up -d`).
-
-**No cambies imports a mano.** El archivo es de la celula B7; el unico cambio
-autorizado es el del commit `bf47249`, que ya esta hecho.
-
-El parche solo se usa si alguien necesita reconstruir el arreglo sobre una rama
-que no lo trae:
-
-```powershell
-git apply "docs/c7-week5/C7-parche-local-B7-Alert-id.patch"
-```
-
-Sin commitear: es codigo de otra celula y no viaja al PR.
+Si traes `develop` actualizado, la aplicacion arranca sin aplicar nada.
 
 ## Instalar la guardia pre-push
 
@@ -42,13 +29,21 @@ cp docs/c7-week5/C7-pre-push .git/hooks/pre-push
 chmod +x .git/hooks/pre-push
 ```
 
-Igual en PowerShell, Git Bash y WSL. Bloquea el push si la rama trae cambios fuera
-de `gt/edu/uinsight/system`, con una excepcion temporal para `Alert.java`.
+Igual en PowerShell, Git Bash y WSL.
 
-Quien ya la tenga instalada desde `Context/C7-pre-push` no necesita reinstalarla:
-es el mismo archivo.
+Quien la tenga instalada de antes **debe reinstalarla**: la version anterior llevaba
+la excepcion para `Alert.java` y ya no corresponde.
 
-## Antes del PR a develop
+## Para que sirve el parche (historico)
 
-Retirar el commit `bf47249` y la excepcion `EXCEPCION_B7` de la guardia. Cuando B7
-corrija el bug en `develop`, esta carpeta entera sobra.
+Entre el 9 de octubre y el PR #147, `Alert.java` importaba `@Id` de
+`org.springframework.data.annotation` en vez de `jakarta.persistence`. Hibernate no
+construia el `EntityManagerFactory` y **ninguna** aplicacion del proyecto arrancaba:
+
+```
+AnnotationException: Entity 'gt.edu.uinsight.alert.model.Alert' has no identifier
+(every '@Entity' class must declare or inherit at least one '@Id' or '@EmbeddedId' property)
+```
+
+C7 lo parcheo en local para poder trabajar y lo reporto a B7 sin corregirlo en el
+PR, porque es codigo de otra celula. B7 lo resolvio por su cuenta en el PR #147.
