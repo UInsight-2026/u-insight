@@ -144,7 +144,6 @@ class SummaryServiceTest {
                     List.<TrendPoint>of());
         }
     }
-<<<<<<< HEAD
 
     private static final class ConcurrentAnalyticsClientRepository implements AnalyticsClientRepository {
 
@@ -192,6 +191,3 @@ class SummaryServiceTest {
         }
     }
 }
-=======
-}
->>>>>>> 1ee7dac03082d19815951d48f50eb659e87dae52

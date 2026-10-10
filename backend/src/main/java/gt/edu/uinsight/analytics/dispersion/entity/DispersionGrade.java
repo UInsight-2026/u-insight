@@ -23,11 +23,7 @@ public class DispersionGrade {
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
-<<<<<<< HEAD
     @Column(name = "score")
-=======
-    @Column(nullable = false, precision = 5, scale = 2)
->>>>>>> 1ee7dac03082d19815951d48f50eb659e87dae52
     private BigDecimal score;
 
     public DispersionGrade() {

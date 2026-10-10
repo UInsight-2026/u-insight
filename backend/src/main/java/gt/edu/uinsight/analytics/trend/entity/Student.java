@@ -36,8 +36,4 @@ public class Student {
     public List<Grade> getGrades() {
         return grades;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 1ee7dac03082d19815951d48f50eb659e87dae52
