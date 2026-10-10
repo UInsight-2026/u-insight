@@ -3,9 +3,13 @@ package gt.edu.uinsight.analytics.summary.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
@@ -14,6 +18,7 @@ import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 @Service
 public class SummaryService {
 
+    private static final Logger log = LoggerFactory.getLogger(SummaryService.class);
     private static final long TIMEOUT_SECONDS = 3;
     private final AnalyticsClientRepository analyticsClientRepository;
 
@@ -31,92 +36,47 @@ public class SummaryService {
         summary.setSectionId(sectionId);
         List<String> unavailableComponents = new ArrayList<>();
 
-        // 1. Tendencia central
-        try {
-            var data = CompletableFuture
-                    .supplyAsync(() -> analyticsClientRepository.getCentralTendency(sectionId))
-                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (data == null) unavailableComponents.add("centralTendency");
-            else summary.setCentralTendencyData(data);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            unavailableComponents.add("centralTendency");
-        } catch (TimeoutException e) {
-            // Componente no respondió a tiempo
-            unavailableComponents.add("centralTendency");
-        } catch (Exception e) {
-            unavailableComponents.add("centralTendency");
-        }
+        var centralTendency = getComponent("centralTendency",
+                () -> analyticsClientRepository.getCentralTendency(sectionId));
+        if (centralTendency == null) unavailableComponents.add("centralTendency");
+        else summary.setCentralTendencyData(centralTendency);
 
-        // 2. Posición
-        try {
-            var data = CompletableFuture
-                    .supplyAsync(() -> analyticsClientRepository.getPosition(sectionId))
-                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (data == null) unavailableComponents.add("position");
-            else summary.setPositionData(data);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            unavailableComponents.add("position");
-        } catch (TimeoutException e) {
-            // Componente no respondió a tiempo
-            unavailableComponents.add("position");
-        } catch (Exception e) {
-            unavailableComponents.add("position");
-        }
+        var position = getComponent("position",
+                () -> analyticsClientRepository.getPosition(sectionId));
+        if (position == null) unavailableComponents.add("position");
+        else summary.setPositionData(position);
 
-        // 3. Dispersión
-        try {
-            var data = CompletableFuture
-                    .supplyAsync(() -> analyticsClientRepository.getDispersion(sectionId))
-                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (data == null) unavailableComponents.add("dispersion");
-            else summary.setDispersionData(data);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            unavailableComponents.add("dispersion");
-        } catch (TimeoutException e) {
-            // Componente no respondió a tiempo
-            unavailableComponents.add("dispersion");
-        } catch (Exception e) {
-            unavailableComponents.add("dispersion");
-        }
+        var dispersion = getComponent("dispersion",
+                () -> analyticsClientRepository.getDispersion(sectionId));
+        if (dispersion == null) unavailableComponents.add("dispersion");
+        else summary.setDispersionData(dispersion);
 
-        // 4. Tendencia
-        try {
-            var data = CompletableFuture
-                    .supplyAsync(() -> analyticsClientRepository.getTrend(sectionId))
-                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (data == null) unavailableComponents.add("trend");
-            else summary.setTrendData(data);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            unavailableComponents.add("trend");
-        } catch (TimeoutException e) {
-            // Componente no respondió a tiempo
-            unavailableComponents.add("trend");
-        } catch (Exception e) {
-            unavailableComponents.add("trend");
-        }
+        var trend = getComponent("trend",
+                () -> analyticsClientRepository.getTrend(sectionId));
+        if (trend == null) unavailableComponents.add("trend");
+        else summary.setTrendData(trend);
 
-        // 5. Comparación de estudiante
-        try {
-            var data = CompletableFuture
-                    .supplyAsync(() -> analyticsClientRepository.getStudentComparison(sectionId))
-                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (data == null) unavailableComponents.add("studentComparison");
-            else summary.setStudentComparisonData(data);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            unavailableComponents.add("studentComparison");
-        } catch (TimeoutException e) {
-            // Componente no respondió a tiempo
-            unavailableComponents.add("studentComparison");
-        } catch (Exception e) {
-            unavailableComponents.add("studentComparison");
-        }
+        unavailableComponents.add("studentsAtRisk");
+        log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionId={} component=studentsAtRisk reason=not-integrated",
+                sectionId);
 
         summary.setUnavailableComponents(unavailableComponents);
         return summary;
+    }
+
+    private <T> T getComponent(String component, Supplier<T> supplier) {
+        try {
+            return CompletableFuture.supplyAsync(supplier)
+                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionComponent={} reason=interrupted", component, e);
+        } catch (TimeoutException e) {
+            log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionComponent={} reason=timeout", component, e);
+        } catch (ExecutionException e) {
+            log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionComponent={} reason=service-error",
+                    component, e.getCause());
+        }
+        return null;
     }
 }

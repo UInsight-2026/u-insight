@@ -24,7 +24,10 @@ class B6AnalyticsGatewayTest {
         when(repository.getCentralTendency(10L))
                 .thenReturn(new CentralTendencyResponse(30, 72.5, 73.0, List.of()));
         when(repository.getDispersion(10L))
-                .thenReturn(new DispersionResponse(10L, null, 40.0, 95.0, 55.0, 124.55, 11.16, null));
+                .thenReturn(new DispersionResponse(10L, null,
+                        new BigDecimal("40.0"), new BigDecimal("95.0"),
+                        new BigDecimal("55.0"), new BigDecimal("124.55"),
+                        new BigDecimal("11.16"), null));
         when(repository.getTrend(10L)).thenReturn(new TrendResponse(
                 TrendClassification.NEGATIVE, new BigDecimal("-2.5"), List.of()));
 
@@ -87,21 +90,20 @@ class B6AnalyticsGatewayTest {
     }
 
     @Test
-    void deberiaMarcarLaDispersionComoNoCalculada() {
-        // El modulo de dispersion devuelve hoy los mismos valores para cualquier
-        // seccion. C5 publica el dato, porque el consumidor puede necesitarlo,
-        // pero lo marca para que no se confunda con la media y la mediana, que
-        // si se calculan sobre las notas.
+    void deberiaDeclararElOrigenDeLaDispersion() {
+        // La respuesta declara de donde sale cada numero. El consumidor no tiene
+        // por que suponer si un indicador se calculo o llego fijo.
         when(repository.getCentralTendency(10L))
                 .thenReturn(new CentralTendencyResponse(30, 72.5, 73.0, List.of()));
         when(repository.getDispersion(10L))
-                .thenReturn(new DispersionResponse(10L, null, 40.0, 95.0, 55.0, 124.55, 11.16, null));
+                .thenReturn(new DispersionResponse(10L, null, new BigDecimal("40.0"),
+                        new BigDecimal("95.0"), new BigDecimal("55.0"),
+                        new BigDecimal("124.55"), new BigDecimal("11.16"), null));
 
         var snapshot = gateway.getSectionAnalytics(10L);
 
-        assertEquals("B3_FIXED", snapshot.getDispersionSource());
-        assertEquals(11.16, snapshot.getStandardDeviation(),
-                "marcar el dato no es omitirlo: sigue publicandose");
+        assertEquals("B3", snapshot.getDispersionSource());
+        assertEquals(11.16, snapshot.getStandardDeviation());
     }
 
     @Test

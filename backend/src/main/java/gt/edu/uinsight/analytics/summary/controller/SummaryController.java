@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/v1/analytics/sections")
 @Tag(
     name = "B6 - Consolidación analítica",
-    description = "Combina los resultados de B1 a B5 en un solo resumen por sección"
+    description = "Combina resultados analíticos de sección de B1 a B4"
 )
 public class SummaryController {
 
