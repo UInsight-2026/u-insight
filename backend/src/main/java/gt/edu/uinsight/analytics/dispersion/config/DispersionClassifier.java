@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
+import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
 
 @Component
 public class DispersionClassifier {
@@ -21,20 +22,30 @@ public class DispersionClassifier {
             BigDecimal standardDeviation) {
 
         if (standardDeviation == null
-                || standardDeviation.signum() < 0) {
-            throw new IllegalArgumentException(
-                    "La desviación estándar debe ser válida y no negativa."
-            );
+                || standardDeviation.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DispersionDatosInvalidosException(
+                    "La desviación estándar no puede ser nula ni negativa.");
         }
 
-        BigDecimal low = BigDecimal.valueOf(thresholds.getLow());
-        BigDecimal high = BigDecimal.valueOf(thresholds.getHigh());
+        double lowValue = thresholds.getLow();
+        double highValue = thresholds.getHigh();
+
+        if (!Double.isFinite(lowValue)
+                || !Double.isFinite(highValue)
+                || lowValue < 0
+                || highValue <= lowValue) {
+            throw new IllegalStateException(
+                    "Los umbrales de dispersión no están configurados correctamente.");
+        }
+
+        BigDecimal low = BigDecimal.valueOf(lowValue);
+        BigDecimal high = BigDecimal.valueOf(highValue);
 
         if (standardDeviation.compareTo(low) < 0) {
             return DispersionClassification.LOW_DISPERSION;
         }
 
-        if (standardDeviation.compareTo(high) <= 0) {
+        if (standardDeviation.compareTo(high) < 0) {
             return DispersionClassification.MODERATE_DISPERSION;
         }
 

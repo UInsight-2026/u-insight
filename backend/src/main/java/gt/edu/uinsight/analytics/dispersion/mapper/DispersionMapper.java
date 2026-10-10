@@ -1,3 +1,4 @@
+
 package gt.edu.uinsight.analytics.dispersion.mapper;
 
 import java.math.BigDecimal;
@@ -27,8 +28,7 @@ public class DispersionMapper {
                 range,
                 variance,
                 standardDeviation,
-                classification
-        );
+                classification);
     }
 
     public DispersionResponse toCourseResponse(
@@ -48,7 +48,6 @@ public class DispersionMapper {
                 range,
                 variance,
                 standardDeviation,
-                classification
-        );
+                classification);
     }
 }

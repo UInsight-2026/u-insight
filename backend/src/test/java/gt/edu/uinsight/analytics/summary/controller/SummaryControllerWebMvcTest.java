@@ -12,14 +12,14 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import gt.edu.uinsight.analytics.centraltendency.exception.GlobalAnalyticsExceptionHandler;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
+import gt.edu.uinsight.analytics.summary.exception.SummaryExceptionHandler;
 import gt.edu.uinsight.analytics.summary.service.SectionValidationService;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 
@@ -30,7 +30,7 @@ import gt.edu.uinsight.analytics.summary.service.SummaryService;
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {
                         SummaryController.class,
-                        GlobalAnalyticsExceptionHandler.class
+                        SummaryExceptionHandler.class
                 }
         )
 )
@@ -41,10 +41,10 @@ class SummaryControllerWebMvcTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private SummaryService summaryService;
 
-    @MockBean
+    @MockitoBean
     private SectionValidationService sectionValidationService;
 
     @Test
