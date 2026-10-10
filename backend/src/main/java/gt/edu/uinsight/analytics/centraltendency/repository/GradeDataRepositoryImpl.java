@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -26,13 +28,16 @@ import gt.edu.uinsight.analytics.centraltendency.model.GradeData;
 @Repository
 public class GradeDataRepositoryImpl implements GradeDataRepository {
 
+    // Declaración del Logger manual
+    private static final Logger log = LoggerFactory.getLogger(GradeDataRepositoryImpl.class);
+
     private static final String ACTIVE = "ACTIVE";
 
     private final RestClient gradesClient;
     private final RestClient sectionsClient;
     private final RestClient academicClient;
 
-       @Autowired
+    @Autowired
     public GradeDataRepositoryImpl(
             @Value("${uinsight.integration.a6.base-url:http://localhost:8080}") String a6BaseUrl,
             @Value("${uinsight.integration.a4.base-url:http://localhost:8080}") String a4BaseUrl,
@@ -119,12 +124,22 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
                 .toList();
     }
 
+    // Centralizador de logs
     private <T> T execute(String service, Supplier<RuntimeException> onNotFound, Supplier<T> call) {
+        // Evento obligatorio: integration_started
+        log.info("service=B1 event=integration_started operation=fetch_data dependency={}", service);
+
         try {
-            return call.get();
+            T result = call.get();
+
+            // Evento obligatorio: integration_succeeded
+            log.info("service=B1 event=integration_succeeded operation=fetch_data dependency={}", service);
+
+            return result;
         } catch (HttpClientErrorException.NotFound ex) {
             throw onNotFound.get();
         } catch (RestClientException ex) {
+            // Este error será capturado por el GlobalAnalyticsExceptionHandler, donde ya configuramos el log correspondiente.
             throw new GradeDataIntegrationException("No se pudo consultar el servicio " + service);
         }
     }
