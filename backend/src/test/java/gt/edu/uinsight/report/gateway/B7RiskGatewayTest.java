@@ -1,8 +1,8 @@
 package gt.edu.uinsight.report.gateway;
 
-import gt.edu.uinsight.alert.b7.model.RiskInput;
-import gt.edu.uinsight.alert.b7.model.RiskOutput;
-import gt.edu.uinsight.alert.b7.Service.RiskEngineService;
+import gt.edu.uinsight.alert.dto.section.SectionIndicatorsDto;
+import gt.edu.uinsight.alert.engine.RiskEngine;
+import gt.edu.uinsight.alert.engine.RiskResult;
 import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
 import gt.edu.uinsight.report.dto.response.RiskSnapshot;
 import org.junit.jupiter.api.Test;
@@ -29,18 +29,18 @@ class B7RiskGatewayTest {
         return new AnalyticsSnapshot(SECCION, 55.0, 54.0, 30, 3.0, "NEGATIVE", -2.5, true);
     }
 
-    private static B7RiskGateway gatewayCon(AnalyticsGateway analytics, RiskEngineService motor) {
+    private static B7RiskGateway gatewayCon(AnalyticsGateway analytics, RiskEngine motor) {
         return new B7RiskGateway(analytics, motor);
     }
 
-    private static RiskOutput salidaDeB7(String nivel) {
-        return new RiskOutput(nivel, "Revision recomendada", 55.5, 3, 1, 1, List.of());
+    private static RiskResult resultadoDelMotor(String nivel) {
+        return new RiskResult(nivel, 55.5, 5, 3, 1, List.of("MEDIA_BAJA", "TENDENCIA_NEGATIVA"));
     }
 
     @Test
-    void deberiaDevolverElNivelDeRiesgoQueCalculaB7() {
-        RiskEngineService motor = mock(RiskEngineService.class);
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("MODERADO"));
+    void deberiaDevolverElNivelDeRiesgoQueCalculaElMotor() {
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenReturn(resultadoDelMotor("MEDIUM"));
 
         RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor)
                 .getSectionRisk(SECCION);
@@ -51,41 +51,26 @@ class B7RiskGatewayTest {
     }
 
     @Test
-    void deberiaTraducirLosTresNivelesDeB7AlaEscalaDeC5() {
-        RiskEngineService motor = mock(RiskEngineService.class);
-        B7RiskGateway gateway = gatewayCon(seccion -> analiticaCompleta(), motor);
-
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("BAJO"));
-        assertEquals("LOW", gateway.getSectionRisk(SECCION).getRiskLevel());
-
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("MODERADO"));
-        assertEquals("MEDIUM", gateway.getSectionRisk(SECCION).getRiskLevel());
-
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("ALTO"));
-        assertEquals("HIGH", gateway.getSectionRisk(SECCION).getRiskLevel());
-    }
-
-    @Test
-    void deberiaEnviarUnPercentil90NeutroParaNoDispararLaTerceraReglaDeB7() {
-        // La regla "percentil90 < 20" de B7 se dispararia con el 0.0 por omision
-        // del double primitivo, y ninguna seccion podria salir nunca en riesgo bajo.
-        RiskEngineService motor = mock(RiskEngineService.class);
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("BAJO"));
+    void deberiaEnviarUnPercentil90NeutroParaNoDispararLaQuintaReglaDelMotor() {
+        // La regla "percentil90 < 20" se dispararia con un valor ausente, y
+        // ninguna seccion podria salir nunca en riesgo bajo por esa regla.
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenReturn(resultadoDelMotor("LOW"));
 
         gatewayCon(seccion -> analiticaCompleta(), motor).getSectionRisk(SECCION);
 
-        ArgumentCaptor<RiskInput> entrada = ArgumentCaptor.forClass(RiskInput.class);
-        verify(motor).evaluarRiesgo(entrada.capture());
-        assertTrue(entrada.getValue().getPercentil90() >= 20.0,
-                "el percentil enviado no debe disparar la regla percentil90 < 20 de B7");
-        assertEquals(55.0, entrada.getValue().getMedia());
-        assertEquals(3.0, entrada.getValue().getDesviacion());
-        assertEquals(-2.5, entrada.getValue().getTendencia());
+        ArgumentCaptor<SectionIndicatorsDto> entrada = ArgumentCaptor.forClass(SectionIndicatorsDto.class);
+        verify(motor).evaluate(entrada.capture());
+        assertTrue(entrada.getValue().getPosition().getPercentile90() >= 20.0,
+                "el percentil enviado no debe disparar la regla percentil90 < 20 del motor");
+        assertEquals(55.0, entrada.getValue().getCentralTendency().getMean());
+        assertEquals(3.0, entrada.getValue().getDispersion().getStdDev());
+        assertEquals(-2.5, entrada.getValue().getTrend().getValue());
     }
 
     @Test
     void deberiaDevolverRiesgoNoDisponibleCuandoB6NoResponde() {
-        RiskEngineService motor = mock(RiskEngineService.class);
+        RiskEngine motor = mock(RiskEngine.class);
 
         RiskSnapshot riesgo = gatewayCon(AnalyticsSnapshot::unavailable, motor)
                 .getSectionRisk(SECCION);
@@ -93,14 +78,14 @@ class B7RiskGatewayTest {
         assertFalse(riesgo.isAvailable());
         assertNull(riesgo.getRiskLevel(), "sin analitica no se puede afirmar que el riesgo sea bajo");
         assertEquals("NONE", riesgo.getRiskSource());
-        // Ni siquiera se molesta a B7 si no hay con que alimentarlo.
-        verify(motor, never()).evaluarRiesgo(any());
+        // Ni siquiera se molesta al motor si no hay con que alimentarlo.
+        verify(motor, never()).evaluate(any());
     }
 
     @Test
-    void deberiaDegradarSiElMotorDeB7Falla() {
-        RiskEngineService motor = mock(RiskEngineService.class);
-        when(motor.evaluarRiesgo(any())).thenThrow(new IllegalStateException("motor caido"));
+    void deberiaDegradarSiElMotorFalla() {
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenThrow(new IllegalStateException("motor caido"));
 
         RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor)
                 .getSectionRisk(SECCION);
@@ -111,32 +96,20 @@ class B7RiskGatewayTest {
     }
 
     @Test
-    void deberiaTratarUnNivelDesconocidoDeB7ComoNoDisponible() {
-        RiskEngineService motor = mock(RiskEngineService.class);
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("CRITICO"));
-
-        RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor)
-                .getSectionRisk(SECCION);
-
-        assertFalse(riesgo.isAvailable());
-        assertNull(riesgo.getRiskLevel());
-    }
-
-    @Test
     void deberiaTolerarQueB6EntregueLaAnaliticaIncompleta() {
         // B6 captura errores por componente: puede traer media y faltarle el resto.
         AnalyticsSnapshot soloMedia =
                 new AnalyticsSnapshot(SECCION, 48.0, null, 12, null, null, null, true);
-        RiskEngineService motor = mock(RiskEngineService.class);
-        when(motor.evaluarRiesgo(any())).thenReturn(salidaDeB7("ALTO"));
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenReturn(resultadoDelMotor("HIGH"));
 
         RiskSnapshot riesgo = gatewayCon(seccion -> soloMedia, motor).getSectionRisk(SECCION);
 
         assertEquals("HIGH", riesgo.getRiskLevel());
 
-        ArgumentCaptor<RiskInput> entrada = ArgumentCaptor.forClass(RiskInput.class);
-        verify(motor).evaluarRiesgo(entrada.capture());
-        assertEquals(0.0, entrada.getValue().getDesviacion(), "los componentes ausentes van en cero");
-        assertEquals(0.0, entrada.getValue().getTendencia());
+        ArgumentCaptor<SectionIndicatorsDto> entrada = ArgumentCaptor.forClass(SectionIndicatorsDto.class);
+        verify(motor).evaluate(entrada.capture());
+        assertEquals(0.0, entrada.getValue().getDispersion().getStdDev(), "los componentes ausentes van en cero");
+        assertEquals(0.0, entrada.getValue().getTrend().getValue());
     }
 }

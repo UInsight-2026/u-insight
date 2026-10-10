@@ -2,6 +2,7 @@ package gt.edu.uinsight.academicperiod.support.exception;
 
 import gt.edu.uinsight.academicperiod.controller.AcademicPeriodController;
 import gt.edu.uinsight.academicperiod.support.logging.AcademicEventLogger;
+import gt.edu.uinsight.course.controller.CourseController;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataAccessException;
@@ -29,7 +30,7 @@ import java.util.List;
  * INTERNAL_ERROR.
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = {AcademicPeriodController.class})
+@RestControllerAdvice(assignableTypes = {AcademicPeriodController.class, CourseController.class})
 public class AcademicExceptionHandler {
 
     private final AcademicEventLogger eventLogger;
