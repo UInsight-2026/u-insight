@@ -1,3 +1,4 @@
+
 package gt.edu.uinsight.analytics.dispersion.service;
 
 import java.math.BigDecimal;
@@ -32,6 +33,7 @@ public class DispersionService {
             DispersionClassifier dispersionClassifier,
             DispersionMapper dispersionMapper,
             SectionRepository sectionRepository) {
+
         this.dispersionGradeRepository = dispersionGradeRepository;
         this.dispersionCalculator = dispersionCalculator;
         this.dispersionClassifier = dispersionClassifier;
@@ -63,14 +65,25 @@ public class DispersionService {
                 dispersionClassifier.clasificar(standardDeviation);
 
         return dispersionMapper.toSectionResponse(
-                sectionId, min, max, range, variance,
-                standardDeviation, classification);
+                sectionId,
+                min,
+                max,
+                range,
+                variance,
+                standardDeviation,
+                classification);
     }
 
     @Transactional(readOnly = true)
     public DispersionResponse getCourseDispersion(Long courseId) {
         validarId(courseId, "curso");
 
+        /*
+         * Comprobación provisional:
+         * verifica que el curso tenga al menos una sección.
+         * Para distinguir entre un curso inexistente y uno sin
+         * secciones, se necesita consultar el repositorio de Course.
+         */
         if (sectionRepository.findByCourseId(courseId).isEmpty()) {
             throw new CursoNoEncontradoException(courseId);
         }
@@ -91,14 +104,19 @@ public class DispersionService {
                 dispersionClassifier.clasificar(standardDeviation);
 
         return dispersionMapper.toCourseResponse(
-                courseId, min, max, range, variance,
-                standardDeviation, classification);
+                courseId,
+                min,
+                max,
+                range,
+                variance,
+                standardDeviation,
+                classification);
     }
 
     private void validarId(Long id, String tipo) {
         if (id == null || id <= 0) {
             throw new DispersionDatosInvalidosException(
-                    "El ID de " + tipo + " debe ser válido.");
+                    "El ID de " + tipo + " debe ser un número positivo.");
         }
     }
 }
