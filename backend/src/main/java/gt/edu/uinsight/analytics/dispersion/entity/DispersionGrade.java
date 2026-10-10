@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "grade")
+@Table(name = "grades")
 public class DispersionGrade {
 
     @Id
@@ -62,3 +62,5 @@ public class DispersionGrade {
         this.score = score;
     }
 }
+
+

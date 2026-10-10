@@ -1,4 +1,3 @@
-
 package gt.edu.uinsight.analytics.dispersion.repository;
 
 import java.math.BigDecimal;
@@ -17,8 +16,8 @@ public interface DispersionGradeRepository
 
     @Query(value = """
             SELECT g.score
-            FROM grade g
-            INNER JOIN evaluation e
+            FROM grades g
+            INNER JOIN grade_evaluation_ref e
                 ON g.evaluation_id = e.id
             WHERE e.section_id = :sectionId
             """, nativeQuery = true)
@@ -27,8 +26,8 @@ public interface DispersionGradeRepository
 
     @Query(value = """
             SELECT g.score
-            FROM grade g
-            INNER JOIN evaluation e
+            FROM grades g
+            INNER JOIN grade_evaluation_ref e
                 ON g.evaluation_id = e.id
             INNER JOIN section s
                 ON e.section_id = s.id
