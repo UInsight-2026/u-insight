@@ -21,43 +21,18 @@ public class AlertRuleController {
         this.alertRuleService = alertRuleService;
     }
 
-    // HU-C2-01: Crear Regla de Alerta
     @PostMapping
-    public ResponseEntity<AlertRuleResponse> createRule(@Valid @RequestBody CreateAlertRuleRequest request) {
-        AlertRuleResponse response = alertRuleService.createRule(request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    public ResponseEntity<AlertRuleResponse> createRule(@RequestBody CreateAlertRuleRequest request) {
+        return new ResponseEntity<>(alertRuleService.createRule(request), HttpStatus.CREATED);
     }
 
-    // HU-C2-02: Consultar Reglas Activas / Todas
     @GetMapping
-    public ResponseEntity<List<AlertRuleResponse>> getAllRules(
-            @RequestParam(value = "active", required = false) Boolean active) {
-        List<AlertRuleResponse> list = alertRuleService.getAllRules(active);
-        return ResponseEntity.ok(list);
+    public ResponseEntity<List<AlertRuleResponse>> getRules(@RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(alertRuleService.getRules(active));
     }
 
-    // Consultar detalle de una regla por ID
     @GetMapping("/{id}")
     public ResponseEntity<AlertRuleResponse> getRuleById(@PathVariable Long id) {
-        AlertRuleResponse response = alertRuleService.getRuleById(id);
-        return ResponseEntity.ok(response);
-    }
-
-    // HU-C2-03: Modificar Regla de Alerta
-    @PutMapping("/{id}")
-    public ResponseEntity<AlertRuleResponse> updateRule(
-            @PathVariable Long id,
-            @Valid @RequestBody CreateAlertRuleRequest request) {
-        AlertRuleResponse response = alertRuleService.updateRule(id, request);
-        return ResponseEntity.ok(response);
-    }
-
-    // HU-C2-04: Activar/Desactivar Regla de Alerta (Cambio de estado)
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<AlertRuleResponse> updateStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateStatusRequest request) {
-        AlertRuleResponse response = alertRuleService.updateStatus(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(alertRuleService.getRuleById(id));
     }
 }

@@ -33,37 +33,4 @@ public class TeacherController {
         return ResponseEntity.ok(teacherService.findAll());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Teacher> getTeacherById(@PathVariable Long id) {
-        return ResponseEntity.ok(teacherService.findById(id));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Teacher> updateTeacher(@PathVariable Long id,
-                                                 @Valid @RequestBody TeacherRequest request) {
-        return ResponseEntity.ok(teacherService.update(id, request));
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<Teacher> updateTeacherStatus(@PathVariable Long id,
-                                                       @Valid @RequestBody TeacherStatusRequest request) {
-        return ResponseEntity.ok(teacherService.changeStatus(id, request.getStatus()));
-    }
-
-    @GetMapping("/{id}/sections")
-    public ResponseEntity<List<TeacherSectionResponse>> getTeacherSections(@PathVariable Long id) {
-        return ResponseEntity.ok(teacherService.findSectionsByTeacher(id));
-    }
-
-    @PutMapping("/{id}/sections/{sectionId}")
-    public ResponseEntity<TeacherSectionResponse> assignSection(@PathVariable Long id,
-                                                                @PathVariable Long sectionId) {
-        return ResponseEntity.ok(teacherService.assignToSection(id, sectionId));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTeacher(@PathVariable Long id) {
-        teacherService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

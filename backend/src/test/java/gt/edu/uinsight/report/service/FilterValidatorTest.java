@@ -70,4 +70,33 @@ class FilterValidatorTest {
                 () -> validator.validatePage(new PageFilter(0, 10, "ALFABETICO")));
         assertDoesNotThrow(() -> validator.validatePage(new PageFilter(null, null, null)));
     }
+
+    //semana 5 
+    @Test
+    @DisplayName("rechaza una pagina negativa")
+    void rechazaPaginaNegativa() {
+        assertThrows(InvalidFilterException.class,
+                () -> validator.validatePage(new PageFilter(-1, null, null)));
+    }
+
+    @Test
+    @DisplayName("rechaza un tamano de pagina mayor al maximo")
+    void rechazaTamanoExcesivo() {
+        assertThrows(InvalidFilterException.class,
+                () -> validator.validatePage(new PageFilter(0, 101, null)));
+    }
+
+    @Test
+    @DisplayName("rechaza un tamano de pagina de cero")
+    void rechazaTamanoCero() {
+        assertThrows(InvalidFilterException.class,
+                () -> validator.validatePage(new PageFilter(0, 0, null)));
+    }
+
+    @Test
+    @DisplayName("rechaza un criterio de orden desconocido")
+    void rechazaOrdenDesconocido() {
+        assertThrows(InvalidFilterException.class,
+                () -> validator.validatePage(new PageFilter(0, 20, "ALFABETICO")));
+    }
 }
