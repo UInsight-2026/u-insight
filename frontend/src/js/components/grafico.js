@@ -7,6 +7,10 @@
 // porcentaje. Sirve como base; si más adelante se autoriza una librería
 // de gráficos, solo hay que reemplazar el contenido de este archivo sin
 // tocar las páginas que ya lo consumen.
+//
+// Se exporta también vía module.exports al final del archivo para poder
+// importarla desde las pruebas (Vitest/Node). No afecta el uso en el
+// navegador: module no existe ahí, así que ese bloque se ignora.
 
 /**
  * Arma el HTML de un gráfico de barras simple a partir de puntos
@@ -50,4 +54,8 @@ function crearContenedorGrafico(titulo, puntos) {
       <div class="grafico-barras">${barras}</div>
     </div>
   `;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { crearContenedorGrafico };
 }
