@@ -13,6 +13,8 @@ import gt.edu.uinsight.enrollment.entity.Enrollment;
 import gt.edu.uinsight.enrollment.repository.EnrollmentRepository;
 import gt.edu.uinsight.grade.dto.GradeResponse;
 import gt.edu.uinsight.grade.service.GradeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +24,8 @@ import java.util.Objects;
 
 @Service
 public class StudentAnalyticsService {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentAnalyticsService.class);
 
     private static final BigDecimal FALLBACK_SECTION_AVERAGE = new BigDecimal("72.0");
     private static final int FALLBACK_PERCENTILE = 20;
@@ -45,17 +49,20 @@ public class StudentAnalyticsService {
     }
 
     public StudentSummaryResponse getSummary(Long studentId) {
-        validateId(studentId);
+        log.info("STUDENT_SUMMARY_STARTED studentId={}", studentId);
+        validateId(studentId, "SUMMARY");
 
         BigDecimal studentAverage = calculateStudentAverage(studentId);
         BigDecimal sectionAverage = resolveSectionAverage(studentId);
         BigDecimal difference = studentAverage.subtract(sectionAverage);
 
+        log.info("STUDENT_SUMMARY_SUCCESS studentId={}", studentId);
         return new StudentSummaryResponse(buildStudentCode(studentId), studentAverage, sectionAverage, difference);
     }
 
     public StudentComparisonResponse getComparison(Long studentId) {
-        validateId(studentId);
+        log.info("STUDENT_COMPARISON_STARTED studentId={}", studentId);
+        validateId(studentId, "COMPARISON");
 
         BigDecimal studentAverage = calculateStudentAverage(studentId);
         BigDecimal sectionAverage = resolveSectionAverage(studentId);
@@ -67,35 +74,44 @@ public class StudentAnalyticsService {
             percentile = position.getPercentile();
         } catch (RuntimeException e) {
             // Fallback: B2 no pudo calcular la posicion del estudiante
+            log.warn("PERCENTILE_FALLBACK studentId={} reason=B2_UNAVAILABLE error={}",
+                    studentId, e.getClass().getSimpleName());
             percentile = FALLBACK_PERCENTILE;
         }
 
+        log.info("STUDENT_COMPARISON_SUCCESS studentId={}", studentId);
         return new StudentComparisonResponse(buildStudentCode(studentId), studentAverage,
                 sectionAverage, difference, percentile);
     }
 
     public StudentTrendResponse getTrend(Long studentId) {
-        validateId(studentId);
+        log.info("STUDENT_TREND_STARTED studentId={}", studentId);
+        validateId(studentId, "TREND");
 
         TrendResponse trend;
         try {
             trend = trendService.getTrendByStudentId(studentId);
         } catch (RuntimeException e) {
             // Fallback: B4 no pudo calcular la tendencia
+            log.warn("TREND_FALLBACK studentId={} reason=B4_UNAVAILABLE error={}",
+                    studentId, e.getClass().getSimpleName());
             trend = null;
         }
 
         String studentCode = buildStudentCode(studentId);
         if (trend == null || trend.classification() == null) {
+            log.warn("STUDENT_TREND_INSUFFICIENT_DATA studentId={}", studentId);
             return new StudentTrendResponse(studentCode, "INSUFFICIENT_DATA", null);
         }
 
         Double averageChange = trend.averageChange() != null ? trend.averageChange().doubleValue() : null;
+        log.info("STUDENT_TREND_SUCCESS studentId={} classification={}", studentId, trend.classification());
         return new StudentTrendResponse(studentCode, trend.classification().name(), averageChange);
     }
 
-    private void validateId(Long studentId) {
+    private void validateId(Long studentId, String operation) {
         if (studentId == null || studentId <= 0) {
+            log.warn("STUDENT_{}_REJECTED studentId={} reason=INVALID_ID", operation, studentId);
             throw new StudentNotFoundException(studentId);
         }
     }
@@ -112,6 +128,7 @@ public class StudentAnalyticsService {
                 .toList();
 
         if (scores.isEmpty()) {
+            log.warn("STUDENT_NO_GRADES studentId={}", studentId);
             throw new StudentNotFoundException(studentId);
         }
 
@@ -123,14 +140,21 @@ public class StudentAnalyticsService {
     private BigDecimal resolveSectionAverage(Long studentId) {
         List<Enrollment> enrollments = enrollmentRepository.findByStudentId(studentId);
         if (enrollments.isEmpty()) {
+            log.warn("SECTION_AVERAGE_FALLBACK studentId={} reason=NO_ENROLLMENT", studentId);
             return FALLBACK_SECTION_AVERAGE;
         }
 
         Long sectionId = enrollments.get(0).getSectionId();
         try {
             Double mean = centralTendencyService.getSectionCentralTendency(sectionId, null).mean();
-            return mean != null ? BigDecimal.valueOf(mean) : FALLBACK_SECTION_AVERAGE;
+            if (mean == null) {
+                log.warn("SECTION_AVERAGE_FALLBACK studentId={} sectionId={} reason=B1_NO_MEAN", studentId, sectionId);
+                return FALLBACK_SECTION_AVERAGE;
+            }
+            return BigDecimal.valueOf(mean);
         } catch (RuntimeException e) {
+            log.warn("SECTION_AVERAGE_FALLBACK studentId={} sectionId={} reason=B1_UNAVAILABLE error={}",
+                    studentId, sectionId, e.getClass().getSimpleName());
             return FALLBACK_SECTION_AVERAGE;
         }
     }
