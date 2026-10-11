@@ -2,6 +2,10 @@ package gt.edu.uinsight.analytics.summary.entity;
 
 import java.util.List;
 
+import gt.edu.uinsight.alert.dto.section.CentralTendencyDto;
+import gt.edu.uinsight.alert.dto.section.DispersionDto;
+import gt.edu.uinsight.alert.dto.section.PositionDto;
+import gt.edu.uinsight.alert.dto.section.TrendDto;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
@@ -42,4 +46,20 @@ public class SectionSummary {
 
     public List<String> getUnavailableComponents() { return unavailableComponents; }
     public void setUnavailableComponents(List<String> unavailable) { this.unavailableComponents = unavailable; }
+    public void setCentralTendencyData(CentralTendencyDto centralTendencyDto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setCentralTendencyData'");
+    }
+    public void setDispersion(DispersionDto dispersionDto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setDispersion'");
+    }
+    public void setTrend(TrendDto trendDto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setTrend'");
+    }
+    public void setPosition(PositionDto positionDto) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setPosition'");
+    }
 }
