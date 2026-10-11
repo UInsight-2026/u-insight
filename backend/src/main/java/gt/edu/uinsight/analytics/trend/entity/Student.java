@@ -1,14 +1,9 @@
 package gt.edu.uinsight.analytics.trend.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 // Parche de arranque aportado por C7: la clase estaba vacia y sin @Entity, pero
@@ -23,8 +18,7 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToMany (mappedBy = "student", fetch = FetchType.LAZY)
-    private List<Grade> grades = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
@@ -33,7 +27,5 @@ public class Student {
         this.id = id;
     }
 
-    public List<Grade> getGrades() {
-        return grades;
-    }
+    
 }

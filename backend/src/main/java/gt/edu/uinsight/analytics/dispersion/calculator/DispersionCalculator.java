@@ -5,8 +5,11 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
 
+@Component 
 public class DispersionCalculator {
 
     private static final MathContext MC =
