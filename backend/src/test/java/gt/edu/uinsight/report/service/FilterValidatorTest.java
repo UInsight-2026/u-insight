@@ -1,4 +1,4 @@
-//semana 3
+//Fix final
 package gt.edu.uinsight.report.service;
 
 import gt.edu.uinsight.report.dto.filter.PageFilter;
@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.DisplayName;
 
 class FilterValidatorTest {
 

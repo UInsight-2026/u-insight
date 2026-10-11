@@ -1,4 +1,4 @@
-//SEMANA 3
+//FIXES FINALES
 package gt.edu.uinsight.report.service;
 
 import gt.edu.uinsight.report.dto.filter.PageFilter;
@@ -28,20 +28,12 @@ public class FilterValidator {
     // Período académico: cuatro dígitos de año, guión, y 1 o 2. Ej. 2026-2
     private static final Pattern PERIOD_PATTERN = Pattern.compile("\\d{4}-[12]");
 
-    // Ciclo de vida oficial de una alerta (documento maestro, célula C3).
-    private static final Set<String> VALID_ALERT_STATUSES =
-            Set.of("NEW", "UNDER_REVIEW", "IN_PROGRESS", "RESOLVED", "DISMISSED");
 
-    private static final Set<String> VALID_SORTS =
-            Set.of("NEWEST", "OLDEST", "RISK");
-
-    // Período académico: cuatro dígitos de año, guión, y 1 o 2. Ej. 2026-2
-    private static final Pattern PERIOD_PATTERN = Pattern.compile("\\d{4}-[12]");
 
     
-
-    public void validatePage(PageFilter pageFilter) {
-        if (pageFilter == null) {
+//fix final
+    public void validate(ReportFilter filter) {
+        if (filter == null) {
             return;
         }
         validateRiskLevel(filter.getRiskLevel());
