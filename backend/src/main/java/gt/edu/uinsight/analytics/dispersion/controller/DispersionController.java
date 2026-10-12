@@ -1,4 +1,3 @@
-
 package gt.edu.uinsight.analytics.dispersion.controller;
 
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,8 @@ public class DispersionController {
 
     private final DispersionService dispersionService;
 
-    public DispersionController(DispersionService dispersionService) {
+    public DispersionController(
+            DispersionService dispersionService) {
         this.dispersionService = dispersionService;
     }
 
@@ -24,19 +24,15 @@ public class DispersionController {
     public ResponseEntity<DispersionResponse> getSectionDispersion(
             @PathVariable("id") Long sectionId) {
 
-        DispersionResponse response =
-                dispersionService.getSectionDispersion(sectionId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                dispersionService.getSectionDispersion(sectionId));
     }
 
     @GetMapping("/courses/{id}/dispersion")
     public ResponseEntity<DispersionResponse> getCourseDispersion(
             @PathVariable("id") Long courseId) {
 
-        DispersionResponse response =
-                dispersionService.getCourseDispersion(courseId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                dispersionService.getCourseDispersion(courseId));
     }
 }
