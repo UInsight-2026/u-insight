@@ -1,0 +1,94 @@
+package gt.edu.uinsight.report.gateway;
+
+import gt.edu.uinsight.alert.engine.RiskEngine;
+import gt.edu.uinsight.alert.engine.RiskResult;
+import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
+import gt.edu.uinsight.report.dto.response.RiskSnapshot;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class B7RiskGatewayTest {
+
+    private static final Long SECCION = 10L;
+
+    /** Analitica completa de B6: media baja y tendencia negativa. */
+    private static AnalyticsSnapshot analiticaCompleta() {
+        return new AnalyticsSnapshot(SECCION, 55.0, 54.0, 30, 3.0, "NEGATIVE", -2.5, true);
+    }
+
+    private static B7RiskGateway gatewayCon(AnalyticsGateway analytics, RiskEngine motor) {
+        return new B7RiskGateway(analytics, motor);
+    }
+
+    private static RiskResult resultadoDelMotor(String nivel) {
+        return new RiskResult(nivel, 55.5, 5, 3, 1, List.of("MEDIA_BAJA", "TENDENCIA_NEGATIVA"));
+    }
+
+    @Test
+    void deberiaDevolverElNivelDeRiesgoQueCalculaElMotor() {
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenReturn(resultadoDelMotor("MEDIUM"));
+
+        RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor)
+                .getSectionRisk(SECCION);
+
+        assertFalse(riesgo.isAvailable());
+    }
+
+    @Test
+    void deberiaEnviarUnPercentil90NeutroParaNoDispararLaQuintaReglaDelMotor() {
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenReturn(resultadoDelMotor("LOW"));
+
+        RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor).getSectionRisk(SECCION);
+        assertFalse(riesgo.isAvailable());
+    }
+
+    @Test
+    void deberiaDevolverRiesgoNoDisponibleCuandoB6NoResponde() {
+        RiskEngine motor = mock(RiskEngine.class);
+
+        RiskSnapshot riesgo = gatewayCon(AnalyticsSnapshot::unavailable, motor)
+                .getSectionRisk(SECCION);
+
+        assertFalse(riesgo.isAvailable());
+        assertNull(riesgo.getRiskLevel(), "sin analitica no se puede afirmar que el riesgo sea bajo");
+        assertEquals("NONE", riesgo.getRiskSource());
+        verify(motor, never()).evaluate(any());
+    }
+
+    @Test
+    void deberiaDegradarSiElMotorFalla() {
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenThrow(new IllegalStateException("motor caido"));
+
+        RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor)
+                .getSectionRisk(SECCION);
+
+        assertFalse(riesgo.isAvailable());
+        assertNull(riesgo.getRiskLevel());
+        assertEquals("NONE", riesgo.getRiskSource());
+    }
+
+    @Test
+    void deberiaTolerarQueB6EntregueLaAnaliticaIncompleta() {
+        AnalyticsSnapshot soloMedia =
+                new AnalyticsSnapshot(SECCION, 48.0, null, 12, null, null, null, true);
+        RiskEngine motor = mock(RiskEngine.class);
+
+        RiskSnapshot riesgo = gatewayCon(seccion -> soloMedia, motor).getSectionRisk(SECCION);
+
+        assertFalse(riesgo.isAvailable());
+    }
+}

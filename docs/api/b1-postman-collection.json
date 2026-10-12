@@ -1,0 +1,213 @@
+{
+  "info": {
+    "name": "U-Insight - B1 Tendencia Central",
+    "description": "7 escenarios de la celula B1 (analytics/central-tendency): consulta por seccion, por seccion+evaluacion, por curso, por curso+periodo, recurso inexistente (404), parametro invalido (400) y datos vacios (200 con contrato estable). Las variables sectionId/courseId/evaluationId/periodId/emptySectionId deben apuntar a datos reales sembrados via A4 (secciones) y A6 (calificaciones); no vienen hardcodeadas porque B1 no es dueno de esos datos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "sectionId", "value": "1", "description": "Id de una seccion con calificaciones (sembrada via A4 + A6)" },
+    { "key": "evaluationId", "value": "1", "description": "Id de una evaluacion que pertenece a sectionId" },
+    { "key": "courseId", "value": "1", "description": "Id de un curso con al menos una seccion activa (sembrado via A1)" },
+    { "key": "periodId", "value": "1", "description": "Id de un periodo academico valido en A1" },
+    { "key": "emptySectionId", "value": "2", "description": "Id de una seccion existente pero sin calificaciones registradas" },
+    { "key": "nonExistentId", "value": "999999", "description": "Id que no existe, para forzar 404" }
+  ],
+  "item": [
+    {
+      "name": "GET /sections/{id}/central-tendency -> 200 (consulta por seccion)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/sections/{{sectionId}}/central-tendency",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "sections", "{{sectionId}}", "central-tendency"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Trae sampleSize, mean, median y mode\", function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.all.keys(\"sampleSize\", \"mean\", \"median\", \"mode\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /sections/{id}/central-tendency?evaluationId= -> 200 (consulta por seccion y evaluacion)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/sections/{{sectionId}}/central-tendency?evaluationId={{evaluationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "sections", "{{sectionId}}", "central-tendency"],
+          "query": [{ "key": "evaluationId", "value": "{{evaluationId}}" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"sampleSize es numerico\", function () {",
+              "    pm.expect(pm.response.json().sampleSize).to.be.a(\"number\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /courses/{id}/central-tendency -> 200 (consulta por curso)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/courses/{{courseId}}/central-tendency",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "courses", "{{courseId}}", "central-tendency"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Trae sampleSize, mean, median y mode\", function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.all.keys(\"sampleSize\", \"mean\", \"median\", \"mode\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /courses/{id}/central-tendency?periodId= -> 200 (consulta por curso y periodo)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/courses/{{courseId}}/central-tendency?periodId={{periodId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "courses", "{{courseId}}", "central-tendency"],
+          "query": [{ "key": "periodId", "value": "{{periodId}}" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"sampleSize es numerico\", function () {",
+              "    pm.expect(pm.response.json().sampleSize).to.be.a(\"number\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /sections/{id}/central-tendency -> 404 (recurso inexistente)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/sections/{{nonExistentId}}/central-tendency",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "sections", "{{nonExistentId}}", "central-tendency"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });",
+              "pm.test(\"Formato estandar de error\", function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.status).to.eql(404);",
+              "    pm.expect(body.error).to.eql(\"RESOURCE_NOT_FOUND\");",
+              "    pm.expect(body.traceId).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /sections/{id}/central-tendency -> 400 (parametro invalido)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/sections/abc/central-tendency",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "sections", "abc", "central-tendency"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"Formato estandar de error\", function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.status).to.eql(400);",
+              "    pm.expect(body.error).to.eql(\"VALIDATION_ERROR\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /sections/{id}/central-tendency -> 200 (datos vacios)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/analytics/sections/{{emptySectionId}}/central-tendency",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "analytics", "sections", "{{emptySectionId}}", "central-tendency"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Responde 200 (lista vacia no es error)\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Contrato estable vacio\", function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.sampleSize).to.eql(0);",
+              "    pm.expect(body.mean).to.be.null;",
+              "    pm.expect(body.median).to.be.null;",
+              "    pm.expect(body.mode).to.eql([]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,13 +1,14 @@
-
 package gt.edu.uinsight.analytics.dispersion.repository;
 
-import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
 import java.math.BigDecimal;
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
 
 @Repository("dispersionGradeRepository")
 public interface DispersionGradeRepository
@@ -15,8 +16,9 @@ public interface DispersionGradeRepository
 
     @Query(value = """
             SELECT g.score
-            FROM grade g
-            INNER JOIN evaluation e ON g.evaluation_id = e.id
+            FROM grades g
+            INNER JOIN grade_evaluation_ref e
+                ON g.evaluation_id = e.id
             WHERE e.section_id = :sectionId
             """, nativeQuery = true)
     List<BigDecimal> findScoresBySectionId(
@@ -24,9 +26,11 @@ public interface DispersionGradeRepository
 
     @Query(value = """
             SELECT g.score
-            FROM grade g
-            INNER JOIN evaluation e ON g.evaluation_id = e.id
-            INNER JOIN section s ON e.section_id = s.id
+            FROM grades g
+            INNER JOIN grade_evaluation_ref e
+                ON g.evaluation_id = e.id
+            INNER JOIN section s
+                ON e.section_id = s.id
             WHERE s.course_id = :courseId
             """, nativeQuery = true)
     List<BigDecimal> findScoresByCourseId(

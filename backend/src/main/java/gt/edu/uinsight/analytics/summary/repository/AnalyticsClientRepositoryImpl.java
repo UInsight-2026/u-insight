@@ -6,6 +6,7 @@ import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyRes
 import gt.edu.uinsight.analytics.centraltendency.service.CentralTendencyService;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.dispersion.service.DispersionService;
+import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.position.service.PositionService;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
@@ -32,8 +33,6 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
 
     @Override
     public CentralTendencyResponse getCentralTendency(Long sectionId) {
-        // B1 real — lee de BD
-        // evaluationId null porque B6 consulta toda la sección, no una evaluación específica
         return centralTendencyService.getSectionCentralTendency(sectionId, null);
     }
 
@@ -49,8 +48,6 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
 
     @Override
     public TrendResponse getTrend(Long sectionId) {
-        // B4 real — lee de BD
         return trendService.getTrendBySectionId(sectionId);
     }
-
 }

@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,6 +75,20 @@ class SummaryServiceTest {
     }
 
     @Test
+    @DisplayName("Inicia todas las consultas antes de esperar resultados")
+    void getSummary_runsComponentCallsConcurrently() {
+        SummaryService summaryService = new SummaryService(new ConcurrentAnalyticsClientRepository());
+
+        SectionSummary result = summaryService.getSummary(SECTION_ID);
+
+        assertNotNull(result.getCentralTendencyData());
+        assertNotNull(result.getPositionData());
+        assertNotNull(result.getDispersionData());
+        assertNotNull(result.getTrendData());
+        assertEquals(List.of("studentsAtRisk"), result.getUnavailableComponents());
+    }
+
+    @Test
     @DisplayName("Rechaza identificadores de sección inválidos")
     void getSummary_invalidSectionId_throwsIllegalArgumentException() {
         SummaryService summaryService = new SummaryService(new FixtureAnalyticsClientRepository());
@@ -126,6 +142,52 @@ class SummaryServiceTest {
             }
             return new TrendResponse(TrendClassification.STABLE, BigDecimal.ZERO,
                     List.<TrendPoint>of());
+        }
+    }
+
+    private static final class ConcurrentAnalyticsClientRepository implements AnalyticsClientRepository {
+
+        private final CountDownLatch allCallsStarted = new CountDownLatch(4);
+
+        @Override
+        public CentralTendencyResponse getCentralTendency(Long sectionId) {
+            awaitOtherCalls();
+            return new CentralTendencyResponse(4, 75.0, 74.0, List.of(75.0));
+        }
+
+        @Override
+        public SectionPositionResponse getPosition(Long sectionId) {
+            awaitOtherCalls();
+            return new SectionPositionResponse(sectionId, 4,
+                    Map.of("Q1", 68.0, "Q2", 74.0, "Q3", 82.0), Map.of());
+        }
+
+        @Override
+        public DispersionResponse getDispersion(Long sectionId) {
+            awaitOtherCalls();
+            return new DispersionResponse(sectionId, null,
+                    new BigDecimal("60"), new BigDecimal("90"),
+                    new BigDecimal("30"), new BigDecimal("100"),
+                    new BigDecimal("10"), DispersionClassification.MODERATE_DISPERSION);
+        }
+
+        @Override
+        public TrendResponse getTrend(Long sectionId) {
+            awaitOtherCalls();
+            return new TrendResponse(TrendClassification.STABLE, BigDecimal.ZERO,
+                    List.<TrendPoint>of());
+        }
+
+        private void awaitOtherCalls() {
+            allCallsStarted.countDown();
+            try {
+                if (!allCallsStarted.await(1, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Las llamadas no se iniciaron en paralelo");
+                }
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("La prueba fue interrumpida", exception);
+            }
         }
     }
 }
