@@ -1,4 +1,3 @@
-
 package gt.edu.uinsight.analytics.dispersion.mapper;
 
 import java.math.BigDecimal;
