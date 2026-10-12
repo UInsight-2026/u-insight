@@ -38,9 +38,11 @@ public class B6AnalyticsGateway implements AnalyticsGateway {
                     central != null ? central.mean() : null,
                     central != null ? central.median() : null,
                     central != null ? central.sampleSize() : null,
-                    dispersion != null ? dispersion.standardDeviation() : null,
+                    dispersion != null && dispersion.standardDeviation() != null
+                            ? dispersion.standardDeviation().doubleValue() : null,
                     trend != null && trend.classification() != null ? trend.classification().name() : null,
-                    trend != null && trend.averageChange() != null ? trend.averageChange().doubleValue() : null,
+                    trend != null && trend.averageChange() != null
+                            ? trend.averageChange().doubleValue() : null,
                     true);
             // available indica que hay al menos un componente; no garantiza
             // que la tendencia u otro indicador concreto este disponible.

@@ -59,13 +59,15 @@ class SectionReportServiceTest {
                 .thenReturn(
                         new DispersionResponse(
                                 10L,
-                                null,
-                                40.0,
-                                95.0,
-                                55.0,
-                                124.55,
-                                11.16,
-                                null));
+    null,
+    new BigDecimal("40.0"),
+    new BigDecimal("95.0"),
+    new BigDecimal("55.0"),
+    new BigDecimal("124.55"),
+    new BigDecimal("11.16"),
+    null
+
+                ));
 
         when(repository.getTrend(10L))
                 .thenReturn(

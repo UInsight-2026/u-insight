@@ -5,6 +5,8 @@ import gt.edu.uinsight.report.common.ReportLogger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +18,10 @@ import java.util.List;
 import java.util.UUID;
 
 
+// Otras celulas declaran @RestControllerAdvice sin acotar paquete y con un
+// @ExceptionHandler(Exception.class). Sin esta precedencia, ese handler captura
+// primero las excepciones de C5 y nuestros 404 y 400 salen como 500.
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(basePackages = "gt.edu.uinsight.report")
 public class ReportExceptionHandler {
 
