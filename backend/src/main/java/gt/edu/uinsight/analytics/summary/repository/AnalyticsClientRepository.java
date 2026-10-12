@@ -4,7 +4,9 @@ import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyRes
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface AnalyticsClientRepository {
     CentralTendencyResponse getCentralTendency(Long sectionId);
     SectionPositionResponse getPosition(Long sectionId);
