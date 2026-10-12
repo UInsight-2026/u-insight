@@ -20,6 +20,43 @@ En consecuencia:
 
 Si traes `develop` actualizado, la aplicacion arranca sin aplicar nada.
 
+## Cierre de la celula 7 (2026-10-12)
+
+`feature/C7-week5-base` quedo con todo lo de la semana 5 integrado:
+
+- merge de `origin/develop` hasta el PR #141 -- **sin conflictos**.
+- merge de `feature/C7-week5-controller-tests` (commit `500ab57`) -- **sin conflictos**.
+- la rama sigue sin tocar ningun archivo de otra celula; `C7-pre-push` pasa limpio.
+
+### Pruebas del modulo system
+
+44 pruebas, 0 fallos, 0 errores, 3 deshabilitadas -- BUILD SUCCESS. Se corrieron
+con el pom oficial de develop (Spring Boot 4.1.1 / Java 25, PR #106).
+
+### Bloqueador abierto: el pom de develop
+
+El PR #141 (modulo AlertRule, celula B7) **reemplazo `backend/pom.xml` completo**
+por una copia vieja de la celula C2: Spring Boot 4.1.1 -> 3.2.3 y Java 25 -> 17.
+Es la tercera vez que pasa (ya se corrigio en los PR #83, #87 y #106).
+
+Con ese pom **no compila el codigo de pruebas de develop**, y no es solo C7:
+
+| Celula | Archivo que deja de compilar | Causa |
+| --- | --- | --- |
+| C7 | `system/controller/*Test.java`, `SystemEndToEndFlowTest` | `org.springframework.boot.webmvc.test.autoconfigure`, `MockitoBean` |
+| A1 | `academicperiod/controller/AcademicPeriodControllerTest` | `MockitoBean` |
+| A2 | `course/controller/CourseControllerTest` | paquete `webmvc.test.autoconfigure`, `MockitoBean` |
+| B6 | `analytics/summary/.../SummaryControllerWebMvcTest` | `MockitoBean` |
+
+Tambien rompe el codigo principal de A1:
+`academicperiod/support/exception/AcademicExceptionHandler.java` importa
+`org.springframework.data.core.PropertyReferenceException`, que es la ruta correcta
+en Spring Data 4 (en 3.2.3 vivia en `org.springframework.data.mapping`). El codigo
+de A1 esta bien; lo que esta mal es el pom.
+
+C7 **no corrige el pom en su rama**: es un archivo compartido y la guardia nace
+justo de ese problema (PR #97). Va en una rama aparte, como se hizo en el PR #106.
+
 ## Instalar la guardia pre-push
 
 Paso 2 de la Tarea 0. Una sola vez por copia del repositorio:
