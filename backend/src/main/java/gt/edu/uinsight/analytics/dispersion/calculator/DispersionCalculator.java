@@ -17,12 +17,16 @@ public class DispersionCalculator {
 
     public BigDecimal calculateMin(List<BigDecimal> scores) {
         DispersionValidator.validar(scores);
-        return scores.stream().min(BigDecimal::compareTo).orElseThrow();
+        return scores.stream()
+                .min(BigDecimal::compareTo)
+                .orElseThrow();
     }
 
     public BigDecimal calculateMax(List<BigDecimal> scores) {
         DispersionValidator.validar(scores);
-        return scores.stream().max(BigDecimal::compareTo).orElseThrow();
+        return scores.stream()
+                .max(BigDecimal::compareTo)
+                .orElseThrow();
     }
 
     public BigDecimal calculateRange(List<BigDecimal> scores) {
