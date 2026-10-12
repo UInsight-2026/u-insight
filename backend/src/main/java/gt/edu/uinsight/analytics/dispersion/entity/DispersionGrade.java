@@ -61,3 +61,5 @@ public class DispersionGrade {
         this.score = score;
     }
 }
+
+

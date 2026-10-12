@@ -7,7 +7,7 @@ Pendientes del backend:
 - PATCH /interventions/{id}/status no está implementado: el estado no se cambia desde el front.
 */
 
-const API_BASE = "/api/v1";
+const API_BASE = "/api/v1"; 
 
 const TIPOS_INTERVENCION = {
   TUTORING: "Tutoría",

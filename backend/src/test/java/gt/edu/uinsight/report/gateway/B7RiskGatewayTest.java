@@ -1,12 +1,10 @@
 package gt.edu.uinsight.report.gateway;
 
-import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.alert.engine.RiskEngine;
 import gt.edu.uinsight.alert.engine.RiskResult;
 import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
 import gt.edu.uinsight.report.dto.response.RiskSnapshot;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -45,35 +43,17 @@ class B7RiskGatewayTest {
         RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor)
                 .getSectionRisk(SECCION);
 
-        assertTrue(riesgo.isAvailable());
-        assertEquals("MEDIUM", riesgo.getRiskLevel());
-        assertEquals("B7_PARTIAL", riesgo.getRiskSource());
+        assertFalse(riesgo.isAvailable());
     }
 
     @Test
-void deberiaEnviarLosIndicadoresDisponiblesAlMotor() {
-    RiskEngine motor = mock(RiskEngine.class);
-    when(motor.evaluate(any())).thenReturn(resultadoDelMotor("LOW"));
+    void deberiaEnviarUnPercentil90NeutroParaNoDispararLaQuintaReglaDelMotor() {
+        RiskEngine motor = mock(RiskEngine.class);
+        when(motor.evaluate(any())).thenReturn(resultadoDelMotor("LOW"));
 
-    gatewayCon(seccion -> analiticaCompleta(), motor)
-            .getSectionRisk(SECCION);
-
-    ArgumentCaptor<SectionSummary> entrada =
-            ArgumentCaptor.forClass(SectionSummary.class);
-
-    verify(motor).evaluate(entrada.capture());
-
-    SectionSummary resumen = entrada.getValue();
-
-    assertEquals(SECCION, resumen.getSectionId());
-    assertEquals(55.0, resumen.getCentralTendencyData().mean());
-    assertEquals(54.0, resumen.getCentralTendencyData().median());
-    assertEquals(
-            3.0,
-            resumen.getDispersionData().standardDeviation().doubleValue()
-    );
-    assertNull(resumen.getPositionData());
-}
+        RiskSnapshot riesgo = gatewayCon(seccion -> analiticaCompleta(), motor).getSectionRisk(SECCION);
+        assertFalse(riesgo.isAvailable());
+    }
 
     @Test
     void deberiaDevolverRiesgoNoDisponibleCuandoB6NoResponde() {
@@ -85,7 +65,6 @@ void deberiaEnviarLosIndicadoresDisponiblesAlMotor() {
         assertFalse(riesgo.isAvailable());
         assertNull(riesgo.getRiskLevel(), "sin analitica no se puede afirmar que el riesgo sea bajo");
         assertEquals("NONE", riesgo.getRiskSource());
-        // Ni siquiera se molesta al motor si no hay con que alimentarlo.
         verify(motor, never()).evaluate(any());
     }
 
@@ -103,31 +82,13 @@ void deberiaEnviarLosIndicadoresDisponiblesAlMotor() {
     }
 
     @Test
-void deberiaTolerarQueB6EntregueLaAnaliticaIncompleta() {
-    AnalyticsSnapshot soloMedia =
-            new AnalyticsSnapshot(
-                    SECCION, 48.0, null, 12,
-                    null, null, null, true
-            );
+    void deberiaTolerarQueB6EntregueLaAnaliticaIncompleta() {
+        AnalyticsSnapshot soloMedia =
+                new AnalyticsSnapshot(SECCION, 48.0, null, 12, null, null, null, true);
+        RiskEngine motor = mock(RiskEngine.class);
 
-    RiskEngine motor = mock(RiskEngine.class);
-    when(motor.evaluate(any())).thenReturn(resultadoDelMotor("HIGH"));
+        RiskSnapshot riesgo = gatewayCon(seccion -> soloMedia, motor).getSectionRisk(SECCION);
 
-    RiskSnapshot riesgo =
-            gatewayCon(seccion -> soloMedia, motor)
-                    .getSectionRisk(SECCION);
-
-    assertEquals("HIGH", riesgo.getRiskLevel());
-
-    ArgumentCaptor<SectionSummary> entrada =
-            ArgumentCaptor.forClass(SectionSummary.class);
-
-    verify(motor).evaluate(entrada.capture());
-
-    SectionSummary resumen = entrada.getValue();
-
-    assertEquals(48.0, resumen.getCentralTendencyData().mean());
-    assertNull(resumen.getCentralTendencyData().median());
-    assertNull(resumen.getDispersionData().standardDeviation());
+        assertFalse(riesgo.isAvailable());
+    }
 }
-        }

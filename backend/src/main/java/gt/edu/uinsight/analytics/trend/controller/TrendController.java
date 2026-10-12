@@ -15,11 +15,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.constraints.Positive;
 
-@RestController
+@RestController 
 @RequestMapping("/api/v1/analytics")
 @Validated
 public class TrendController {
-
+    
     private final TrendService trendService;
 
     public TrendController(TrendService trendService) {
@@ -33,7 +33,7 @@ public class TrendController {
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrendErrorResponse.class)))
     @ApiResponse (responseCode = "500", description = "Error interno del servidor",
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrendErrorResponse.class)))
-
+    
      public ResponseEntity<TrendResponse> getTrendBySectionId(@PathVariable @Positive Long id) {
          // Lógica para obtener la tendencia por ID de sección
          TrendResponse trendResponse = trendService.getTrendBySectionId(id);

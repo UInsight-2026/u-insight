@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
 
-@Component
+@Component 
 public class DispersionCalculator {
 
     private static final MathContext MC =

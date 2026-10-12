@@ -1,8 +1,11 @@
 package gt.edu.uinsight.imports.exception;
 
 import gt.edu.uinsight.imports.util.ImportLogEvents;
+import gt.edu.uinsight.imports.util.StructuredLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,16 +14,24 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.util.UUID;
 
+/**
+ * Manejador de errores de la célula A7. Tiene prioridad máxima para que los
+ * manejadores globales de otras células no capturen antes las excepciones de
+ * los controladores de este módulo (basePackages lo limita a gt.edu.uinsight.imports).
+ */
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice(basePackages = "gt.edu.uinsight.imports")
 public class ImportExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ImportExceptionHandler.class);
+    private static final String OPERATION = "manejarError";
 
     @ExceptionHandler(ImportNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ImportNotFoundException ex,
                                                           WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.warn("{} traceId={} message={}", ImportLogEvents.RESOURCE_NOT_FOUND, traceId, ex.getMessage());
+        StructuredLog.warn(log, ImportLogEvents.RESOURCE_NOT_FOUND, OPERATION, null,
+                "traceId=" + traceId + " message=" + ex.getMessage());
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "Not Found",
@@ -35,7 +46,8 @@ public class ImportExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidCsv(InvalidCsvFileException ex,
                                                             WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.warn("{} traceId={} message={}", ImportLogEvents.INVALID_CSV_FILE, traceId, ex.getMessage());
+        StructuredLog.warn(log, ImportLogEvents.INVALID_CSV_FILE, OPERATION, null,
+                "traceId=" + traceId + " message=" + ex.getMessage());
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Bad Request",
@@ -50,7 +62,8 @@ public class ImportExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotConfirmable(ImportNotConfirmableException ex,
                                                                 WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.warn("{} traceId={} message={}", ImportLogEvents.BUSINESS_RULE_REJECTED, traceId, ex.getMessage());
+        StructuredLog.warn(log, ImportLogEvents.BUSINESS_RULE_REJECTED, OPERATION, null,
+                "traceId=" + traceId + " message=" + ex.getMessage());
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "Conflict",
@@ -64,7 +77,8 @@ public class ImportExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, WebRequest request) {
         String traceId = UUID.randomUUID().toString();
-        log.error("{} traceId={} message={}", ImportLogEvents.INTERNAL_ERROR, traceId, ex.getMessage(), ex);
+        log.error("{}", StructuredLog.toJson("ERROR", ImportLogEvents.INTERNAL_ERROR, OPERATION, null,
+                "traceId=" + traceId + " message=" + ex.getMessage()), ex);
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",

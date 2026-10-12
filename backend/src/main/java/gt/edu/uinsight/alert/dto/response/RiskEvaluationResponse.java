@@ -12,7 +12,7 @@ public class RiskEvaluationResponse {
     private int rulesTriggered;
     private int alertsGenerated;
     private List<String> activatedRules;
-
+    
     public RiskEvaluationResponse() {
     }
 
@@ -89,5 +89,5 @@ public class RiskEvaluationResponse {
     public void setActivatedRules(List<String> activatedRules) {
         this.activatedRules = activatedRules;
     }
-
+    
 }
