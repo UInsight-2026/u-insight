@@ -48,7 +48,8 @@ public class SectionReportService {
         try {
             filterValidator.validate(filter);
         } catch (InvalidFilterException ex) {
-            reportLogger.rejected(traceId, OPERATION, ex.getMessage());
+            //fix final
+            reportLogger.rejected(traceId, OPERATION, null,ex.getMessage());
             throw ex;
         }
 
@@ -65,6 +66,8 @@ public class SectionReportService {
         reportLogger.success(
                 traceId,
                 OPERATION,
+                //fix final
+                id.toString(),
                 startedAt,
                 "sectionId=" + id
                         + " riskLevel=" + section.getRiskLevel()

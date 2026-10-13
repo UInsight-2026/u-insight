@@ -45,7 +45,7 @@ public class AlertReportService {
             filterValidator.validate(filter);
             filterValidator.validatePage(pageFilter);
         } catch (InvalidFilterException ex) {
-            reportLogger.rejected(traceId, OPERATION, ex.getMessage());
+            reportLogger.rejected(traceId, OPERATION, null ,ex.getMessage());
             throw ex;
         }
 
@@ -63,7 +63,7 @@ public class AlertReportService {
         int hasta = Math.min(desde + size, total);
         List<AlertItemResponse> pagina = ordenadas.subList(desde, hasta);
 
-        reportLogger.success(traceId, OPERATION, startedAt,
+        reportLogger.success(traceId,OPERATION, null, startedAt,
                 "total=" + total
                         + " page=" + pageFilter.getPage()
                         + " size=" + size

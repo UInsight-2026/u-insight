@@ -47,7 +47,8 @@ public class CourseReportService {
         try {
             filterValidator.validate(filter);
         } catch (InvalidFilterException ex) {
-            reportLogger.rejected(traceId, OPERATION, ex.getMessage());
+                //fix final
+            reportLogger.rejected(traceId, OPERATION,id.toString(), ex.getMessage());
             throw ex;
         }
 
@@ -74,10 +75,11 @@ public class CourseReportService {
                         section.getStudentsAtRisk(),
                         contarAlertasActivasDeLaSeccion(section.getId())))
                 .toList();
-
+//fix final
         reportLogger.success(
                 traceId,
                 OPERATION,
+                id.toString(),
                 startedAt,
                 "courseId=" + id
                         + " sections=" + desglose.size()
