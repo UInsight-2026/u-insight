@@ -7,6 +7,7 @@ import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendClassification;
+import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.List;
@@ -86,5 +87,43 @@ class B6AnalyticsGatewayTest {
         var snapshot = new B6AnalyticsGateway(service).getSectionAnalytics(10L);
         assertNull(snapshot.getTrendClassification());
         assertNull(snapshot.getAverageChange());
+    }
+
+    @Test
+    void deberiaDeclararElOrigenDeLaDispersion() {
+        // La respuesta declara de donde sale cada numero. El consumidor no tiene
+        // por que suponer si un indicador se calculo o llego fijo.
+        when(repository.getCentralTendency(10L))
+                .thenReturn(new CentralTendencyResponse(30, 72.5, 73.0, List.of()));
+        when(repository.getDispersion(10L))
+                .thenReturn(new DispersionResponse(10L, null, new BigDecimal("40.0"),
+                        new BigDecimal("95.0"), new BigDecimal("55.0"),
+                        new BigDecimal("124.55"), new BigDecimal("11.16"), null));
+
+        var snapshot = gateway.getSectionAnalytics(10L);
+
+        assertEquals("B3", snapshot.getDispersionSource());
+        assertEquals(11.16, snapshot.getStandardDeviation());
+    }
+
+    @Test
+    void deberiaDeclararNoneCuandoNoHayDispersion() {
+        when(repository.getCentralTendency(10L))
+                .thenReturn(new CentralTendencyResponse(30, 72.5, 73.0, List.of()));
+        when(repository.getDispersion(10L)).thenThrow(new IllegalStateException("B3 no responde"));
+
+        var snapshot = gateway.getSectionAnalytics(10L);
+
+        assertTrue(snapshot.isAvailable(), "el resto de la analitica sigue disponible");
+        assertEquals("NONE", snapshot.getDispersionSource());
+        assertNull(snapshot.getStandardDeviation());
+    }
+
+    @Test
+    void deberiaDeclararNoneCuandoNoHayAnalitica() {
+        var snapshot = AnalyticsSnapshot.unavailable(10L);
+
+        assertEquals("NONE", snapshot.getDispersionSource());
+        assertNull(snapshot.getStandardDeviation());
     }
 }
