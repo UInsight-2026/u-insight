@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CourseReportServiceTest {
 
@@ -21,13 +22,22 @@ class CourseReportServiceTest {
     private final ReportLogger reportLogger = new ReportLogger();
 
     private final CourseReportService courseReportService =
-            new CourseReportService(gateway, filterValidator, reportLogger);
+            new CourseReportService(
+                    gateway,
+                    filterValidator,
+                    reportLogger);
+
+    private final ReportFilter sinFiltros =
+            new ReportFilter(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
 
     @Test
     void deberiaDevolverElReporteDelCursoProgramacionII() {
-
-        ReportFilter sinFiltros =
-                new ReportFilter(null, null, null, null, null, null);
 
         CourseReportResponse response =
                 courseReportService.getCourseReport(1L, sinFiltros);
@@ -40,9 +50,6 @@ class CourseReportServiceTest {
 
     @Test
     void deberiaDevolverElDesgloseDeLasSecciones() {
-
-        ReportFilter sinFiltros =
-                new ReportFilter(null, null, null, null, null, null);
 
         CourseReportResponse response =
                 courseReportService.getCourseReport(1L, sinFiltros);
@@ -62,9 +69,6 @@ class CourseReportServiceTest {
     @Test
     void deberiaDevolverElReporteDeProgramacionI() {
 
-        ReportFilter sinFiltros =
-                new ReportFilter(null, null, null, null, null, null);
-
         CourseReportResponse response =
                 courseReportService.getCourseReport(4L, sinFiltros);
 
@@ -78,19 +82,15 @@ class CourseReportServiceTest {
     @Test
     void deberiaLanzar404SiElCursoNoExiste() {
 
-        ReportFilter sinFiltros =
-                new ReportFilter(null, null, null, null, null, null);
-
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> courseReportService.getCourseReport(999L, sinFiltros));
+                () -> courseReportService.getCourseReport(
+                        999L,
+                        sinFiltros));
     }
 
     @Test
     void deberiaMantenerLaListaDeSeccionesComoLista() {
-
-        ReportFilter sinFiltros =
-                new ReportFilter(null, null, null, null, null, null);
 
         CourseReportResponse response =
                 courseReportService.getCourseReport(1L, sinFiltros);
@@ -99,5 +99,14 @@ class CourseReportServiceTest {
                 response.getSections();
 
         assertEquals(3, sections.size());
+    }
+
+    @Test
+    void deberiaMantenerUnavailableSourcesVacioCuandoA1EstaDisponible() {
+
+        CourseReportResponse response =
+                courseReportService.getCourseReport(1L, sinFiltros);
+
+        assertTrue(response.getUnavailableSources().isEmpty());
     }
 }
