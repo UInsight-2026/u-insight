@@ -32,7 +32,15 @@ public class IntegrationStatusController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Estado de integración obtenido")
     })
-    public ResponseEntity<List<IntegrationStatusResponse>> getIntegrationStatus() {
-        return ResponseEntity.ok(service.getIntegrationStatus());
+   public ResponseEntity<List<IntegrationStatusResponse>> getIntegrationStatus() {
+        List<IntegrationStatusResponse> response = service.getIntegrationStatus().stream()
+                .map(status -> new IntegrationStatusResponse(
+                        status.module(),
+                        gt.edu.uinsight.system.entity.CheckStatus.valueOf(status.status()),
+                        status.responseTimeMs()
+                ))
+                .toList();
+        
+        return ResponseEntity.ok(response);
     }
 }

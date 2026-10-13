@@ -3,6 +3,8 @@ package gt.edu.uinsight.system.dto.response;
 import gt.edu.uinsight.system.entity.CheckStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+
 @Schema(description = "Estado de disponibilidad de los componentes críticos de la aplicación")
 public record ReadinessResponse(
 
@@ -16,6 +18,12 @@ public record ReadinessResponse(
         CheckStatus configuration,
 
         @Schema(description = "Estado de los servicios críticos", example = "UP")
-        CheckStatus criticalServices
+        CheckStatus criticalServices,
+
+        @Schema(description = "Detalle de las configuraciones verificadas")
+        List<String> configurationDetails,
+
+        @Schema(description = "Detalle de los servicios críticos verificados")
+        List<String> criticalServicesDetails
 ) {
 }

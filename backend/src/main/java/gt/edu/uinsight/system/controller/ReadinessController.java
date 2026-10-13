@@ -30,7 +30,7 @@ public class ReadinessController {
                     + "y los servicios criticos. Devuelve 200 si todos los componentes estan disponibles "
                     + "y 503 si alguno no lo esta."
     )
-   @ApiResponses({
+    @ApiResponses({
         @ApiResponse(
                 responseCode = "200",
                 description = "La aplicacion esta lista",
@@ -42,7 +42,17 @@ public class ReadinessController {
                                           "ready": true,
                                           "database": "UP",
                                           "configuration": "UP",
-                                          "criticalServices": "UP"
+                                          "criticalServices": "UP",
+                                          "configurationDetails": [
+                                            "spring.datasource.url: OK",
+                                            "spring.datasource.username: OK",
+                                            "server.port: OK",
+                                            "springdoc.swagger-ui.path: OK"
+                                          ],
+                                          "criticalServicesDetails": [
+                                            "SystemCheckLogRepository: OK",
+                                            "IntegrationStatusService: OK"
+                                          ]
                                         }
                                         """
                         )
@@ -57,15 +67,25 @@ public class ReadinessController {
                                 value = """
                                         {
                                           "ready": false,
-                                          "database": "DOWN",
-                                          "configuration": "UP",
-                                          "criticalServices": "UP"
+                                          "database": "UP",
+                                          "configuration": "DOWN",
+                                          "criticalServices": "UP",
+                                          "configurationDetails": [
+                                            "spring.datasource.url: OK",
+                                            "spring.datasource.username: MISSING",
+                                            "server.port: OK",
+                                            "springdoc.swagger-ui.path: OK"
+                                          ],
+                                          "criticalServicesDetails": [
+                                            "SystemCheckLogRepository: OK",
+                                            "IntegrationStatusService: OK"
+                                          ]
                                         }
                                         """
                         )
                 )
         )
-})
+    })
     public ResponseEntity<ReadinessResponse> readiness() {
 
         ReadinessResponse response = readinessService.checkReadiness();
