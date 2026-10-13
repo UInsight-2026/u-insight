@@ -14,6 +14,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import gt.edu.uinsight.analytics.centraltendency.dto.integration.EvaluationApiResponse;
 import gt.edu.uinsight.analytics.centraltendency.dto.integration.GradeApiResponse;
 import gt.edu.uinsight.analytics.centraltendency.dto.integration.SectionApiResponse;
 import gt.edu.uinsight.analytics.centraltendency.exception.AnalyticsResourceNotFoundException;
@@ -36,21 +37,26 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
     private final RestClient gradesClient;
     private final RestClient sectionsClient;
     private final RestClient academicClient;
+    private final RestClient evaluationsClient;
 
     @Autowired
     public GradeDataRepositoryImpl(
             @Value("${uinsight.integration.a6.base-url:http://localhost:8080}") String a6BaseUrl,
             @Value("${uinsight.integration.a4.base-url:http://localhost:8080}") String a4BaseUrl,
-            @Value("${uinsight.integration.a1.base-url:http://localhost:8080}") String a1BaseUrl) {
+            @Value("${uinsight.integration.a1.base-url:http://localhost:8080}") String a1BaseUrl,
+            @Value("${uinsight.integration.a5.base-url:http://localhost:8080}") String a5BaseUrl) {
         this(RestClient.builder().baseUrl(a6BaseUrl).build(),
                 RestClient.builder().baseUrl(a4BaseUrl).build(),
-                RestClient.builder().baseUrl(a1BaseUrl).build());
+                RestClient.builder().baseUrl(a1BaseUrl).build(),
+                RestClient.builder().baseUrl(a5BaseUrl).build());
     }
 
-    GradeDataRepositoryImpl(RestClient gradesClient, RestClient sectionsClient, RestClient academicClient) {
+    GradeDataRepositoryImpl(RestClient gradesClient, RestClient sectionsClient, RestClient academicClient,
+                             RestClient evaluationsClient) {
         this.gradesClient = gradesClient;
         this.sectionsClient = sectionsClient;
         this.academicClient = academicClient;
+        this.evaluationsClient = evaluationsClient;
     }
 
     @Override
@@ -64,7 +70,27 @@ public class GradeDataRepositoryImpl implements GradeDataRepository {
         if (section == null) {
             throw new AnalyticsResourceNotFoundException("La seccion " + sectionId + " no existe");
         }
+        if (evaluationId != null) {
+            validateEvaluationBelongsToSection(sectionId, evaluationId);
+        }
         return fetchGrades(section, evaluationId);
+    }
+
+    private void validateEvaluationBelongsToSection(Long sectionId, Long evaluationId) {
+        List<EvaluationApiResponse> evaluations = execute("A5",
+                () -> new GradeDataIntegrationException(
+                        "A5 no pudo confirmar las evaluaciones de la seccion " + sectionId),
+                () -> evaluationsClient.get()
+                        .uri("/api/v1/sections/{id}/evaluations", sectionId)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<EvaluationApiResponse>>() { }));
+
+        boolean belongsToSection = evaluations != null && evaluations.stream()
+                .anyMatch(evaluation -> Objects.equals(evaluation.id(), evaluationId));
+        if (!belongsToSection) {
+            throw new InvalidAnalyticsRequestException(
+                    "La evaluacion " + evaluationId + " no pertenece a la seccion " + sectionId);
+        }
     }
 
     @Override

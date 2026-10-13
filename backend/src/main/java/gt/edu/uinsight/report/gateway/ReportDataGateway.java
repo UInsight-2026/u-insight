@@ -17,4 +17,5 @@ public interface ReportDataGateway {
     List<MockAlert> findAlerts(ReportFilter filter);
     List<MockAlert> findAlertsBySectionId(Long sectionId);
     List<MockAlert> findAlertsByCourseId(Long courseId);
+    int countEnrolledStudents(Long sectionId);
 }

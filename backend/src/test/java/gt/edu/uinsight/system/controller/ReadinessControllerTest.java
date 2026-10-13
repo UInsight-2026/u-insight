@@ -6,6 +6,8 @@ import gt.edu.uinsight.system.service.ReadinessService;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -23,7 +25,17 @@ class ReadinessControllerTest {
                 true,
                 CheckStatus.UP,
                 CheckStatus.UP,
-                CheckStatus.UP
+                CheckStatus.UP,
+                List.of(
+                        "spring.datasource.url: OK",
+                        "spring.datasource.username: OK",
+                        "server.port: OK",
+                        "springdoc.swagger-ui.path: OK"
+                ),
+                List.of(
+                        "SystemCheckLogRepository: OK",
+                        "IntegrationStatusService: OK"
+                )
         );
 
         when(readinessService.checkReadiness()).thenReturn(response);
@@ -33,6 +45,8 @@ class ReadinessControllerTest {
         assertEquals(200, result.getStatusCode().value());
         assertTrue(result.getBody().ready());
         assertEquals(CheckStatus.UP, result.getBody().database());
+        assertEquals(CheckStatus.UP, result.getBody().configuration());
+        assertEquals(CheckStatus.UP, result.getBody().criticalServices());
     }
 
     @Test
@@ -45,7 +59,17 @@ class ReadinessControllerTest {
                 false,
                 CheckStatus.DOWN,
                 CheckStatus.UP,
-                CheckStatus.UP
+                CheckStatus.UP,
+                List.of(
+                        "spring.datasource.url: OK",
+                        "spring.datasource.username: OK",
+                        "server.port: OK",
+                        "springdoc.swagger-ui.path: OK"
+                ),
+                List.of(
+                        "SystemCheckLogRepository: OK",
+                        "IntegrationStatusService: OK"
+                )
         );
 
         when(readinessService.checkReadiness()).thenReturn(response);
