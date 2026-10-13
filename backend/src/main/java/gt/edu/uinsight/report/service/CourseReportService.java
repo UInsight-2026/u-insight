@@ -64,6 +64,7 @@ public class CourseReportService {
             reportLogger.rejected(
                     traceId,
                     OPERATION,
+                    id.toString(),
                     "No se encontro el curso con id " + id);
 
             throw new ResourceNotFoundException(
