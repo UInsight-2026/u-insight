@@ -42,17 +42,17 @@ public class StudentAnalyticsController {
                             name = "Ejemplo de resumen",
                             value = """
                                     {
-                                      "studentCode": "20240589",
-                                      "studentAverage": 85.50,
-                                      "sectionAverage": 78.20,
-                                      "difference": 7.30
+                                      "studentCode": "EST-0001",
+                                      "studentAverage": 85.5,
+                                      "sectionAverage": 78.2,
+                                      "difference": 7.3
                                     }
                                     """
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID de estudiante inválido")
-    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
+    @ApiResponse(responseCode = "400", description = "ID de estudiante con formato inválido")
+    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado o sin calificaciones registradas")
     public StudentSummaryResponse getSummary(
             @Parameter(description = "ID del estudiante", example = "1")
             @PathVariable Long id) {
@@ -74,16 +74,18 @@ public class StudentAnalyticsController {
                             name = "Ejemplo de comparación",
                             value = """
                                     {
-                                      "studentCode": "20240589",
-                                      "studentAverage": 85.50,
+                                      "studentCode": "EST-0001",
+                                      "studentAverage": 85.5,
+                                      "sectionAverage": 78.2,
+                                      "difference": 7.3,
                                       "percentile": 72
                                     }
                                     """
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID de estudiante inválido")
-    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
+    @ApiResponse(responseCode = "400", description = "ID de estudiante con formato inválido")
+    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado o sin calificaciones registradas")
     public StudentComparisonResponse getComparison(
             @Parameter(description = "ID del estudiante", example = "1")
             @PathVariable Long id) {
@@ -93,7 +95,7 @@ public class StudentAnalyticsController {
     @GetMapping("/{id}/trend")
     @Operation(
             summary = "Obtener tendencia del estudiante",
-            description = "Devuelve la tendencia del rendimiento del estudiante (POSITIVE, NEGATIVE, STABLE, INSUFFICIENT_DATA)."
+            description = "Devuelve la tendencia del rendimiento del estudiante (POSITIVE, NEGATIVE, STABLE, INSUFFICIENT_DATA) y el cambio promedio entre evaluaciones."
     )
     @ApiResponse(
             responseCode = "200",
@@ -105,15 +107,16 @@ public class StudentAnalyticsController {
                             name = "Ejemplo de tendencia",
                             value = """
                                     {
-                                      "studentCode": "20240589",
-                                      "trend": "POSITIVE"
+                                      "studentCode": "EST-0001",
+                                      "trend": "POSITIVE",
+                                      "averageChange": 3.5
                                     }
                                     """
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID de estudiante inválido")
-    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
+    @ApiResponse(responseCode = "400", description = "ID de estudiante con formato inválido")
+    @ApiResponse(responseCode = "404", description = "ID de estudiante inválido")
     public StudentTrendResponse getTrend(
             @Parameter(description = "ID del estudiante", example = "1")
             @PathVariable Long id) {

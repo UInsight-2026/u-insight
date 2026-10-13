@@ -17,7 +17,6 @@ public class DispersionCalculator {
 
     public BigDecimal calculateMin(List<BigDecimal> scores) {
         DispersionValidator.validar(scores);
-
         return scores.stream()
                 .min(BigDecimal::compareTo)
                 .orElseThrow();
@@ -25,52 +24,42 @@ public class DispersionCalculator {
 
     public BigDecimal calculateMax(List<BigDecimal> scores) {
         DispersionValidator.validar(scores);
-
         return scores.stream()
                 .max(BigDecimal::compareTo)
                 .orElseThrow();
     }
 
     public BigDecimal calculateRange(List<BigDecimal> scores) {
-        DispersionValidator.validar(scores);
-
         return calculateMax(scores).subtract(calculateMin(scores));
     }
 
     public BigDecimal calculateVariance(List<BigDecimal> scores) {
         DispersionValidator.validar(scores);
 
-        BigDecimal mean = calculateMean(scores);
-        BigDecimal sumOfSquaredDifferences = BigDecimal.ZERO;
+        BigDecimal sum = scores.stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal mean = sum.divide(
+                BigDecimal.valueOf(scores.size()), MC);
+
+        BigDecimal squaredDifferences = BigDecimal.ZERO;
 
         for (BigDecimal score : scores) {
             BigDecimal difference = score.subtract(mean);
-            BigDecimal squaredDifference =
-                    difference.multiply(difference);
-
-            sumOfSquaredDifferences =
-                    sumOfSquaredDifferences.add(squaredDifference);
+            squaredDifferences = squaredDifferences.add(
+                    difference.multiply(difference, MC));
         }
 
-        return sumOfSquaredDifferences.divide(
+        return squaredDifferences.divide(
                 BigDecimal.valueOf(scores.size()), MC);
     }
 
     public BigDecimal calculateStandardDeviation(
             List<BigDecimal> scores) {
 
-        DispersionValidator.validar(scores);
+        BigDecimal variance = calculateVariance(scores);
 
-        return calculateVariance(scores).sqrt(MC);
-    }
-
-    private BigDecimal calculateMean(List<BigDecimal> scores) {
-        BigDecimal sum = BigDecimal.ZERO;
-
-        for (BigDecimal score : scores) {
-            sum = sum.add(score);
-        }
-
-        return sum.divide(BigDecimal.valueOf(scores.size()), MC);
+        return BigDecimal.valueOf(
+                Math.sqrt(variance.doubleValue()));
     }
 }

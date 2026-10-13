@@ -14,13 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Reporte general del sistema (GET /api/v1/reports/overview).
- *
- * Semana 3: overallTrend deja de calcularse localmente y se consulta a
- * la Celula B6. Si B6 no responde para ninguna seccion, se usa la regla
- * local anterior y se avisa en la respuesta.
- */
+
 @Service
 public class OverviewService {
 
@@ -49,7 +43,8 @@ public class OverviewService {
         try {
             filterValidator.validate(filter);
         } catch (InvalidFilterException ex) {
-            reportLogger.rejected(traceId, OPERATION, ex.getMessage());
+            //fix
+            reportLogger.rejected(traceId, OPERATION,null, ex.getMessage());
             throw ex;
         }
 
@@ -93,8 +88,8 @@ public class OverviewService {
                 unavailableSources.add("B6");
             }
         }
-
-        reportLogger.success(traceId, OPERATION, startedAt,
+//fix final
+        reportLogger.success(traceId, OPERATION, null,startedAt,
                 "activeAlerts=" + activeAlerts
                         + " highRiskSections=" + highRiskSections
                         + " unknownRiskSections=" + unknownRiskSections

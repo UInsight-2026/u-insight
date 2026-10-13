@@ -1,17 +1,21 @@
+
 package gt.edu.uinsight.alert.engine;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import gt.edu.uinsight.alertrule.entity.AlertRule;
 import gt.edu.uinsight.alertrule.service.AlertRuleService;
-
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 
 public class RiskEngine {
 
     private final AlertRuleService alertRuleService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public RiskEngine(AlertRuleService alertRuleService) {
         this.alertRuleService = alertRuleService;
@@ -22,7 +26,7 @@ public class RiskEngine {
         List<AlertRule> rules = alertRuleService.getActiveRules();
         List<String> activatedRules = new ArrayList<>();
 
-        int rulesEvaluated = rules.size();
+        int rulesEvaluated = 0;
         int rulesTriggered = 0;
         double score = 0;
 
@@ -32,27 +36,33 @@ public class RiskEngine {
         Map<String, Object> trend = convert(summary.getTrendData());
         Map<String, Object> comp = convert(summary.getStudentComparisonData());
 
-        //Extraer los valores reales
         Double media = getDouble(ct, "mean");
         Double mediana = getDouble(ct, "median");
-
-        Double desviacion = getDouble(disp, "stdDev");
+        Double desviacion = getDouble(disp, "standardDeviation");
 
         String tendencia = getString(trend, "value");
-
         Double percentil90 = getDouble(pos, "percentile90");
 
-        Integer studentsAtRisk = comp != null ? getInt(comp, "studentsAtRisk") : null;
+        Integer studentsAtRisk = comp != null
+                ? getInt(comp, "studentsAtRisk")
+                : null;
 
-        //Evaluar las reglas
         for (AlertRule rule : rules) {
 
-            if (!Boolean.TRUE.equals(rule.getActive())) continue;
+            if (!Boolean.TRUE.equals(rule.getActive())) {
+                continue;
+            }
+
+            rulesEvaluated++;
 
             boolean triggered = evaluateRule(
                     rule.getConditionExpression(),
-                    media, mediana, desviacion,
-                    tendencia, percentil90, studentsAtRisk
+                    media,
+                    mediana,
+                    desviacion,
+                    tendencia,
+                    percentil90,
+                    studentsAtRisk
             );
 
             if (triggered) {
@@ -74,43 +84,67 @@ public class RiskEngine {
         );
     }
 
-    @SuppressWarnings("unchecked")
     private Map<String, Object> convert(Object obj) {
-        if (obj instanceof Map) {
-            return (Map<String, Object>) obj;
+        if (obj == null) {
+            return null;
         }
-        return null;
+
+        return objectMapper.convertValue(
+                obj,
+                new TypeReference<Map<String, Object>>() {}
+        );
     }
 
-    //extraer valores
     private Double getDouble(Map<String, Object> map, String key) {
-        if (map == null) return null;
+        if (map == null) {
+            return null;
+        }
+
         Object val = map.get(key);
-        if (val instanceof Number) return ((Number) val).doubleValue();
+
+        if (val instanceof Number) {
+            return ((Number) val).doubleValue();
+        }
+
         return null;
     }
 
     private Integer getInt(Map<String, Object> map, String key) {
-        if (map == null) return null;
+        if (map == null) {
+            return null;
+        }
+
         Object val = map.get(key);
-        if (val instanceof Number) return ((Number) val).intValue();
+
+        if (val instanceof Number) {
+            return ((Number) val).intValue();
+        }
+
         return null;
     }
 
     private String getString(Map<String, Object> map, String key) {
-        if (map == null) return null;
+        if (map == null) {
+            return null;
+        }
+
         Object val = map.get(key);
+
         return val != null ? val.toString() : null;
     }
 
-    //Evaluacion de las reglas
-    private boolean evaluateRule(String expr,
-                                 Double media,
-                                 Double mediana,
-                                 Double desviacion,
-                                 String tendencia,
-                                 Double percentil90,
-                                 Integer studentsAtRisk) {
+    private boolean evaluateRule(
+            String expr,
+            Double media,
+            Double mediana,
+            Double desviacion,
+            String tendencia,
+            Double percentil90,
+            Integer studentsAtRisk) {
+
+        if (expr == null || expr.isBlank()) {
+            return false;
+        }
 
         String[] parts = expr.split("&&");
 
@@ -119,22 +153,28 @@ public class RiskEngine {
 
             if (!evaluateSingleCondition(
                     part,
-                    media, mediana, desviacion,
-                    tendencia, percentil90, studentsAtRisk
+                    media,
+                    mediana,
+                    desviacion,
+                    tendencia,
+                    percentil90,
+                    studentsAtRisk
             )) {
                 return false;
             }
         }
+
         return true;
     }
 
-    private boolean evaluateSingleCondition(String condition,
-                                            Double media,
-                                            Double mediana,
-                                            Double desviacion,
-                                            String tendencia,
-                                            Double percentil90,
-                                            Integer studentsAtRisk) {
+    private boolean evaluateSingleCondition(
+            String condition,
+            Double media,
+            Double mediana,
+            Double desviacion,
+            String tendencia,
+            Double percentil90,
+            Integer studentsAtRisk) {
 
         String[] operators = {"<=", ">=", "==", "<", ">"};
         String operator = null;
@@ -146,9 +186,19 @@ public class RiskEngine {
             }
         }
 
-        if (operator == null) return false;
+        if (operator == null) {
+            return false;
+        }
 
-        String[] tokens = condition.split(operator);
+        String[] tokens = condition.split(
+                java.util.regex.Pattern.quote(operator),
+                2
+        );
+
+        if (tokens.length != 2) {
+            return false;
+        }
+
         String left = tokens[0].trim();
         String right = tokens[1].trim();
 
@@ -162,10 +212,19 @@ public class RiskEngine {
             default -> null;
         };
 
-        if (leftValue == null) return false;
+        if (leftValue == null) {
+            return false;
+        }
+
         if (leftValue instanceof Number) {
             double leftNum = ((Number) leftValue).doubleValue();
-            double rightNum = Double.parseDouble(right);
+            double rightNum;
+
+            try {
+                rightNum = Double.parseDouble(right);
+            } catch (NumberFormatException ex) {
+                return false;
+            }
 
             return switch (operator) {
                 case "<" -> leftNum < rightNum;
@@ -178,13 +237,21 @@ public class RiskEngine {
         }
 
         if (leftValue instanceof String) {
+            if (!"==".equals(operator)) {
+                return false;
+            }
+
             return leftValue.toString().equalsIgnoreCase(right);
         }
+
         return false;
     }
 
     private double getSeverityWeight(String severity) {
-        if (severity == null) return 0;
+        if (severity == null) {
+            return 0;
+        }
+
         return switch (severity.toUpperCase()) {
             case "HIGH" -> 30;
             case "MEDIUM" -> 15;
@@ -194,8 +261,14 @@ public class RiskEngine {
     }
 
     private String calculateRiskLevel(double score) {
-        if (score >= 60) return "HIGH";
-        if (score >= 30) return "MEDIUM";
+        if (score >= 60) {
+            return "HIGH";
+        }
+
+        if (score >= 30) {
+            return "MEDIUM";
+        }
+
         return "LOW";
     }
 }

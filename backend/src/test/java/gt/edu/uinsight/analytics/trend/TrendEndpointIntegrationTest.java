@@ -54,7 +54,7 @@ class TrendEndpointIntegrationTest {
 
     @Test
     void sectionTrendReadsDatabaseAndReturnsOrderedAverages() throws Exception {
-        mockMvc.perform(get("/api/v1/analytics/sections/10/trend"))
+        mockMvc.perform(get("/api/v1/analytics/sections/10/trends"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.classification").value("POSITIVE"))
                 .andExpect(jsonPath("$.averageChange").value(10.0))
@@ -66,7 +66,7 @@ class TrendEndpointIntegrationTest {
 
     @Test
     void studentTrendReadsDatabaseAndReturnsOrderedScores() throws Exception {
-        mockMvc.perform(get("/api/v1/analytics/students/501/trend"))
+        mockMvc.perform(get("/api/v1/analytics/students/501/trends"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.classification").value("POSITIVE"))
                 .andExpect(jsonPath("$.averageChange").value(10.0))
@@ -76,18 +76,36 @@ class TrendEndpointIntegrationTest {
 
     @Test
     void missingSectionReturnsNotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/analytics/sections/999/trend"))
+        mockMvc.perform(get("/api/v1/analytics/sections/999/trends"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.traceId").exists());
     }
 
     @Test
     void missingStudentReturnsNotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/analytics/students/999/trend"))
+        mockMvc.perform(get("/api/v1/analytics/students/999/trends"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.traceId").exists());
+    }
+
+    @Test
+    void invalidSectionIdReturnsStandardValidationError() throws Exception {
+        mockMvc.perform(get("/api/v1/analytics/sections/0/trends"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.traceId").exists())
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     private void insertStudent(long id, String studentCode) {

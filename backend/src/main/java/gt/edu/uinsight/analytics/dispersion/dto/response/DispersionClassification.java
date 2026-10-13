@@ -1,4 +1,3 @@
-
 package gt.edu.uinsight.analytics.dispersion.dto.response;
 
 public enum DispersionClassification {

@@ -12,11 +12,14 @@ import gt.edu.uinsight.report.mock.model.MockAlert;
 import gt.edu.uinsight.report.mock.model.MockSection;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Reporte consolidado por sección (GET /api/v1/reports/sections/{id}).
+ * Reporte consolidado por seccion (GET /api/v1/reports/sections/{id}).
  *
- * Semana 3: agrega estudiantes en riesgo, integración con
- * los datos analíticos de B6 y registro de la operación.
+ * Semana 4: expone informacion de periodo, docente y curso,
+ * ademas de identificar las fuentes de datos no disponibles.
  */
 @Service
 public class SectionReportService {
@@ -34,6 +37,7 @@ public class SectionReportService {
             AnalyticsGateway analyticsGateway,
             FilterValidator filterValidator,
             ReportLogger reportLogger) {
+
         this.gateway = gateway;
         this.analyticsGateway = analyticsGateway;
         this.filterValidator = filterValidator;
@@ -48,7 +52,8 @@ public class SectionReportService {
         try {
             filterValidator.validate(filter);
         } catch (InvalidFilterException ex) {
-            reportLogger.rejected(traceId, OPERATION, ex.getMessage());
+            //fix final
+            reportLogger.rejected(traceId, OPERATION, null,ex.getMessage());
             throw ex;
         }
 
@@ -62,9 +67,33 @@ public class SectionReportService {
 
         AnalyticsSnapshot analytics = analyticsGateway.getSectionAnalytics(id);
 
+        List<String> unavailableSources = new ArrayList<>();
+
+        if (section.getPeriod() == null) {
+            unavailableSources.add("A1");
+        }
+
+        if (section.getTeacherCode() == null) {
+            unavailableSources.add("A2");
+        }
+
+        if (section.getRiskLevel() == null) {
+            unavailableSources.add("B7");
+        }
+
+        if (!analytics.isAvailable()) {
+            unavailableSources.add("B6");
+        }
+
+        String riskSource = section.getRiskLevel() == null
+                ? "NONE"
+                : "B7";
+
         reportLogger.success(
                 traceId,
                 OPERATION,
+                //fix final
+                id.toString(),
                 startedAt,
                 "sectionId=" + id
                         + " riskLevel=" + section.getRiskLevel()
@@ -77,6 +106,11 @@ public class SectionReportService {
                 section.getRiskLevel(),
                 section.getStudentsAtRisk(),
                 activeAlerts,
-                analytics);
+                analytics,
+                section.getPeriod(),
+                section.getTeacherCode(),
+                section.getCourseId(),
+                riskSource,
+                unavailableSources);
     }
 }

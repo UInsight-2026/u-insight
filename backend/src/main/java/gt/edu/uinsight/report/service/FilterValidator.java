@@ -1,9 +1,11 @@
-//SEMANA 3
+//FIXES FINALES
 package gt.edu.uinsight.report.service;
 
 import gt.edu.uinsight.report.dto.filter.PageFilter;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
 import gt.edu.uinsight.report.exception.InvalidFilterException;
+import gt.edu.uinsight.teacher.repository.TeacherRepository;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
@@ -26,6 +28,10 @@ public class FilterValidator {
     // Período académico: cuatro dígitos de año, guión, y 1 o 2. Ej. 2026-2
     private static final Pattern PERIOD_PATTERN = Pattern.compile("\\d{4}-[12]");
 
+
+
+    
+//fix final
     public void validate(ReportFilter filter) {
         if (filter == null) {
             return;
