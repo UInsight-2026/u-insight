@@ -29,10 +29,12 @@ class GradeDataRepositoryImplTest {
     private static final String A6_BASE_URL = "http://localhost:8086";
     private static final String A4_BASE_URL = "http://localhost:8084";
     private static final String A1_BASE_URL = "http://localhost:8081";
+    private static final String A5_BASE_URL = "http://localhost:8085";
 
     private MockRestServiceServer a6Server;
     private MockRestServiceServer a4Server;
     private MockRestServiceServer a1Server;
+    private MockRestServiceServer a5Server;
     private GradeDataRepositoryImpl repository;
 
     @BeforeEach
@@ -40,13 +42,16 @@ class GradeDataRepositoryImplTest {
         RestClient.Builder a6Builder = RestClient.builder().baseUrl(A6_BASE_URL);
         RestClient.Builder a4Builder = RestClient.builder().baseUrl(A4_BASE_URL);
         RestClient.Builder a1Builder = RestClient.builder().baseUrl(A1_BASE_URL);
+        RestClient.Builder a5Builder = RestClient.builder().baseUrl(A5_BASE_URL);
         a6Server = MockRestServiceServer.bindTo(a6Builder).build();
         a4Server = MockRestServiceServer.bindTo(a4Builder).build();
         a1Server = MockRestServiceServer.bindTo(a1Builder).build();
+        a5Server = MockRestServiceServer.bindTo(a5Builder).build();
         repository = new GradeDataRepositoryImpl(
                 a6Builder.build(),
                 a4Builder.build(),
-                a1Builder.build()
+                a1Builder.build(),
+                a5Builder.build()
         );
     }
 
@@ -56,6 +61,12 @@ class GradeDataRepositoryImplTest {
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(
                         "{\"id\":10,\"academicPeriodId\":2,\"courseId\":5,\"status\":\"ACTIVE\"}",
+                        MediaType.APPLICATION_JSON
+                ));
+        a5Server.expect(once(), requestTo(A5_BASE_URL + "/api/v1/sections/10/evaluations"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        "[{\"id\":45,\"sectionId\":10,\"name\":\"Examen\"},{\"id\":46,\"sectionId\":10,\"name\":\"Quiz\"}]",
                         MediaType.APPLICATION_JSON
                 ));
         a6Server.expect(once(), requestTo(A6_BASE_URL + "/api/v1/sections/10/grades"))
@@ -195,6 +206,25 @@ class GradeDataRepositoryImplTest {
     }
 
     @Test
+    void rejectsAnEvaluationIdThatDoesNotBelongToTheSection() {
+        expectActiveSection(10L);
+        a5Server.expect(once(), requestTo(A5_BASE_URL + "/api/v1/sections/10/evaluations"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        "[{\"id\":45,\"sectionId\":10,\"name\":\"Examen\"}]",
+                        MediaType.APPLICATION_JSON
+                ));
+
+        InvalidAnalyticsRequestException exception = assertThrows(
+                InvalidAnalyticsRequestException.class,
+                () -> repository.findBySectionId(10L, 999L)
+        );
+
+        assertTrue(exception.getMessage().contains("999"));
+        verifyServers();
+    }
+
+    @Test
     void translatesA4NotFoundResponseIntoTheModuleException() {
         a4Server.expect(once(), requestTo(A4_BASE_URL + "/api/v1/sections/99"))
                 .andExpect(method(HttpMethod.GET))
@@ -221,5 +251,6 @@ class GradeDataRepositoryImplTest {
         a6Server.verify();
         a4Server.verify();
         a1Server.verify();
+        a5Server.verify();
     }
 }
