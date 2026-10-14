@@ -1,9 +1,16 @@
 package gt.edu.uinsight.integration.b7;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Representación de una regla activa para el motor de riesgo")
 public class ActiveRuleIntegrationDto {
+    @Schema(description = "Identificador de la regla", example = "4")
     private Long id;
+    @Schema(description = "Nombre de la regla", example = "Bajo rendimiento")
     private String name;
+    @Schema(description = "Expresión condicional evaluada por el motor", example = "average < threshold")
     private String conditionExpression;
+    @Schema(description = "Severidad de la regla", example = "HIGH")
     private String severity;
 
     public ActiveRuleIntegrationDto(Long id, String name, String conditionExpression, String severity) {

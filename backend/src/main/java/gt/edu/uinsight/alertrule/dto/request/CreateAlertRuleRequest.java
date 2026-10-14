@@ -1,9 +1,16 @@
 package gt.edu.uinsight.alertrule.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Datos requeridos para crear o actualizar una regla de riesgo")
 public class CreateAlertRuleRequest {
+    @Schema(description = "Nombre único de la regla", example = "Bajo rendimiento")
     private String name;
+    @Schema(description = "Descripción funcional de la regla", example = "Detecta promedios inferiores al umbral establecido")
     private String description;
+    @Schema(description = "Expresión condicional evaluada por el motor de riesgo", example = "average < threshold")
     private String conditionExpression;
+    @Schema(description = "Severidad de la regla", allowableValues = {"LOW", "MEDIUM", "HIGH"}, example = "HIGH")
     private String severity;
 
     public String getName() { return name; }

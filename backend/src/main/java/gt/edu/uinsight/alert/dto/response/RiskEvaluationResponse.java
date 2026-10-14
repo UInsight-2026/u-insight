@@ -1,16 +1,25 @@
 package gt.edu.uinsight.alert.dto.response;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Resultado de evaluar las reglas de riesgo para una sección")
 public class RiskEvaluationResponse {
 
+    @Schema(description = "Identificador de la sección evaluada", example = "10")
     private Long sectionId;
+    @Schema(description = "Nivel de riesgo calculado", example = "HIGH")
     private String riskLevel;
+    @Schema(description = "Puntaje de riesgo calculado", example = "0.82")
     private double score;
 
+    @Schema(description = "Cantidad de reglas activas evaluadas", example = "5")
     private int rulesEvaluated;
+    @Schema(description = "Cantidad de reglas que se activaron", example = "2")
     private int rulesTriggered;
+    @Schema(description = "Cantidad de alertas generadas", example = "1")
     private int alertsGenerated;
+    @Schema(description = "Nombres de las reglas que se activaron", example = "[\"Bajo rendimiento\"]")
     private List<String> activatedRules;
     
     public RiskEvaluationResponse() {
