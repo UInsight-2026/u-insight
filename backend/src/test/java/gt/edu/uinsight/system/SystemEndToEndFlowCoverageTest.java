@@ -106,9 +106,9 @@ class SystemEndToEndFlowCoverageTest {
                                         + "HTTP 206; fallaron los componentes de tendencia central "
                                         + "y dispersion; tendencia sin datos y studentsAtRisk sin integrar",
 
-                        "10 | B4 | GET /api/v1/analytics/sections/{id}/trends | BLOQUEADO | "
-                                        + "HTTP 404; el servicio informa TREND_CALCULATION_NO_DATA "
-                                        + "para la seccion creada durante el E2E",
+                        "10 | B4 | GET /api/v1/analytics/sections/{id}/trends | PARCIAL | "
+                                        + "HTTP 200; responde INSUFFICIENT_DATA porque la seccion "
+                                        + "E2E aun no tiene dos evaluaciones con calificaciones",
 
                         // ====================================================
                         // RIESGO Y ALERTAS
@@ -241,14 +241,14 @@ class SystemEndToEndFlowCoverageTest {
                                                 + "clasificados como PASA");
 
                 assertEquals(
-                                5,
+                                6,
                                 porEstado.getOrDefault("PARCIAL", 0),
-                                "La matriz debe conservar los cinco pasos parciales");
+                                "La matriz debe conservar los seis pasos parciales");
 
                 assertEquals(
-                                2,
+                                1,
                                 porEstado.getOrDefault("BLOQUEADO", 0),
-                                "La matriz debe conservar los dos bloqueos");
+                                "La matriz debe conservar el bloqueo restante");
 
                 assertEquals(
                                 3,

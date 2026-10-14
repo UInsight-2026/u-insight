@@ -26,8 +26,8 @@ class TrendEndpointIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        insertStudent(501, "S-501");
-        insertStudent(502, "S-502");
+        insertStudent(501);
+        insertStudent(502);
 
         jdbcTemplate.update("""
                 INSERT INTO section
@@ -86,6 +86,19 @@ class TrendEndpointIntegrationTest {
     }
 
     @Test
+    void sectionWithoutGradesReturnsInsufficientData() throws Exception {
+        jdbcTemplate.update("""
+                INSERT INTO section
+                    (id, academic_period_id, course_id, teacher_id, section_code, status)
+                VALUES (11, 1, 1, 1, 'B', 'ACTIVE')
+                """);
+
+        mockMvc.perform(get("/api/v1/analytics/sections/11/trends"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.classification").value("INSUFFICIENT_DATA"));
+    }
+
+    @Test
     void missingStudentReturnsNotFound() throws Exception {
         mockMvc.perform(get("/api/v1/analytics/students/999/trends"))
                 .andExpect(status().isNotFound())
@@ -108,11 +121,11 @@ class TrendEndpointIntegrationTest {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
-    private void insertStudent(long id, String studentCode) {
+    private void insertStudent(long id) {
         jdbcTemplate.update("""
-                INSERT INTO student (id, student_code, status)
-                VALUES (?, ?, 'ACTIVE')
-                """, id, studentCode);
+                INSERT INTO student (id)
+                VALUES (?)
+                """, id);
     }
 
     private void insertGrade(long id, long evaluationId, long studentId, String score) {
