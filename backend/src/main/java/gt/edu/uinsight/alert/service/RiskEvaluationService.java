@@ -42,6 +42,12 @@ public class RiskEvaluationService {
         alert.setRulesEvaluated(result.getRulesEvaluated());
         alert.setRulesTriggered(result.getRulesTriggered());
         alert.setAlertsGenerated(result.getAlertsGenerated());
+        alert.setAlertType("RISK_EVALUATION");
+        alert.setSeverity(result.getRiskLevel());
+        alert.setTitle(buildTitle(result, sectionId));
+        if (!result.getActivatedRules().isEmpty()) {
+            alert.setDescription("Reglas activadas: " + String.join(", ", result.getActivatedRules()));
+        }
 
         alertRepository.save(alert);
 
@@ -54,5 +60,9 @@ public class RiskEvaluationService {
                 result.getAlertsGenerated(),
                 result.getActivatedRules()
         );
+    }
+
+    private String buildTitle(RiskResult result, Long sectionId) {
+        return "Riesgo " + result.getRiskLevel() + " detectado en la sección " + sectionId;
     }
 }
