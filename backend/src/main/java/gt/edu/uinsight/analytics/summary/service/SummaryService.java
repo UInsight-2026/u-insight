@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -51,21 +52,14 @@ public class SummaryService {
         CompletableFuture<TrendResponse> trendFuture =
                 getComponent(() -> analyticsClientRepository.getTrend(sectionId));
 
-        var centralTendency = awaitComponent("centralTendency", centralTendencyFuture, deadline, sectionId);
-        if (centralTendency == null) unavailableComponents.add("centralTendency");
-        else summary.setCentralTendencyData(centralTendency);
-
-        var position = awaitComponent("position", positionFuture, deadline, sectionId);
-        if (position == null) unavailableComponents.add("position");
-        else summary.setPositionData(position);
-
-        var dispersion = awaitComponent("dispersion", dispersionFuture, deadline, sectionId);
-        if (dispersion == null) unavailableComponents.add("dispersion");
-        else summary.setDispersionData(dispersion);
-
-        var trend = awaitComponent("trend", trendFuture, deadline, sectionId);
-        if (trend == null) unavailableComponents.add("trend");
-        else summary.setTrendData(trend);
+        setComponentOrMarkUnavailable("centralTendency", centralTendencyFuture, deadline, sectionId,
+                unavailableComponents, summary::setCentralTendencyData);
+        setComponentOrMarkUnavailable("position", positionFuture, deadline, sectionId,
+                unavailableComponents, summary::setPositionData);
+        setComponentOrMarkUnavailable("dispersion", dispersionFuture, deadline, sectionId,
+                unavailableComponents, summary::setDispersionData);
+        setComponentOrMarkUnavailable("trend", trendFuture, deadline, sectionId,
+                unavailableComponents, summary::setTrendData);
 
         unavailableComponents.add("studentsAtRisk");
         log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionId={} component=studentsAtRisk reason=not-integrated",
@@ -77,6 +71,21 @@ public class SummaryService {
 
     private <T> CompletableFuture<T> getComponent(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier);
+    }
+
+    private <T> void setComponentOrMarkUnavailable(
+            String component,
+            CompletableFuture<T> future,
+            long deadline,
+            Long sectionId,
+            List<String> unavailableComponents,
+            Consumer<T> setter) {
+        T result = awaitComponent(component, future, deadline, sectionId);
+        if (result == null) {
+            unavailableComponents.add(component);
+        } else {
+            setter.accept(result);
+        }
     }
 
     private <T> T awaitComponent(

@@ -11,7 +11,6 @@ import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendService;
 import gt.edu.uinsight.enrollment.entity.Enrollment;
 import gt.edu.uinsight.enrollment.repository.EnrollmentRepository;
-import gt.edu.uinsight.grade.dto.GradeResponse;
 import gt.edu.uinsight.grade.service.GradeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,21 +51,18 @@ public class StudentAnalyticsService {
         log.info("STUDENT_SUMMARY_STARTED studentId={}", studentId);
         validateId(studentId, "SUMMARY");
 
-        BigDecimal studentAverage = calculateStudentAverage(studentId);
-        BigDecimal sectionAverage = resolveSectionAverage(studentId);
-        BigDecimal difference = studentAverage.subtract(sectionAverage);
+        PerformanceMetrics metrics = calculatePerformanceMetrics(studentId);
 
         log.info("STUDENT_SUMMARY_SUCCESS studentId={}", studentId);
-        return new StudentSummaryResponse(buildStudentCode(studentId), studentAverage, sectionAverage, difference);
+        return new StudentSummaryResponse(buildStudentCode(studentId),
+                metrics.studentAverage(), metrics.sectionAverage(), metrics.difference());
     }
 
     public StudentComparisonResponse getComparison(Long studentId) {
         log.info("STUDENT_COMPARISON_STARTED studentId={}", studentId);
         validateId(studentId, "COMPARISON");
 
-        BigDecimal studentAverage = calculateStudentAverage(studentId);
-        BigDecimal sectionAverage = resolveSectionAverage(studentId);
-        BigDecimal difference = studentAverage.subtract(sectionAverage);
+        PerformanceMetrics metrics = calculatePerformanceMetrics(studentId);
 
         Integer percentile;
         try {
@@ -80,8 +76,8 @@ public class StudentAnalyticsService {
         }
 
         log.info("STUDENT_COMPARISON_SUCCESS studentId={}", studentId);
-        return new StudentComparisonResponse(buildStudentCode(studentId), studentAverage,
-                sectionAverage, difference, percentile);
+        return new StudentComparisonResponse(buildStudentCode(studentId),
+                metrics.studentAverage(), metrics.sectionAverage(), metrics.difference(), percentile);
     }
 
     public StudentTrendResponse getTrend(Long studentId) {
@@ -120,10 +116,16 @@ public class StudentAnalyticsService {
         return "EST-%04d".formatted(studentId);
     }
 
+    private PerformanceMetrics calculatePerformanceMetrics(Long studentId) {
+        BigDecimal studentAverage = calculateStudentAverage(studentId);
+        BigDecimal sectionAverage = resolveSectionAverage(studentId);
+        return new PerformanceMetrics(studentAverage, sectionAverage, studentAverage.subtract(sectionAverage));
+    }
+
     // Promedio de los score crudos de A6 (mismo criterio que B1 para la seccion)
     private BigDecimal calculateStudentAverage(Long studentId) {
         List<BigDecimal> scores = gradeService.getByStudent(studentId).stream()
-                .map(GradeResponse::getScore)
+                .map(grade -> grade.getScore())
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -132,7 +134,7 @@ public class StudentAnalyticsService {
             throw new StudentNotFoundException(studentId);
         }
 
-        BigDecimal sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal sum = scores.stream().reduce(BigDecimal.ZERO, (total, score) -> total.add(score));
         return sum.divide(BigDecimal.valueOf(scores.size()), 1, RoundingMode.HALF_UP);
     }
 
@@ -157,5 +159,11 @@ public class StudentAnalyticsService {
                     studentId, sectionId, e.getClass().getSimpleName());
             return FALLBACK_SECTION_AVERAGE;
         }
+    }
+
+    private record PerformanceMetrics(
+            BigDecimal studentAverage,
+            BigDecimal sectionAverage,
+            BigDecimal difference) {
     }
 }

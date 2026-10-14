@@ -12,11 +12,10 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class PositionService {
@@ -45,8 +44,7 @@ public class PositionService {
             throw new NoGradesAvailableException("No hay notas registradas para la seccion con id: " + sectionId);
         }
 
-        List<Double> ordenados = new ArrayList<>(notasReales);
-        Collections.sort(ordenados);
+        List<Double> ordenados = ordenarNotas(notasReales);
 
         Map<String, Double> quartiles = new LinkedHashMap<>();
         quartiles.put("Q1", calcularFractila(ordenados, 4, 1));
@@ -94,7 +92,9 @@ public class PositionService {
         }
 
         String studentCode = "EST-%04d".formatted(studentId);
-        double studentAverage = notasEstudiante.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
+        double studentAverage = notasEstudiante.stream()
+                .mapToDouble(score -> Objects.requireNonNull(score, "Student grade must not be null").doubleValue())
+                .average().orElseThrow();
 
         // El percentil se calcula contra TODA la seccion del estudiante, no contra sus propias notas
         Long resolvedSectionId = resolveSectionId(studentId, sectionId);
@@ -105,8 +105,7 @@ public class PositionService {
             throw new NoGradesAvailableException(
                     "No hay notas registradas para la seccion del estudiante con id: " + studentId);
         }
-        List<Double> ordenados = new ArrayList<>(notasSeccion);
-        Collections.sort(ordenados);
+        List<Double> ordenados = ordenarNotas(notasSeccion);
 
         int percentile = calcularPercentilDeValor(ordenados, studentAverage);
 
@@ -149,6 +148,12 @@ public class PositionService {
                             + secciones.size() + "). Especifique el parametro sectionId.");
         }
         return secciones.get(0);
+    }
+
+    private List<Double> ordenarNotas(List<Double> notas) {
+        return notas.stream()
+                .sorted()
+                .toList();
     }
 
     /**

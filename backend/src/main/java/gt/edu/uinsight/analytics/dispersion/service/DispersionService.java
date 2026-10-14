@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import gt.edu.uinsight.analytics.dispersion.calculator.DispersionCalculator;
 import gt.edu.uinsight.analytics.dispersion.config.DispersionClassifier;
+import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.dispersion.exception.CursoNoEncontradoException;
 import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosException;
@@ -52,26 +53,16 @@ public class DispersionService {
         List<BigDecimal> scores =
                 dispersionGradeRepository.findScoresBySectionId(sectionId);
 
-        DispersionValidator.validar(scores);
-
-        BigDecimal min = dispersionCalculator.calculateMin(scores);
-        BigDecimal max = dispersionCalculator.calculateMax(scores);
-        BigDecimal range = dispersionCalculator.calculateRange(scores);
-        BigDecimal variance = dispersionCalculator.calculateVariance(scores);
-        BigDecimal standardDeviation =
-                dispersionCalculator.calculateStandardDeviation(scores);
-
-        var classification =
-                dispersionClassifier.clasificar(standardDeviation);
+        DispersionMetrics metrics = calculateMetrics(scores);
 
         return dispersionMapper.toSectionResponse(
                 sectionId,
-                min,
-                max,
-                range,
-                variance,
-                standardDeviation,
-                classification);
+                metrics.min(),
+                metrics.max(),
+                metrics.range(),
+                metrics.variance(),
+                metrics.standardDeviation(),
+                metrics.classification());
     }
 
     @Transactional(readOnly = true)
@@ -91,26 +82,34 @@ public class DispersionService {
         List<BigDecimal> scores =
                 dispersionGradeRepository.findScoresByCourseId(courseId);
 
+        DispersionMetrics metrics = calculateMetrics(scores);
+
+        return dispersionMapper.toCourseResponse(
+                courseId,
+                metrics.min(),
+                metrics.max(),
+                metrics.range(),
+                metrics.variance(),
+                metrics.standardDeviation(),
+                metrics.classification());
+    }
+
+    private DispersionMetrics calculateMetrics(List<BigDecimal> scores) {
         DispersionValidator.validar(scores);
 
         BigDecimal min = dispersionCalculator.calculateMin(scores);
         BigDecimal max = dispersionCalculator.calculateMax(scores);
         BigDecimal range = dispersionCalculator.calculateRange(scores);
         BigDecimal variance = dispersionCalculator.calculateVariance(scores);
-        BigDecimal standardDeviation =
-                dispersionCalculator.calculateStandardDeviation(scores);
+        BigDecimal standardDeviation = dispersionCalculator.calculateStandardDeviation(scores);
 
-        var classification =
-                dispersionClassifier.clasificar(standardDeviation);
-
-        return dispersionMapper.toCourseResponse(
-                courseId,
+        return new DispersionMetrics(
                 min,
                 max,
                 range,
                 variance,
                 standardDeviation,
-                classification);
+                dispersionClassifier.clasificar(standardDeviation));
     }
 
     private void validarId(Long id, String tipo) {
@@ -118,5 +117,14 @@ public class DispersionService {
             throw new DispersionDatosInvalidosException(
                     "El ID de " + tipo + " debe ser un número positivo.");
         }
+    }
+
+    private record DispersionMetrics(
+            BigDecimal min,
+            BigDecimal max,
+            BigDecimal range,
+            BigDecimal variance,
+            BigDecimal standardDeviation,
+            DispersionClassification classification) {
     }
 }
