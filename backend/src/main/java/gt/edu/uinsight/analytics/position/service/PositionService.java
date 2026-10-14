@@ -22,7 +22,7 @@ public class PositionService {
 
     private static final Logger log = LoggerFactory.getLogger(PositionService.class);
     
-    // Inyección de la dependencia (Integración con A6)
+    // B2 lee las calificaciones del esquema canónico de la base de datos.
     private final GradeIntegrationService gradeIntegrationService;
 
     public PositionService(GradeIntegrationService gradeIntegrationService) {
@@ -84,20 +84,22 @@ public class PositionService {
             throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
         }
 
-        // AQUI ESTA LA INTEGRACION: Usamos el servicio externo para obtener las notas propias del estudiante
-        List<Double> notasEstudiante = gradeIntegrationService.getGradesByStudent(studentId);
+        Long resolvedSectionId = resolveSectionId(studentId, sectionId);
+        List<Double> notasEstudiante = gradeIntegrationService.getGradesByStudent(studentId, resolvedSectionId);
         if (notasEstudiante == null || notasEstudiante.isEmpty()) {
             log.error("Regla de negocio rechazada: el estudiante {} no tiene notas registradas", studentId);
             throw new NoGradesAvailableException("No hay notas registradas para el estudiante con id: " + studentId);
         }
 
-        String studentCode = "EST-%04d".formatted(studentId);
+        String studentCode = gradeIntegrationService.getStudentCode(studentId);
+        if (studentCode == null || studentCode.isBlank()) {
+            throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
+        }
         double studentAverage = notasEstudiante.stream()
                 .mapToDouble(score -> Objects.requireNonNull(score, "Student grade must not be null").doubleValue())
                 .average().orElseThrow();
 
         // El percentil se calcula contra TODA la seccion del estudiante, no contra sus propias notas
-        Long resolvedSectionId = resolveSectionId(studentId, sectionId);
         List<Double> notasSeccion = gradeIntegrationService.getGradesBySection(resolvedSectionId);
         if (notasSeccion == null || notasSeccion.isEmpty()) {
             log.error("Regla de negocio rechazada: la seccion {} del estudiante {} no tiene notas registradas",

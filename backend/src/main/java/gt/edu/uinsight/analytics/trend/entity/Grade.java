@@ -36,19 +36,16 @@ public class Grade {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    private String status;
-
     // Constructor sin argumentos agregado por C7: Hibernate lo necesita para instanciar
     // la entidad y sin el el contexto de Spring no arranca.
     protected Grade() {
     }
 
-    public Grade(Long evaluationId, Long studentId, BigDecimal score, LocalDateTime registeredAt, String status) {
+    public Grade(Long evaluationId, Long studentId, BigDecimal score, LocalDateTime registeredAt) {
         this.evaluationId = evaluationId;
         this.studentId = studentId;
         this.score = score;
         this.registeredAt = registeredAt;
-        this.status = status;
     }
 
     public Long getId() {

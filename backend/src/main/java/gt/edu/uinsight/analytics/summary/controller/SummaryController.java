@@ -39,7 +39,8 @@ public class SummaryController {
     @Operation(
         summary = "Obtener resumen de consolidado de una sección.",
         description = "Devuelve tendencia central, posición, dispersión y evolución de la sección indicada, "
-                    + "más el conteo de estudiantes en riesgo."
+                    + "más el conteo de estudiantes activos cuyo promedio normalizado está por debajo del umbral "
+                    + "configurado en uinsight.analytics.students-at-risk-threshold (60 por defecto)."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Resumen generado correctamente",

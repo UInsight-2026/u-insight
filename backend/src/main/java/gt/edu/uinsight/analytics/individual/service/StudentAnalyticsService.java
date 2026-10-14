@@ -1,164 +1,135 @@
 package gt.edu.uinsight.analytics.individual.service;
 
-import gt.edu.uinsight.analytics.centraltendency.service.CentralTendencyService;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentComparisonResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentSummaryResponse;
 import gt.edu.uinsight.analytics.individual.dto.response.StudentTrendResponse;
 import gt.edu.uinsight.analytics.individual.exception.StudentNotFoundException;
 import gt.edu.uinsight.analytics.position.dto.response.StudentPositionResponse;
 import gt.edu.uinsight.analytics.position.service.PositionService;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendService;
-import gt.edu.uinsight.enrollment.entity.Enrollment;
-import gt.edu.uinsight.enrollment.repository.EnrollmentRepository;
-import gt.edu.uinsight.grade.service.GradeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class StudentAnalyticsService {
 
     private static final Logger log = LoggerFactory.getLogger(StudentAnalyticsService.class);
 
-    private static final BigDecimal FALLBACK_SECTION_AVERAGE = new BigDecimal("72.0");
-    private static final int FALLBACK_PERCENTILE = 20;
-
-    private final CentralTendencyService centralTendencyService;
     private final PositionService positionService;
-    private final GradeService gradeService;
     private final TrendService trendService;
-    private final EnrollmentRepository enrollmentRepository;
+    private final AnalyticsDatabaseRepository databaseRepository;
 
-    public StudentAnalyticsService(CentralTendencyService centralTendencyService,
-                                   PositionService positionService,
-                                   GradeService gradeService,
+    public StudentAnalyticsService(PositionService positionService,
                                    TrendService trendService,
-                                   EnrollmentRepository enrollmentRepository) {
-        this.centralTendencyService = centralTendencyService;
+                                   AnalyticsDatabaseRepository databaseRepository) {
         this.positionService = positionService;
-        this.gradeService = gradeService;
         this.trendService = trendService;
-        this.enrollmentRepository = enrollmentRepository;
+        this.databaseRepository = databaseRepository;
     }
 
-    public StudentSummaryResponse getSummary(Long studentId) {
+    public StudentSummaryResponse getSummary(Long studentId, Long requestedSectionId) {
         log.info("STUDENT_SUMMARY_STARTED studentId={}", studentId);
-        validateId(studentId, "SUMMARY");
-
-        PerformanceMetrics metrics = calculatePerformanceMetrics(studentId);
-
-        log.info("STUDENT_SUMMARY_SUCCESS studentId={}", studentId);
-        return new StudentSummaryResponse(buildStudentCode(studentId),
+        validateStudent(studentId);
+        Long sectionId = resolveSectionId(studentId, requestedSectionId);
+        PerformanceMetrics metrics = calculatePerformanceMetrics(studentId, sectionId);
+        return new StudentSummaryResponse(studentCode(studentId),
                 metrics.studentAverage(), metrics.sectionAverage(), metrics.difference());
     }
 
-    public StudentComparisonResponse getComparison(Long studentId) {
+    public StudentComparisonResponse getComparison(Long studentId, Long requestedSectionId) {
         log.info("STUDENT_COMPARISON_STARTED studentId={}", studentId);
-        validateId(studentId, "COMPARISON");
+        validateStudent(studentId);
+        Long sectionId = resolveSectionId(studentId, requestedSectionId);
+        PerformanceMetrics metrics = calculatePerformanceMetrics(studentId, sectionId);
 
-        PerformanceMetrics metrics = calculatePerformanceMetrics(studentId);
-
-        Integer percentile;
-        try {
-            StudentPositionResponse position = positionService.getStudentPosition(studentId);
-            percentile = position.getPercentile();
-        } catch (RuntimeException e) {
-            // Fallback: B2 no pudo calcular la posicion del estudiante
-            log.warn("PERCENTILE_FALLBACK studentId={} reason=B2_UNAVAILABLE error={}",
-                    studentId, e.getClass().getSimpleName());
-            percentile = FALLBACK_PERCENTILE;
-        }
-
-        log.info("STUDENT_COMPARISON_SUCCESS studentId={}", studentId);
-        return new StudentComparisonResponse(buildStudentCode(studentId),
-                metrics.studentAverage(), metrics.sectionAverage(), metrics.difference(), percentile);
+        StudentPositionResponse position = positionService.getStudentPosition(studentId, sectionId);
+        return new StudentComparisonResponse(studentCode(studentId),
+                metrics.studentAverage(), metrics.sectionAverage(), metrics.difference(),
+                position.getPercentile());
     }
 
     public StudentTrendResponse getTrend(Long studentId) {
         log.info("STUDENT_TREND_STARTED studentId={}", studentId);
-        validateId(studentId, "TREND");
+        validateStudent(studentId);
 
-        TrendResponse trend;
-        try {
-            trend = trendService.getTrendByStudentId(studentId);
-        } catch (RuntimeException e) {
-            // Fallback: B4 no pudo calcular la tendencia
-            log.warn("TREND_FALLBACK studentId={} reason=B4_UNAVAILABLE error={}",
-                    studentId, e.getClass().getSimpleName());
-            trend = null;
-        }
-
-        String studentCode = buildStudentCode(studentId);
+        TrendResponse trend = trendService.getTrendByStudentId(studentId);
         if (trend == null || trend.classification() == null) {
-            log.warn("STUDENT_TREND_INSUFFICIENT_DATA studentId={}", studentId);
-            return new StudentTrendResponse(studentCode, "INSUFFICIENT_DATA", null);
+            return new StudentTrendResponse(studentCode(studentId), "INSUFFICIENT_DATA", null);
         }
-
-        Double averageChange = trend.averageChange() != null ? trend.averageChange().doubleValue() : null;
-        log.info("STUDENT_TREND_SUCCESS studentId={} classification={}", studentId, trend.classification());
-        return new StudentTrendResponse(studentCode, trend.classification().name(), averageChange);
+        Double averageChange = trend.averageChange() == null ? null : trend.averageChange().doubleValue();
+        return new StudentTrendResponse(studentCode(studentId), trend.classification().name(), averageChange);
     }
 
-    private void validateId(Long studentId, String operation) {
-        if (studentId == null || studentId <= 0) {
-            log.warn("STUDENT_{}_REJECTED studentId={} reason=INVALID_ID", operation, studentId);
+    private void validateStudent(Long studentId) {
+        if (studentId == null || studentId <= 0 || !databaseRepository.studentExists(studentId)) {
             throw new StudentNotFoundException(studentId);
         }
     }
 
-    private String buildStudentCode(Long studentId) {
-        return "EST-%04d".formatted(studentId);
+    private String studentCode(Long studentId) {
+        String studentCode = databaseRepository.findStudentCode(studentId);
+        if (studentCode == null || studentCode.isBlank()) {
+            throw new IllegalStateException("El estudiante no tiene un código registrado en la base de datos.");
+        }
+        return studentCode;
     }
 
-    private PerformanceMetrics calculatePerformanceMetrics(Long studentId) {
-        BigDecimal studentAverage = calculateStudentAverage(studentId);
-        BigDecimal sectionAverage = resolveSectionAverage(studentId);
+    private Long resolveSectionId(Long studentId, Long requestedSectionId) {
+        List<Long> sectionIds = databaseRepository.findActiveSectionIdsByStudent(studentId);
+        if (requestedSectionId != null) {
+            if (!sectionIds.contains(requestedSectionId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El estudiante no tiene una inscripción activa en la sección " + requestedSectionId + ".");
+            }
+            return requestedSectionId;
+        }
+        if (sectionIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "El estudiante no tiene una inscripción activa en ninguna sección.");
+        }
+        if (sectionIds.size() > 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El estudiante tiene varias secciones activas; debe indicar el parámetro sectionId.");
+        }
+        return sectionIds.get(0);
+    }
+
+    private PerformanceMetrics calculatePerformanceMetrics(Long studentId, Long sectionId) {
+        BigDecimal studentAverage = average(
+                databaseRepository.findGradesByStudentAndSection(studentId, sectionId).stream()
+                        .map(AnalyticsDatabaseRepository.AnalyticsGrade::score)
+                        .toList());
+        BigDecimal sectionAverage = average(
+                databaseRepository.findGradesBySection(sectionId).stream()
+                        .map(AnalyticsDatabaseRepository.AnalyticsGrade::score)
+                        .toList());
+
+        if (studentAverage == null) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "El estudiante no tiene calificaciones registradas en la sección " + sectionId + ".");
+        }
+        if (sectionAverage == null) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "La sección no tiene calificaciones registradas.");
+        }
         return new PerformanceMetrics(studentAverage, sectionAverage, studentAverage.subtract(sectionAverage));
     }
 
-    // Promedio de los score crudos de A6 (mismo criterio que B1 para la seccion)
-    private BigDecimal calculateStudentAverage(Long studentId) {
-        List<BigDecimal> scores = gradeService.getByStudent(studentId).stream()
-                .map(grade -> grade.getScore())
-                .filter(Objects::nonNull)
-                .toList();
-
+    private BigDecimal average(List<BigDecimal> scores) {
         if (scores.isEmpty()) {
-            log.warn("STUDENT_NO_GRADES studentId={}", studentId);
-            throw new StudentNotFoundException(studentId);
+            return null;
         }
-
-        BigDecimal sum = scores.stream().reduce(BigDecimal.ZERO, (total, score) -> total.add(score));
+        BigDecimal sum = scores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         return sum.divide(BigDecimal.valueOf(scores.size()), 1, RoundingMode.HALF_UP);
-    }
-
-    // Promedio de la seccion del estudiante segun B1, con fallback si no hay inscripcion o B1 falla
-    private BigDecimal resolveSectionAverage(Long studentId) {
-        List<Enrollment> enrollments = enrollmentRepository.findByStudentId(studentId);
-        if (enrollments.isEmpty()) {
-            log.warn("SECTION_AVERAGE_FALLBACK studentId={} reason=NO_ENROLLMENT", studentId);
-            return FALLBACK_SECTION_AVERAGE;
-        }
-
-        Long sectionId = enrollments.get(0).getSectionId();
-        try {
-            Double mean = centralTendencyService.getSectionCentralTendency(sectionId, null).mean();
-            if (mean == null) {
-                log.warn("SECTION_AVERAGE_FALLBACK studentId={} sectionId={} reason=B1_NO_MEAN", studentId, sectionId);
-                return FALLBACK_SECTION_AVERAGE;
-            }
-            return BigDecimal.valueOf(mean);
-        } catch (RuntimeException e) {
-            log.warn("SECTION_AVERAGE_FALLBACK studentId={} sectionId={} reason=B1_UNAVAILABLE error={}",
-                    studentId, sectionId, e.getClass().getSimpleName());
-            return FALLBACK_SECTION_AVERAGE;
-        }
     }
 
     private record PerformanceMetrics(

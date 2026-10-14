@@ -62,7 +62,7 @@ class TrendServiceTest {
     }
 
     private Grade grade(Long evaluationId, String score) {
-        return new Grade(evaluationId, 5L, new BigDecimal(score), null, "ACTIVE");
+        return new Grade(evaluationId, 5L, new BigDecimal(score), null);
     }
 
     private Evaluation evaluation(Long id) {

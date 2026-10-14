@@ -104,7 +104,7 @@ class SystemEndToEndFlowCoverageTest {
 
                         "09 | B1/B2/B3/B5/B6 | GET /api/v1/analytics/sections/{id}/summary | PARCIAL | "
                                         + "HTTP 206; fallaron los componentes de tendencia central "
-                                        + "y dispersion; tendencia sin datos y studentsAtRisk sin integrar",
+                                        + "y dispersion; tendencia sin datos; conteo studentsAtRisk desde DB",
 
                         "10 | B4 | GET /api/v1/analytics/sections/{id}/trends | PARCIAL | "
                                         + "HTTP 200; responde INSUFFICIENT_DATA porque la seccion "

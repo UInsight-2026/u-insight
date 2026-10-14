@@ -24,7 +24,6 @@ import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosEx
 import gt.edu.uinsight.analytics.dispersion.exception.SeccionNoEncontradaException;
 import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
 import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
-import gt.edu.uinsight.section.entity.Section;
 import gt.edu.uinsight.section.repository.SectionRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,7 +96,6 @@ class DispersionServiceTest {
     @Test
     void calculaYMapeaLaDispersionDeUnCurso() {
         Long courseId = 2L;
-        Section section = mock(Section.class);
 
         List<BigDecimal> scores = List.of(
                 new BigDecimal("70"),
@@ -113,8 +111,7 @@ class DispersionServiceTest {
         DispersionClassification classification =
                 DispersionClassification.MODERATE_DISPERSION;
 
-        when(sectionRepository.findByCourseId(courseId))
-                .thenReturn(List.of(section));
+        when(dispersionGradeRepository.courseExists(courseId)).thenReturn(true);
         when(dispersionGradeRepository.findScoresByCourseId(courseId))
                 .thenReturn(scores);
         when(dispersionCalculator.calculateMin(scores)).thenReturn(min);
@@ -155,11 +152,10 @@ class DispersionServiceTest {
     }
 
     @Test
-    void lanzaExcepcionSiElCursoNoTieneSecciones() {
+    void lanzaExcepcionSiElCursoNoExiste() {
         Long courseId = 99L;
 
-        when(sectionRepository.findByCourseId(courseId))
-                .thenReturn(List.of());
+        when(dispersionGradeRepository.courseExists(courseId)).thenReturn(false);
 
         assertThrows(
                 CursoNoEncontradoException.class,

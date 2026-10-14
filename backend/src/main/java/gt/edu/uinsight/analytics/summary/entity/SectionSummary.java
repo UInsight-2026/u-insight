@@ -45,7 +45,7 @@ public class SectionSummary {
     public StudentComparisonResponse getStudentComparisonData() { return studentComparison; }
     public void setStudentComparisonData(StudentComparisonResponse scd) { this.studentComparison = scd; }
 
-    @Schema(description = "Cantidad de estudiantes clasificados en riesgo", example = "3")
+    @Schema(description = "Estudiantes activos con promedio de calificaciones normalizado menor al umbral de bajo rendimiento (60 por defecto)", example = "3")
     public Integer getStudentsAtRisk() { return studentsAtRisk; }
     public void setStudentsAtRisk(Integer sar) { this.studentsAtRisk = sar; }
 

@@ -1,38 +1,33 @@
 package gt.edu.uinsight.analytics.dispersion.repository;
 
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
+import org.springframework.stereotype.Repository;
+
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
-import gt.edu.uinsight.analytics.dispersion.entity.DispersionGrade;
-
 @Repository("dispersionGradeRepository")
-public interface DispersionGradeRepository
-        extends JpaRepository<DispersionGrade, Long> {
+public class DispersionGradeRepository {
 
-    @Query(value = """
-            SELECT g.score
-            FROM grades g
-            INNER JOIN grade_evaluation_ref e
-                ON g.evaluation_id = e.id
-            WHERE e.section_id = :sectionId
-            """, nativeQuery = true)
-    List<BigDecimal> findScoresBySectionId(
-            @Param("sectionId") Long sectionId);
+    private final AnalyticsDatabaseRepository databaseRepository;
 
-    @Query(value = """
-            SELECT g.score
-            FROM grades g
-            INNER JOIN grade_evaluation_ref e
-                ON g.evaluation_id = e.id
-            INNER JOIN section s
-                ON e.section_id = s.id
-            WHERE s.course_id = :courseId
-            """, nativeQuery = true)
-    List<BigDecimal> findScoresByCourseId(
-            @Param("courseId") Long courseId);
+    public DispersionGradeRepository(AnalyticsDatabaseRepository databaseRepository) {
+        this.databaseRepository = databaseRepository;
+    }
+
+    public List<BigDecimal> findScoresBySectionId(Long sectionId) {
+        return databaseRepository.findGradesBySection(sectionId).stream()
+                .map(AnalyticsDatabaseRepository.AnalyticsGrade::score)
+                .toList();
+    }
+
+    public List<BigDecimal> findScoresByCourseId(Long courseId) {
+        return databaseRepository.findGradesByCourse(courseId, null).stream()
+                .map(AnalyticsDatabaseRepository.AnalyticsGrade::score)
+                .toList();
+    }
+
+    public boolean courseExists(Long courseId) {
+        return databaseRepository.courseExists(courseId);
+    }
 }

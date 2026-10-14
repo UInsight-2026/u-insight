@@ -3,6 +3,7 @@ package gt.edu.uinsight.report.gateway;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
@@ -17,7 +18,8 @@ import static org.mockito.Mockito.*;
 class B6AnalyticsGatewayTest {
     private final AnalyticsClientRepository repository = mock(AnalyticsClientRepository.class);
     // Se ejecuta el servicio real de B6; solo se simulan sus dependencias.
-    private final B6AnalyticsGateway gateway = new B6AnalyticsGateway(new SummaryService(repository));
+    private final B6AnalyticsGateway gateway = new B6AnalyticsGateway(
+            new SummaryService(repository, mock(AnalyticsDatabaseRepository.class), 60.0));
 
     @Test
     void deberiaLeerLaAnaliticaDeB6ConElContratoActual() {

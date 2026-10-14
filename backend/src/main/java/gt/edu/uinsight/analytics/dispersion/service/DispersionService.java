@@ -75,7 +75,7 @@ public class DispersionService {
          * Para distinguir entre un curso inexistente y uno sin
          * secciones, se necesita consultar el repositorio de Course.
          */
-        if (sectionRepository.findByCourseId(courseId).isEmpty()) {
+        if (!dispersionGradeRepository.courseExists(courseId)) {
             throw new CursoNoEncontradoException(courseId);
         }
 

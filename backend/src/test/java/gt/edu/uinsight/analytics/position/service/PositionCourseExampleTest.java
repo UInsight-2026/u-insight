@@ -21,6 +21,8 @@ class PositionCourseExampleTest {
         GradeIntegrationService fuente = new GradeIntegrationService() {
             @Override public List<Double> getGradesBySection(Long sectionId) { return NOTAS; }
             @Override public List<Double> getGradesByStudent(Long studentId) { return NOTAS; }
+            @Override public List<Double> getGradesByStudent(Long studentId, Long sectionId) { return NOTAS; }
+            @Override public String getStudentCode(Long studentId) { return "EST-0001"; }
             @Override public List<Long> getSectionIdsByStudent(Long studentId) { return List.of(); }
             @Override public boolean isStudentEnrolledInSection(Long studentId, Long sectionId) { return false; }
         };

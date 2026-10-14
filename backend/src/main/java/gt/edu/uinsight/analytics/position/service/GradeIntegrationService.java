@@ -4,7 +4,12 @@ import java.util.List;
 
 public interface GradeIntegrationService {
     List<Double> getGradesBySection(Long sectionId);
+
     List<Double> getGradesByStudent(Long studentId);
+
+    List<Double> getGradesByStudent(Long studentId, Long sectionId);
+
+    String getStudentCode(Long studentId);
 
     /**
      * Secciones en las que esta matriculado el estudiante. Un estudiante

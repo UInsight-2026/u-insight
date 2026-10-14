@@ -1,6 +1,7 @@
 package gt.edu.uinsight.report.service;
 
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
 import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyResponse;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
@@ -40,7 +41,7 @@ class SectionReportServiceTest {
     private final AnalyticsGateway analyticsReal =
             new B6AnalyticsGateway(
                     new SummaryService(
-                            repositorioDeB6()));
+                            repositorioDeB6(), mock(AnalyticsDatabaseRepository.class), 60.0));
 
     private static AnalyticsClientRepository repositorioDeB6() {
 

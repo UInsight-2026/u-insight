@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,7 +31,7 @@ public class StudentAnalyticsController {
     @GetMapping("/{id}/summary")
     @Operation(
             summary = "Obtener resumen del estudiante",
-            description = "Devuelve el promedio del estudiante, el promedio de su sección y la diferencia entre ambos."
+            description = "Devuelve promedios y diferencia usando la base de datos. Si el estudiante tiene varias secciones activas, debe enviarse sectionId."
     )
     @ApiResponse(
             responseCode = "200",
@@ -42,7 +43,7 @@ public class StudentAnalyticsController {
                             name = "Ejemplo de resumen",
                             value = """
                                     {
-                                      "studentCode": "EST-0001",
+                                      "studentCode": "EST2024001",
                                       "studentAverage": 85.5,
                                       "sectionAverage": 78.2,
                                       "difference": 7.3
@@ -51,18 +52,21 @@ public class StudentAnalyticsController {
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID de estudiante con formato inválido")
-    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado o sin calificaciones registradas")
+    @ApiResponse(responseCode = "400", description = "ID inválido, sectionId no activo o sectionId requerido por tener varias secciones")
+    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
+    @ApiResponse(responseCode = "422", description = "El estudiante o la sección no tiene datos analíticos disponibles")
     public StudentSummaryResponse getSummary(
             @Parameter(description = "ID del estudiante", example = "1")
-            @PathVariable Long id) {
-        return studentAnalyticsService.getSummary(id);
+            @PathVariable Long id,
+            @Parameter(description = "Sección activa del estudiante. Obligatoria si tiene varias inscripciones activas.", example = "2")
+            @RequestParam(required = false) Long sectionId) {
+        return studentAnalyticsService.getSummary(id, sectionId);
     }
 
     @GetMapping("/{id}/comparison")
     @Operation(
             summary = "Obtener comparación del estudiante",
-            description = "Devuelve el resumen del estudiante junto con su percentil dentro de la sección."
+            description = "Devuelve promedios y percentil usando la base de datos. Si el estudiante tiene varias secciones activas, debe enviarse sectionId."
     )
     @ApiResponse(
             responseCode = "200",
@@ -74,7 +78,7 @@ public class StudentAnalyticsController {
                             name = "Ejemplo de comparación",
                             value = """
                                     {
-                                      "studentCode": "EST-0001",
+                                      "studentCode": "EST2024001",
                                       "studentAverage": 85.5,
                                       "sectionAverage": 78.2,
                                       "difference": 7.3,
@@ -84,12 +88,15 @@ public class StudentAnalyticsController {
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID de estudiante con formato inválido")
-    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado o sin calificaciones registradas")
+    @ApiResponse(responseCode = "400", description = "ID inválido, sectionId no activo o sectionId requerido por tener varias secciones")
+    @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
+    @ApiResponse(responseCode = "422", description = "El estudiante o la sección no tiene datos analíticos disponibles")
     public StudentComparisonResponse getComparison(
             @Parameter(description = "ID del estudiante", example = "1")
-            @PathVariable Long id) {
-        return studentAnalyticsService.getComparison(id);
+            @PathVariable Long id,
+            @Parameter(description = "Sección activa del estudiante. Obligatoria si tiene varias inscripciones activas.", example = "2")
+            @RequestParam(required = false) Long sectionId) {
+        return studentAnalyticsService.getComparison(id, sectionId);
     }
 
     @GetMapping("/{id}/trend")
@@ -107,7 +114,7 @@ public class StudentAnalyticsController {
                             name = "Ejemplo de tendencia",
                             value = """
                                     {
-                                      "studentCode": "EST-0001",
+                                      "studentCode": "EST2024001",
                                       "trend": "POSITIVE",
                                       "averageChange": 3.5
                                     }
