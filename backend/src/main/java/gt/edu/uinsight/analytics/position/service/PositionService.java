@@ -12,18 +12,17 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class PositionService {
 
     private static final Logger log = LoggerFactory.getLogger(PositionService.class);
     
-    // Inyección de la dependencia (Integración con A6)
+    // B2 lee las calificaciones del esquema canónico de la base de datos.
     private final GradeIntegrationService gradeIntegrationService;
 
     public PositionService(GradeIntegrationService gradeIntegrationService) {
@@ -45,8 +44,7 @@ public class PositionService {
             throw new NoGradesAvailableException("No hay notas registradas para la seccion con id: " + sectionId);
         }
 
-        List<Double> ordenados = new ArrayList<>(notasReales);
-        Collections.sort(ordenados);
+        List<Double> ordenados = ordenarNotas(notasReales);
 
         Map<String, Double> quartiles = new LinkedHashMap<>();
         quartiles.put("Q1", calcularFractila(ordenados, 4, 1));
@@ -86,18 +84,22 @@ public class PositionService {
             throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
         }
 
-        // AQUI ESTA LA INTEGRACION: Usamos el servicio externo para obtener las notas propias del estudiante
-        List<Double> notasEstudiante = gradeIntegrationService.getGradesByStudent(studentId);
+        Long resolvedSectionId = resolveSectionId(studentId, sectionId);
+        List<Double> notasEstudiante = gradeIntegrationService.getGradesByStudent(studentId, resolvedSectionId);
         if (notasEstudiante == null || notasEstudiante.isEmpty()) {
             log.error("Regla de negocio rechazada: el estudiante {} no tiene notas registradas", studentId);
             throw new NoGradesAvailableException("No hay notas registradas para el estudiante con id: " + studentId);
         }
 
-        String studentCode = "EST-%04d".formatted(studentId);
-        double studentAverage = notasEstudiante.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
+        String studentCode = gradeIntegrationService.getStudentCode(studentId);
+        if (studentCode == null || studentCode.isBlank()) {
+            throw new PositionNotFoundException("No se encontro el estudiante con id: " + studentId);
+        }
+        double studentAverage = notasEstudiante.stream()
+                .mapToDouble(score -> Objects.requireNonNull(score, "Student grade must not be null").doubleValue())
+                .average().orElseThrow();
 
         // El percentil se calcula contra TODA la seccion del estudiante, no contra sus propias notas
-        Long resolvedSectionId = resolveSectionId(studentId, sectionId);
         List<Double> notasSeccion = gradeIntegrationService.getGradesBySection(resolvedSectionId);
         if (notasSeccion == null || notasSeccion.isEmpty()) {
             log.error("Regla de negocio rechazada: la seccion {} del estudiante {} no tiene notas registradas",
@@ -105,8 +107,7 @@ public class PositionService {
             throw new NoGradesAvailableException(
                     "No hay notas registradas para la seccion del estudiante con id: " + studentId);
         }
-        List<Double> ordenados = new ArrayList<>(notasSeccion);
-        Collections.sort(ordenados);
+        List<Double> ordenados = ordenarNotas(notasSeccion);
 
         int percentile = calcularPercentilDeValor(ordenados, studentAverage);
 
@@ -149,6 +150,12 @@ public class PositionService {
                             + secciones.size() + "). Especifique el parametro sectionId.");
         }
         return secciones.get(0);
+    }
+
+    private List<Double> ordenarNotas(List<Double> notas) {
+        return notas.stream()
+                .sorted()
+                .toList();
     }
 
     /**

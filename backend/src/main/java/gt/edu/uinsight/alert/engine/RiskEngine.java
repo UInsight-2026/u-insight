@@ -34,7 +34,6 @@ public class RiskEngine {
         Map<String, Object> pos = convert(summary.getPositionData());
         Map<String, Object> disp = convert(summary.getDispersionData());
         Map<String, Object> trend = convert(summary.getTrendData());
-        Map<String, Object> comp = convert(summary.getStudentComparisonData());
 
         Double media = getDouble(ct, "mean");
         Double mediana = getDouble(ct, "median");
@@ -43,9 +42,7 @@ public class RiskEngine {
         String tendencia = getString(trend, "value");
         Double percentil90 = getDouble(pos, "percentile90");
 
-        Integer studentsAtRisk = comp != null
-                ? getInt(comp, "studentsAtRisk")
-                : null;
+        Integer studentsAtRisk = summary.getStudentsAtRisk();
 
         for (AlertRule rule : rules) {
 
@@ -104,20 +101,6 @@ public class RiskEngine {
 
         if (val instanceof Number) {
             return ((Number) val).doubleValue();
-        }
-
-        return null;
-    }
-
-    private Integer getInt(Map<String, Object> map, String key) {
-        if (map == null) {
-            return null;
-        }
-
-        Object val = map.get(key);
-
-        if (val instanceof Number) {
-            return ((Number) val).intValue();
         }
 
         return null;

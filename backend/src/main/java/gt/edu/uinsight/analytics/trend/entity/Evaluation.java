@@ -2,8 +2,6 @@ package gt.edu.uinsight.analytics.trend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -31,8 +29,7 @@ public class Evaluation {
 
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    private Type type;
+    private String type;
 
     @Column(name = "evaluation_date")
     private LocalDate evaluationDate;
@@ -42,15 +39,14 @@ public class Evaluation {
 
     private BigDecimal weight;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private String status;
 
     // Constructor sin argumentos agregado por C7: Hibernate lo necesita para instanciar
     // la entidad y sin el el contexto de Spring no arranca.
     protected Evaluation() {
     }
 
-    public Evaluation(Long sectionId, String name, Type type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight, Status status) {
+    public Evaluation(Long sectionId, String name, String type, LocalDate evaluationDate, BigDecimal maximumScore, BigDecimal weight, String status) {
         this.sectionId = sectionId;
         this.name = name;
         this.type = type;
@@ -72,7 +68,7 @@ public class Evaluation {
         return name;
     }
 
-    public Type getType() {
+    public String getType() {
         return type;
     }
 
@@ -88,7 +84,7 @@ public class Evaluation {
         return weight;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 }

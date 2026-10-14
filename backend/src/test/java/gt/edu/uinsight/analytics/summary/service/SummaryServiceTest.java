@@ -18,20 +18,24 @@ import gt.edu.uinsight.analytics.centraltendency.dto.response.CentralTendencyRes
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassification;
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendPoint;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.trend.service.TrendClassification;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 class SummaryServiceTest {
 
     private static final Long SECTION_ID = 101L;
 
     @Test
-    @DisplayName("Retorna analíticas disponibles y reporta el conteo de riesgo aún no integrado")
-    void getSummary_sectionAnalyticsAvailable_reportsRiskCountAsUnavailable() {
-        SummaryService summaryService = new SummaryService(new FixtureAnalyticsClientRepository());
+    @DisplayName("Incluye el conteo de estudiantes en riesgo consultado en la base de datos")
+    void getSummary_sectionAnalyticsAvailable_includesRiskCount() {
+        SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository());
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
@@ -41,16 +45,15 @@ class SummaryServiceTest {
         assertNotNull(result.getPositionData());
         assertNotNull(result.getDispersionData());
         assertNotNull(result.getTrendData());
-        assertEquals(List.of("studentsAtRisk"), result.getUnavailableComponents());
-        assertNull(result.getStudentsAtRisk());
+        assertEquals(List.of(), result.getUnavailableComponents());
+        assertEquals(3, result.getStudentsAtRisk());
         assertNull(result.getStudentComparisonData());
     }
 
     @Test
     @DisplayName("Un componente fallido no impide incluir los demás")
     void getSummary_trendFails_returnsPartialSummary() {
-        SummaryService summaryService = new SummaryService(
-                new FixtureAnalyticsClientRepository(false, true));
+        SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository(false, true));
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
@@ -58,26 +61,41 @@ class SummaryServiceTest {
         assertNotNull(result.getPositionData());
         assertNotNull(result.getDispersionData());
         assertNull(result.getTrendData());
-        assertEquals(List.of("trend", "studentsAtRisk"), result.getUnavailableComponents());
+        assertEquals(List.of("trend"), result.getUnavailableComponents());
     }
 
     @Test
     @DisplayName("Componentes vacíos o fallidos se reportan sin perder el resumen")
     void getSummary_allComponentsUnavailable_returnsAllUnavailable() {
-        SummaryService summaryService = new SummaryService(
-                new FixtureAnalyticsClientRepository(true, false));
+        SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository(true, false));
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
         assertNotNull(result);
-        assertEquals(List.of("centralTendency", "position", "dispersion", "trend", "studentsAtRisk"),
+        assertEquals(List.of("centralTendency", "position", "dispersion", "trend"),
                 result.getUnavailableComponents());
+    }
+
+    @Test
+    @DisplayName("Marca el conteo de riesgo como no disponible si falla la consulta a la base")
+    void getSummary_riskCountQueryFails_marksRiskCountUnavailable() {
+        AnalyticsDatabaseRepository databaseRepository = mock(AnalyticsDatabaseRepository.class);
+        when(databaseRepository.countStudentsBelowAverage(SECTION_ID, 60.0))
+                .thenThrow(new IllegalStateException("database unavailable"));
+        SummaryService summaryService = new SummaryService(
+                new FixtureAnalyticsClientRepository(), databaseRepository, 60.0);
+
+        SectionSummary result = summaryService.getSummary(SECTION_ID);
+
+        assertNull(result.getStudentsAtRisk());
+        assertEquals(List.of("studentsAtRisk"), result.getUnavailableComponents());
     }
 
     @Test
     @DisplayName("Inicia todas las consultas antes de esperar resultados")
     void getSummary_runsComponentCallsConcurrently() {
-        SummaryService summaryService = new SummaryService(new ConcurrentAnalyticsClientRepository());
+        SummaryService summaryService = new SummaryService(
+                new ConcurrentAnalyticsClientRepository(), concurrentRiskRepository(), 60.0);
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
@@ -85,15 +103,31 @@ class SummaryServiceTest {
         assertNotNull(result.getPositionData());
         assertNotNull(result.getDispersionData());
         assertNotNull(result.getTrendData());
-        assertEquals(List.of("studentsAtRisk"), result.getUnavailableComponents());
+        assertEquals(3, result.getStudentsAtRisk());
+        assertEquals(List.of(), result.getUnavailableComponents());
     }
 
     @Test
     @DisplayName("Rechaza identificadores de sección inválidos")
     void getSummary_invalidSectionId_throwsIllegalArgumentException() {
-        SummaryService summaryService = new SummaryService(new FixtureAnalyticsClientRepository());
+        SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository());
 
         assertThrows(IllegalArgumentException.class, () -> summaryService.getSummary(0L));
+    }
+
+    private SummaryService summaryService(AnalyticsClientRepository clientRepository) {
+        AnalyticsDatabaseRepository databaseRepository = mock(AnalyticsDatabaseRepository.class);
+        when(databaseRepository.countStudentsBelowAverage(SECTION_ID, 60.0)).thenReturn(3);
+        return new SummaryService(clientRepository, databaseRepository, 60.0);
+    }
+
+    private AnalyticsDatabaseRepository concurrentRiskRepository() {
+        AnalyticsDatabaseRepository databaseRepository = mock(AnalyticsDatabaseRepository.class);
+        when(databaseRepository.countStudentsBelowAverage(SECTION_ID, 60.0)).thenAnswer(invocation -> {
+            ConcurrentAnalyticsClientRepository.awaitOtherCalls();
+            return 3;
+        });
+        return databaseRepository;
     }
 
     private static final class FixtureAnalyticsClientRepository implements AnalyticsClientRepository {
@@ -147,7 +181,7 @@ class SummaryServiceTest {
 
     private static final class ConcurrentAnalyticsClientRepository implements AnalyticsClientRepository {
 
-        private final CountDownLatch allCallsStarted = new CountDownLatch(4);
+        private static final CountDownLatch allCallsStarted = new CountDownLatch(5);
 
         @Override
         public CentralTendencyResponse getCentralTendency(Long sectionId) {
@@ -178,7 +212,7 @@ class SummaryServiceTest {
                     List.<TrendPoint>of());
         }
 
-        private void awaitOtherCalls() {
+        private static void awaitOtherCalls() {
             allCallsStarted.countDown();
             try {
                 if (!allCallsStarted.await(1, TimeUnit.SECONDS)) {

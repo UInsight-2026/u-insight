@@ -1,6 +1,7 @@
 package gt.edu.uinsight.report.service;
 
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
 import gt.edu.uinsight.analytics.trend.service.TrendClassification;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
@@ -35,7 +36,8 @@ class OverviewServiceTest {
 
     // Servicio real de B6; solo se simulan sus dependencias, igual que en B6AnalyticsGatewayTest.
     private final AnalyticsGateway analyticsReal =
-            new B6AnalyticsGateway(new SummaryService(repositorioDeB6()));
+            new B6AnalyticsGateway(new SummaryService(
+                    repositorioDeB6(), mock(AnalyticsDatabaseRepository.class), 60.0));
 
     private static AnalyticsClientRepository repositorioDeB6() {
         AnalyticsClientRepository repo = mock(AnalyticsClientRepository.class);

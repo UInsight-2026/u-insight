@@ -11,6 +11,9 @@ import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.service.SectionValidationService;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/v1/analytics/sections")
 @Tag(
     name = "B6 - Consolidación analítica",
-    description = "Combina resultados analíticos de sección de B1 a B4"
+    description = "Consolida las métricas de B1 a B4 y el conteo de estudiantes en riesgo en una respuesta por sección."
 )
 public class SummaryController {
 
@@ -36,16 +39,21 @@ public class SummaryController {
     @Operation(
         summary = "Obtener resumen de consolidado de una sección.",
         description = "Devuelve tendencia central, posición, dispersión y evolución de la sección indicada, "
-                    + "más el conteo de estudiantes en riesgo."
+                    + "más el conteo de estudiantes activos cuyo promedio normalizado está por debajo del umbral "
+                    + "configurado en uinsight.analytics.students-at-risk-threshold (60 por defecto)."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Resumen generado correctamente"),
-        @ApiResponse(responseCode = "206", description = "Resumen generado parcialmente; uno o más componentes no están disponibles"),
+        @ApiResponse(responseCode = "200", description = "Resumen generado correctamente",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = SectionSummary.class))),
+        @ApiResponse(responseCode = "206", description = "Resumen generado parcialmente; uno o más componentes no están disponibles",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = SectionSummary.class))),
         @ApiResponse(responseCode = "404", description = "Sección no encontrada"),
         @ApiResponse(responseCode = "500", description = "Error inesperado en el servidor")
     })
     @GetMapping("/{sectionId}/summary")
-    public ResponseEntity<SectionSummary> getSummary(@PathVariable Long sectionId) {
+    public ResponseEntity<SectionSummary> getSummary(
+            @Parameter(description = "Identificador de la sección a consolidar", example = "10")
+            @PathVariable Long sectionId) {
 
         if (!sectionValidationService.exists(sectionId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

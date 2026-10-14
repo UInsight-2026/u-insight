@@ -22,8 +22,6 @@ import org.springframework.web.client.RestClient;
  *
  * <p>El builder se crea con {@link RestClient#builder()} y no se inyecta: Spring Boot 4 ya
  * no autoconfigura un bean {@code RestClient.Builder} con solo tener web en el classpath.
- * Es el mismo camino que tomaron B1 ({@code GradeDataRepositoryImpl}) y B5
- * ({@code A6GradeIntegrationService}) en el PR #131.
  */
 @Configuration
 public class IntegrationRestClientConfig {

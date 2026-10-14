@@ -2,6 +2,7 @@ package gt.edu.uinsight.analytics.centraltendency.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.function.Supplier;
 
 // Importaciones manuales para el Logger
 import org.slf4j.Logger;
@@ -39,33 +40,28 @@ public class CentralTendencyService {
         requirePositive(sectionId, "sectionId");
         requirePositiveIfPresent(evaluationId, "evaluationId");
 
-        // Log de inicio exactamente como lo pide el documento
-        log.info("service=B1 event=operation_started operation=section_central_tendency resourceId={}", sectionId);
-
-        List<GradeData> grades = gradeDataRepository.findBySectionId(sectionId, evaluationId);
-        CentralTendencyResponse response = buildResponse(grades);
-
-        // Log de éxito exactamente como lo pide el documento
-        log.info("service=B1 event=operation_succeeded operation=section_central_tendency resourceId={} sampleSize={}",
-                 sectionId, response.sampleSize());
-
-        return response;
+        return calculate("section_central_tendency", sectionId,
+                () -> gradeDataRepository.findBySectionId(sectionId, evaluationId));
     }
 
     public CentralTendencyResponse getCourseCentralTendency(Long courseId, Long periodId) {
         requirePositive(courseId, "courseId");
         requirePositiveIfPresent(periodId, "periodId");
 
-        // Log de inicio adaptado para el cálculo de un curso completo
-        log.info("service=B1 event=operation_started operation=course_central_tendency resourceId={}", courseId);
+        return calculate("course_central_tendency", courseId,
+                () -> gradeDataRepository.findByCourseId(courseId, periodId));
+    }
 
-        List<GradeData> grades = gradeDataRepository.findByCourseId(courseId, periodId);
-        CentralTendencyResponse response = buildResponse(grades);
+    private CentralTendencyResponse calculate(
+            String operation,
+            Long resourceId,
+            Supplier<List<GradeData>> gradeLoader) {
+        log.info("service=B1 event=operation_started operation={} resourceId={}", operation, resourceId);
 
-        // Log de éxito adaptado para el cálculo de un curso completo
-        log.info("service=B1 event=operation_succeeded operation=course_central_tendency resourceId={} sampleSize={}",
-                 courseId, response.sampleSize());
+        CentralTendencyResponse response = buildResponse(gradeLoader.get());
 
+        log.info("service=B1 event=operation_succeeded operation={} resourceId={} sampleSize={}",
+                operation, resourceId, response.sampleSize());
         return response;
     }
 
@@ -73,7 +69,7 @@ public class CentralTendencyService {
         if (grades == null) {
             return CentralTendencyResponse.empty();
         }
-        List<BigDecimal> scores = grades.stream().map(GradeData::getScore).toList();
+        List<BigDecimal> scores = grades.stream().map(grade -> grade.getScore()).toList();
         return centralTendencyCalculator.calculate(scores);
     }
 
