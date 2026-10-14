@@ -2,6 +2,7 @@
 package gt.edu.uinsight.intervention.controller;
 
 import gt.edu.uinsight.intervention.dto.request.CreateInterventionRequest;
+import gt.edu.uinsight.intervention.dto.request.UpdateInterventionStatusRequest;
 import gt.edu.uinsight.intervention.dto.response.InterventionResponse;
 import gt.edu.uinsight.intervention.service.InterventionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -81,5 +83,21 @@ public class InterventionController {
             @Parameter(description = "Id de la intervención", example = "1") @PathVariable Long id) {
 
         return ResponseEntity.ok(interventionService.findById(id));
+    }
+
+    @Operation(summary = "Cambiar el estado de una intervención",
+            description = "Transiciones válidas (RN-4): PLANNED→IN_PROGRESS→COMPLETED, "
+                    + "y PLANNED/IN_PROGRESS→CANCELLED. Sin saltos ni retrocesos.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado actualizado"),
+            @ApiResponse(responseCode = "404", description = "La intervención indicada no existe"),
+            @ApiResponse(responseCode = "409", description = "Transición de estado no permitida")
+    })
+    @PatchMapping("/interventions/{id}/status")
+    public ResponseEntity<InterventionResponse> updateStatus(
+            @Parameter(description = "Id de la intervención", example = "1") @PathVariable Long id,
+            @Valid @RequestBody UpdateInterventionStatusRequest request) {
+
+        return ResponseEntity.ok(interventionService.updateStatus(id, request));
     }
 }

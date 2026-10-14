@@ -110,4 +110,8 @@ public class Intervention {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public void changeStatus(InterventionStatus newStatus) {
+        this.status = newStatus;
+    }
 }

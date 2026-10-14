@@ -175,6 +175,40 @@ class IndicatorConfigurationServiceImplTest {
         verify(repository, never()).save(any(IndicatorConfiguration.class));
     }
 
+    @Test
+    void update_debeLanzarExcepcion_cuandoLaClaveNoExiste() {
+        UpdateIndicatorConfigurationRequest request = new UpdateIndicatorConfigurationRequest();
+        request.setValue("55");
+
+        when(repository.findByKey("DOES_NOT_EXIST")).thenReturn(Optional.empty());
+
+        assertThrows(
+                IndicatorConfigurationNotFoundException.class,
+                () -> service.update("DOES_NOT_EXIST", request)
+        );
+
+        verify(repository, never()).save(any(IndicatorConfiguration.class));
+    }
+
+    @Test
+    void update_debeActualizarSoloDescripcion_cuandoValueNoViene() {
+        UpdateIndicatorConfigurationRequest request = new UpdateIndicatorConfigurationRequest();
+        request.setDescription("Solo cambia la descripcion");
+
+        IndicatorConfiguration entity = entity(1L, "HIGH_RISK_PERCENTAGE", "50", "Valor inicial");
+        IndicatorConfigurationResponse expected = response(entity);
+
+        when(repository.findByKey("HIGH_RISK_PERCENTAGE")).thenReturn(Optional.of(entity));
+        when(repository.save(entity)).thenReturn(entity);
+        when(mapper.toResponse(entity)).thenReturn(expected);
+
+        IndicatorConfigurationResponse actual = service.update("HIGH_RISK_PERCENTAGE", request);
+
+        assertEquals("50", entity.getValue());
+        assertEquals("Solo cambia la descripcion", entity.getDescription());
+        assertEquals(expected, actual);
+    }
+
     private CreateIndicatorConfigurationRequest createRequest(String key, String value, String description) {
         CreateIndicatorConfigurationRequest request = new CreateIndicatorConfigurationRequest();
         request.setKey(key);
