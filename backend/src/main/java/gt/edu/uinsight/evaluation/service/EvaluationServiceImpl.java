@@ -47,16 +47,13 @@ public class EvaluationServiceImpl implements EvaluationService, EvaluationQuery
     private final EvaluationRepository evaluationRepository;
     private final EvaluationMapper evaluationMapper;
     private final SectionValidationPort sectionValidationPort;
-    private final GradeEvaluationSyncPort gradeEvaluationSyncPort;
 
     public EvaluationServiceImpl(EvaluationRepository evaluationRepository,
                                  EvaluationMapper evaluationMapper,
-                                 SectionValidationPort sectionValidationPort,
-                                 GradeEvaluationSyncPort gradeEvaluationSyncPort) {
+                                 SectionValidationPort sectionValidationPort) {
         this.evaluationRepository = evaluationRepository;
         this.evaluationMapper = evaluationMapper;
         this.sectionValidationPort = sectionValidationPort;
-        this.gradeEvaluationSyncPort = gradeEvaluationSyncPort;
     }
 
     // ------------------------------------------------------------ HU1
@@ -124,9 +121,6 @@ public class EvaluationServiceImpl implements EvaluationService, EvaluationQuery
         entity.setWeight(request.getWeight());
         Evaluation saved = evaluationRepository.save(entity);
 
-        if (status == EvaluationStatus.ACTIVE) {
-            gradeEvaluationSyncPort.publish(toSummary(saved));                      // integración A6
-        }
         log.info("EVALUATION_UPDATED operation=UPDATE evaluationId={} sectionId={} weight={} maximumScore={} durationMs={}",
                 saved.getId(), saved.getSectionId(), saved.getWeight(), saved.getMaximumScore(),
                 System.currentTimeMillis() - start);
@@ -157,9 +151,6 @@ public class EvaluationServiceImpl implements EvaluationService, EvaluationQuery
         entity.setStatus(target.name());
         Evaluation saved = evaluationRepository.save(entity);
 
-        if (target == EvaluationStatus.ACTIVE) {
-            gradeEvaluationSyncPort.publish(toSummary(saved));                      // integración A6
-        }
         log.info("EVALUATION_STATUS_CHANGED operation=CHANGE_STATUS evaluationId={} from={} to={} durationMs={}",
                 id, current, target, System.currentTimeMillis() - start);
         return evaluationMapper.toResponse(saved);
@@ -239,6 +230,6 @@ public class EvaluationServiceImpl implements EvaluationService, EvaluationQuery
 
     private EvaluationSummary toSummary(Evaluation e) {
         return new EvaluationSummary(e.getId(), e.getSectionId(), e.getName(),
-                e.getMaximumScore(), e.getWeight(), e.getStatus());
+                e.getMaximumScore(), e.getWeight(), e.getStatus(), e.getEvaluationDate());
     }
 }

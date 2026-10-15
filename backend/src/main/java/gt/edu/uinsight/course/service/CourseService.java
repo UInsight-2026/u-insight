@@ -15,6 +15,8 @@ public interface CourseService {
 
     CourseResponse findById(Long id);
 
+    boolean existsById(Long id);
+
     CourseResponse findByCode(String code);
 
     CourseResponse update(Long id, UpdateCourseRequest request);

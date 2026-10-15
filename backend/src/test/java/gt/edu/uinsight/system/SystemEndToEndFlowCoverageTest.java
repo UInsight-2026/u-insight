@@ -94,9 +94,8 @@ class SystemEndToEndFlowCoverageTest {
                                         + "HTTP 201; evaluacion creada y se obtuvo evaluationId",
 
                         "08 | A6 | POST /api/v1/grades | PARCIAL | "
-                                        + "HTTP 201; calificacion registrada, pero requirio cargar "
-                                        + "referencias auxiliares mediante /grades/evaluation-refs "
-                                        + "y /grades/enrollment-refs; no hay sincronizacion automatica",
+                                        + "HTTP 201; calificacion validada contra evaluaciones de A5 "
+                                        + "e inscripciones de A4 sin referencias duplicadas",
 
                         // ====================================================
                         // ANALITICA

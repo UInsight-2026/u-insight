@@ -12,6 +12,7 @@ public class DispersionMapper {
 
     public DispersionResponse toSectionResponse(
             Long sectionId,
+            Long courseId,
             BigDecimal min,
             BigDecimal max,
             BigDecimal range,
@@ -21,7 +22,7 @@ public class DispersionMapper {
 
         return new DispersionResponse(
                 sectionId,
-                null,
+                courseId,
                 min,
                 max,
                 range,

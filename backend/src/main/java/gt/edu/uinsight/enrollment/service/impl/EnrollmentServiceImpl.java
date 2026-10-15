@@ -55,6 +55,25 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     }
 
     @Override
+    public boolean isStudentEnrolled(Long studentId, Long sectionId) {
+        return enrollmentRepository.findBySectionIdAndStudentId(sectionId, studentId)
+                .map(enrollment -> isEnrolledStatus(enrollment.getStatus()))
+                .orElse(false);
+    }
+
+    @Override
+    public List<Long> getEnrolledStudentIds(Long sectionId) {
+        return enrollmentRepository.findBySectionId(sectionId).stream()
+                .filter(enrollment -> isEnrolledStatus(enrollment.getStatus()))
+                .map(Enrollment::getStudentId)
+                .toList();
+    }
+
+    private boolean isEnrolledStatus(String status) {
+        return "ENROLLED".equalsIgnoreCase(status) || "ACTIVE".equalsIgnoreCase(status);
+    }
+
+    @Override
     public EnrollmentResponseDTO updateEnrollmentStatus(Long id, String status) {
         Enrollment enrollment = enrollmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));

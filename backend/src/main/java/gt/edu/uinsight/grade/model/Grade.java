@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-    name = "grades",
+    name = "grade",
     uniqueConstraints = @UniqueConstraint(
-        name = "uk_grade_evaluation_student",
+        name = "uk_grade",
         columnNames = {"evaluation_id", "student_id"}
     )
 )
@@ -25,24 +25,34 @@ public class Grade {
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
-    @Column(name = "score", nullable = false, precision = 6, scale = 2)
+    @Column(name = "score", nullable = false, precision = 5, scale = 2)
     private BigDecimal score;
 
     @Column(name = "registered_at", nullable = false)
     private LocalDateTime registeredAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private GradeStatus status;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     public Grade() {}
 
-    public Grade(Long evaluationId, Long studentId, BigDecimal score, LocalDateTime registeredAt, GradeStatus status) {
+    public Grade(Long evaluationId, Long studentId, BigDecimal score, LocalDateTime registeredAt) {
         this.evaluationId = evaluationId;
         this.studentId = studentId;
         this.score = score;
         this.registeredAt = registeredAt;
-        this.status = status;
+    }
+
+    @PrePersist
+    private void setInitialUpdatedAt() {
+        if (updatedAt == null) {
+            updatedAt = registeredAt == null ? LocalDateTime.now() : registeredAt;
+        }
+    }
+
+    @PreUpdate
+    private void markUpdated() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -60,6 +70,11 @@ public class Grade {
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
 
-    public GradeStatus getStatus() { return status; }
-    public void setStatus(GradeStatus status) { this.status = status; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    public GradeStatus getStatus() {
+        return updatedAt != null && registeredAt != null && updatedAt.isAfter(registeredAt)
+                ? GradeStatus.UPDATED
+                : GradeStatus.REGISTERED;
+    }
 }

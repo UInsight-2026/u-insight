@@ -84,21 +84,21 @@ public class StudentAnalyticsService {
     }
 
     private Long resolveSectionId(Long studentId, Long requestedSectionId) {
-        List<Long> sectionIds = databaseRepository.findActiveSectionIdsByStudent(studentId);
+        List<Long> sectionIds = databaseRepository.findEnrolledSectionIdsByStudent(studentId);
         if (requestedSectionId != null) {
             if (!sectionIds.contains(requestedSectionId)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "El estudiante no tiene una inscripción activa en la sección " + requestedSectionId + ".");
+                        "El estudiante no tiene una inscripción vigente en la sección " + requestedSectionId + ".");
             }
             return requestedSectionId;
         }
         if (sectionIds.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "El estudiante no tiene una inscripción activa en ninguna sección.");
+                    "El estudiante no tiene una inscripción vigente en ninguna sección.");
         }
         if (sectionIds.size() > 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El estudiante tiene varias secciones activas; debe indicar el parámetro sectionId.");
+                    "El estudiante tiene varias inscripciones vigentes; debe indicar el parámetro sectionId.");
         }
         return sectionIds.get(0);
     }

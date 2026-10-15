@@ -24,7 +24,8 @@ import gt.edu.uinsight.analytics.dispersion.exception.DispersionDatosInvalidosEx
 import gt.edu.uinsight.analytics.dispersion.exception.SeccionNoEncontradaException;
 import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
 import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
-import gt.edu.uinsight.section.repository.SectionRepository;
+import gt.edu.uinsight.section.dto.SectionResponseDTO;
+import gt.edu.uinsight.section.service.SectionService;
 
 @ExtendWith(MockitoExtension.class)
 class DispersionServiceTest {
@@ -42,7 +43,7 @@ class DispersionServiceTest {
     private DispersionMapper dispersionMapper;
 
     @Mock
-    private SectionRepository sectionRepository;
+    private SectionService sectionService;
 
     @InjectMocks
     private DispersionService service;
@@ -65,7 +66,9 @@ class DispersionServiceTest {
         DispersionClassification classification =
                 DispersionClassification.MODERATE_DISPERSION;
 
-        when(sectionRepository.existsById(sectionId)).thenReturn(true);
+        when(sectionService.existsById(sectionId)).thenReturn(true);
+        when(sectionService.getSectionById(sectionId))
+                .thenReturn(new SectionResponseDTO(sectionId, 1L, 2L, 3L, "A", "ACTIVE"));
         when(dispersionGradeRepository.findScoresBySectionId(sectionId))
                 .thenReturn(scores);
         when(dispersionCalculator.calculateMin(scores)).thenReturn(min);
@@ -80,7 +83,7 @@ class DispersionServiceTest {
         DispersionResponse expectedResponse = mock(DispersionResponse.class);
 
         when(dispersionMapper.toSectionResponse(
-                sectionId, min, max, range, variance,
+                sectionId, 2L, min, max, range, variance,
                 standardDeviation, classification
         )).thenReturn(expectedResponse);
 
@@ -88,7 +91,7 @@ class DispersionServiceTest {
 
         assertNotNull(response);
         verify(dispersionMapper).toSectionResponse(
-                sectionId, min, max, range, variance,
+                sectionId, 2L, min, max, range, variance,
                 standardDeviation, classification
         );
     }
@@ -143,7 +146,7 @@ class DispersionServiceTest {
     void lanzaExcepcionSiLaSeccionNoExiste() {
         Long sectionId = 99L;
 
-        when(sectionRepository.existsById(sectionId)).thenReturn(false);
+        when(sectionService.existsById(sectionId)).thenReturn(false);
 
         assertThrows(
                 SeccionNoEncontradaException.class,

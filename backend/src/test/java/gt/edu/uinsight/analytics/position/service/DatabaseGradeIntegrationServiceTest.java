@@ -26,7 +26,7 @@ class DatabaseGradeIntegrationServiceTest {
     void normalizesGradesAndReadsEnrollmentsAndStudentCodeFromDatabase() {
         when(databaseRepository.findGradesBySection(10L)).thenReturn(List.of(grade(15, 20)));
         when(databaseRepository.findGradesByStudentAndSection(5L, 10L)).thenReturn(List.of(grade(40, 50)));
-        when(databaseRepository.findActiveSectionIdsByStudent(5L)).thenReturn(List.of(10L));
+        when(databaseRepository.findEnrolledSectionIdsByStudent(5L)).thenReturn(List.of(10L));
         when(databaseRepository.findStudentCode(5L)).thenReturn("EST2024005");
 
         assertEquals(List.of(75.0), service.getGradesBySection(10L));
