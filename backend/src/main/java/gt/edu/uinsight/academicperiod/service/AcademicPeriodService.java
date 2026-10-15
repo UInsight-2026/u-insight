@@ -15,6 +15,8 @@ public interface AcademicPeriodService {
 
     AcademicPeriodResponse findById(Long id);
 
+    boolean existsById(Long id);
+
     AcademicPeriodResponse findActive();
 
     AcademicPeriodResponse update(Long id, UpdateAcademicPeriodRequest request);

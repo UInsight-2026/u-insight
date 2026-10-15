@@ -1,7 +1,6 @@
 // Celula A5 - Gestión de evaluaciones
 package gt.edu.uinsight.evaluation.service;
 
-import gt.edu.uinsight.evaluation.api.EvaluationSummary;
 import gt.edu.uinsight.evaluation.dto.request.ChangeEvaluationStatusRequest;
 import gt.edu.uinsight.evaluation.dto.request.CreateEvaluationRequest;
 import gt.edu.uinsight.evaluation.dto.request.UpdateEvaluationRequest;
@@ -19,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -35,7 +33,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** Pruebas unitarias de las reglas de negocio RN1-RN6 e integración con A6 (célula A5). */
+/** Pruebas unitarias de las reglas de negocio RN1-RN6 de A5. */
 @ExtendWith(MockitoExtension.class)
 class EvaluationServiceImplTest {
 
@@ -43,13 +41,12 @@ class EvaluationServiceImplTest {
 
     @Mock private EvaluationRepository repository;
     @Mock private SectionValidationPort sectionPort;
-    @Mock private GradeEvaluationSyncPort gradeSyncPort;
 
     private EvaluationServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new EvaluationServiceImpl(repository, new EvaluationMapper(), sectionPort, gradeSyncPort);
+        service = new EvaluationServiceImpl(repository, new EvaluationMapper(), sectionPort);
     }
 
     // ---------------------------------------------------------------- helpers
@@ -164,7 +161,6 @@ class EvaluationServiceImplTest {
 
         assertThat(response.getWeight()).isEqualByComparingTo("50");
         assertThat(response.getMaximumScore()).isEqualByComparingTo("80");
-        verify(gradeSyncPort, never()).publish(any());
     }
 
     @Test
@@ -188,40 +184,20 @@ class EvaluationServiceImplTest {
         verify(repository, never()).save(any());
     }
 
-    @Test
-    @DisplayName("Integración A6: al actualizar una evaluación ACTIVE se publica la nueva nota máxima")
-    void update_active_publishesToGrades() {
-        Evaluation own = evaluation(5L, "ACTIVE", "40");
-        when(repository.findById(5L)).thenReturn(Optional.of(own));
-        sectionActive();
-        when(repository.findBySectionId(SECTION_ID)).thenReturn(List.of(own));
-        saveReturnsArgument();
-
-        service.updateEvaluation(5L, updateRequest("40"));
-
-        ArgumentCaptor<EvaluationSummary> captor = ArgumentCaptor.forClass(EvaluationSummary.class);
-        verify(gradeSyncPort).publish(captor.capture());
-        assertThat(captor.getValue().id()).isEqualTo(5L);
-        assertThat(captor.getValue().maximumScore()).isEqualByComparingTo("80");
-    }
-
     // ---------------------------------------------------------------- HU4 cambiar estado
 
     @Test
-    @DisplayName("RN6: DRAFT -> ACTIVE es válido y publica la evaluación a A6")
-    void changeStatus_draftToActive_publishes() {
+    @DisplayName("RN6: DRAFT -> ACTIVE es válido")
+    void changeStatus_draftToActive() {
         when(repository.findById(5L)).thenReturn(Optional.of(evaluation(5L, "DRAFT", "40")));
         sectionActive();
         saveReturnsArgument();
-
         EvaluationResponse response = service.changeStatus(5L, new ChangeEvaluationStatusRequest("active"));
-
         assertThat(response.getStatus()).isEqualTo("ACTIVE");
-        verify(gradeSyncPort).publish(any(EvaluationSummary.class));
     }
 
     @Test
-    @DisplayName("RN6: ACTIVE -> CLOSED es válido y no vuelve a publicar")
+    @DisplayName("RN6: ACTIVE -> CLOSED es válido")
     void changeStatus_activeToClosed() {
         when(repository.findById(5L)).thenReturn(Optional.of(evaluation(5L, "ACTIVE", "40")));
         saveReturnsArgument();
@@ -229,7 +205,6 @@ class EvaluationServiceImplTest {
         EvaluationResponse response = service.changeStatus(5L, new ChangeEvaluationStatusRequest("CLOSED"));
 
         assertThat(response.getStatus()).isEqualTo("CLOSED");
-        verify(gradeSyncPort, never()).publish(any());
     }
 
     @Test
@@ -260,7 +235,6 @@ class EvaluationServiceImplTest {
 
         assertThatThrownBy(() -> service.changeStatus(5L, new ChangeEvaluationStatusRequest("ACTIVE")))
                 .isInstanceOf(SectionNotActiveException.class);
-        verify(gradeSyncPort, never()).publish(any());
     }
 
     // ---------------------------------------------------------------- consultas

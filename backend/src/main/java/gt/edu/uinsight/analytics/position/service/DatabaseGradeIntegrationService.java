@@ -43,12 +43,12 @@ public class DatabaseGradeIntegrationService implements GradeIntegrationService 
 
     @Override
     public List<Long> getSectionIdsByStudent(Long studentId) {
-        return databaseRepository.findActiveSectionIdsByStudent(studentId);
+        return databaseRepository.findEnrolledSectionIdsByStudent(studentId);
     }
 
     @Override
     public boolean isStudentEnrolledInSection(Long studentId, Long sectionId) {
-        return databaseRepository.findActiveSectionIdsByStudent(studentId).contains(sectionId);
+        return databaseRepository.findEnrolledSectionIdsByStudent(studentId).contains(sectionId);
     }
 
     private Double normalize(java.math.BigDecimal score, java.math.BigDecimal maximumScore) {

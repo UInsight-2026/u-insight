@@ -9,5 +9,6 @@ public interface SectionService {
     SectionResponseDTO createSection(SectionCreateDTO dto);
     List<SectionResponseDTO> getAllSections();
     SectionResponseDTO getSectionById(Long id);
+    boolean existsById(Long id);
     SectionResponseDTO updateSectionStatus(Long id, String status);
 }

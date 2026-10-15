@@ -39,7 +39,7 @@ class StudentAnalyticsServiceTest {
     void summaryReadsStudentAndSectionAveragesFromDatabase() {
         when(databaseRepository.studentExists(1L)).thenReturn(true);
         when(databaseRepository.findStudentCode(1L)).thenReturn("EST2024001");
-        when(databaseRepository.findActiveSectionIdsByStudent(1L)).thenReturn(List.of(5L));
+        when(databaseRepository.findEnrolledSectionIdsByStudent(1L)).thenReturn(List.of(5L));
         when(databaseRepository.findGradesByStudentAndSection(1L, 5L))
                 .thenReturn(List.of(grade(70), grade(90)));
         when(databaseRepository.findGradesBySection(5L))
@@ -56,7 +56,7 @@ class StudentAnalyticsServiceTest {
     @Test
     void summaryRequiresSectionWhenStudentHasMultipleActiveEnrollments() {
         when(databaseRepository.studentExists(1L)).thenReturn(true);
-        when(databaseRepository.findActiveSectionIdsByStudent(1L)).thenReturn(List.of(5L, 6L));
+        when(databaseRepository.findEnrolledSectionIdsByStudent(1L)).thenReturn(List.of(5L, 6L));
 
         assertThrows(ResponseStatusException.class, () -> service.getSummary(1L, null));
     }
@@ -65,7 +65,7 @@ class StudentAnalyticsServiceTest {
     void comparisonUsesPositionForTheSelectedSection() {
         when(databaseRepository.studentExists(1L)).thenReturn(true);
         when(databaseRepository.findStudentCode(1L)).thenReturn("EST2024001");
-        when(databaseRepository.findActiveSectionIdsByStudent(1L)).thenReturn(List.of(5L, 6L));
+        when(databaseRepository.findEnrolledSectionIdsByStudent(1L)).thenReturn(List.of(5L, 6L));
         when(databaseRepository.findGradesByStudentAndSection(1L, 6L)).thenReturn(List.of(grade(85)));
         when(databaseRepository.findGradesBySection(6L)).thenReturn(List.of(grade(85), grade(75)));
         when(positionService.getStudentPosition(1L, 6L))

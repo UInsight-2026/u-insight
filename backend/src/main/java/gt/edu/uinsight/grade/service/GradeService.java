@@ -7,10 +7,9 @@ import gt.edu.uinsight.grade.dto.GradeResponse;
 import gt.edu.uinsight.grade.dto.GradeUpdateRequest;
 import gt.edu.uinsight.grade.exception.InvalidRequestException;
 import gt.edu.uinsight.grade.exception.ResourceNotFoundException;
-import gt.edu.uinsight.grade.model.EvaluationRef;
+import gt.edu.uinsight.evaluation.api.EvaluationQueryService;
+import gt.edu.uinsight.evaluation.api.EvaluationSummary;
 import gt.edu.uinsight.grade.model.Grade;
-import gt.edu.uinsight.grade.model.GradeStatus;
-import gt.edu.uinsight.grade.repository.EvaluationRefRepository;
 import gt.edu.uinsight.grade.repository.GradeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +24,13 @@ public class GradeService {
     private static final Logger log = LoggerFactory.getLogger(GradeService.class);
 
     private final GradeRepository gradeRepository;
-    private final EvaluationRefRepository evaluationRefRepository;
+    private final EvaluationQueryService evaluationQueryService;
     private final GradeRegistrar gradeRegistrar;
 
-    public GradeService(GradeRepository gradeRepository, EvaluationRefRepository evaluationRefRepository,
-                         GradeRegistrar gradeRegistrar) {
+    public GradeService(GradeRepository gradeRepository, EvaluationQueryService evaluationQueryService,
+                        GradeRegistrar gradeRegistrar) {
         this.gradeRepository = gradeRepository;
-        this.evaluationRefRepository = evaluationRefRepository;
+        this.evaluationQueryService = evaluationQueryService;
         this.gradeRegistrar = gradeRegistrar;
     }
 
@@ -99,12 +98,12 @@ public class GradeService {
         Grade grade = gradeRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Calificacion no encontrada: " + id));
 
-        EvaluationRef evaluation = evaluationRefRepository.findById(grade.getEvaluationId())
-            .orElseThrow(() -> new ResourceNotFoundException("La evaluacion no existe: " + grade.getEvaluationId()));
-        GradeRegistrar.validateScoreRange(request.getScore(), evaluation.getMaximumScore());
+        EvaluationSummary evaluation = evaluationQueryService.findSummary(grade.getEvaluationId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "La evaluacion no existe: " + grade.getEvaluationId()));
+        GradeRegistrar.validateScoreRange(request.getScore(), evaluation.maximumScore());
 
         grade.setScore(request.getScore());
-        grade.setStatus(GradeStatus.UPDATED);
         Grade updated = gradeRepository.save(grade);
 
         log.info("GRADE_UPDATED gradeId={} evaluationId={} studentId={} score={}",

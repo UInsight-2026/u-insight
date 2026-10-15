@@ -17,7 +17,7 @@ import gt.edu.uinsight.analytics.dispersion.exception.SeccionNoEncontradaExcepti
 import gt.edu.uinsight.analytics.dispersion.mapper.DispersionMapper;
 import gt.edu.uinsight.analytics.dispersion.repository.DispersionGradeRepository;
 import gt.edu.uinsight.analytics.dispersion.validation.DispersionValidator;
-import gt.edu.uinsight.section.repository.SectionRepository;
+import gt.edu.uinsight.section.service.SectionService;
 
 @Service
 public class DispersionService {
@@ -26,29 +26,30 @@ public class DispersionService {
     private final DispersionCalculator dispersionCalculator;
     private final DispersionClassifier dispersionClassifier;
     private final DispersionMapper dispersionMapper;
-    private final SectionRepository sectionRepository;
+    private final SectionService sectionService;
 
     public DispersionService(
             DispersionGradeRepository dispersionGradeRepository,
             DispersionCalculator dispersionCalculator,
             DispersionClassifier dispersionClassifier,
             DispersionMapper dispersionMapper,
-            SectionRepository sectionRepository) {
+            SectionService sectionService) {
 
         this.dispersionGradeRepository = dispersionGradeRepository;
         this.dispersionCalculator = dispersionCalculator;
         this.dispersionClassifier = dispersionClassifier;
         this.dispersionMapper = dispersionMapper;
-        this.sectionRepository = sectionRepository;
+        this.sectionService = sectionService;
     }
 
     @Transactional(readOnly = true)
     public DispersionResponse getSectionDispersion(Long sectionId) {
         validarId(sectionId, "sección");
 
-        if (!sectionRepository.existsById(sectionId)) {
+        if (!sectionService.existsById(sectionId)) {
             throw new SeccionNoEncontradaException(sectionId);
         }
+        Long courseId = sectionService.getSectionById(sectionId).getCourseId();
 
         List<BigDecimal> scores =
                 dispersionGradeRepository.findScoresBySectionId(sectionId);
@@ -57,6 +58,7 @@ public class DispersionService {
 
         return dispersionMapper.toSectionResponse(
                 sectionId,
+                courseId,
                 metrics.min(),
                 metrics.max(),
                 metrics.range(),

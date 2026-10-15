@@ -74,6 +74,12 @@ public class AcademicPeriodServiceImpl implements AcademicPeriodService {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean existsById(Long id) {
+        return repository.existsById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public AcademicPeriodResponse findActive() {
         return repository.findFirstByStatus(PeriodStatus.ACTIVE)
                 .map(mapper::toResponse)

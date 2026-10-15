@@ -53,6 +53,11 @@ public class SectionServiceImpl implements SectionService {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return sectionRepository.existsById(id);
+    }
+
+    @Override
     public SectionResponseDTO updateSectionStatus(Long id, String status) {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada con id: " + id));

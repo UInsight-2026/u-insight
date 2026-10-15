@@ -56,7 +56,7 @@ public class IntegrationProperties {
         endpoints.put("A2", BASE + "/api/v1/teachers");
         endpoints.put("A4", BASE + "/api/v1/sections");
         endpoints.put("A5", BASE + "/api/v1/evaluations");
-        endpoints.put("A6", BASE + "/api/v1/grades/evaluation-refs");
+        endpoints.put("A6", BASE + "/api/v1/sections/1/grades");
         endpoints.put("B7", BASE + "/api/v1/integration/b7/active-rules");
         endpoints.put("C1", BASE + "/api/v1/indicator-configurations");
         endpoints.put("C3", BASE + "/api/v1/alert-rules");

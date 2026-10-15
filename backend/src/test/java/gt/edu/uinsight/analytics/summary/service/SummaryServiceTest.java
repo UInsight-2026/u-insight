@@ -108,6 +108,18 @@ class SummaryServiceTest {
     }
 
     @Test
+    @DisplayName("Incluye componentes que tardan más de 500 ms")
+    void getSummary_slowComponent_isStillIncluded() {
+        SummaryService summaryService = summaryService(
+                new FixtureAnalyticsClientRepository(false, false, 600));
+
+        SectionSummary result = summaryService.getSummary(SECTION_ID);
+
+        assertNotNull(result.getCentralTendencyData());
+        assertEquals(List.of(), result.getUnavailableComponents());
+    }
+
+    @Test
     @DisplayName("Rechaza identificadores de sección inválidos")
     void getSummary_invalidSectionId_throwsIllegalArgumentException() {
         SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository());
@@ -134,18 +146,33 @@ class SummaryServiceTest {
 
         private final boolean unavailable;
         private final boolean trendFails;
+        private final long centralTendencyDelayMillis;
 
         private FixtureAnalyticsClientRepository() {
-            this(false, false);
+            this(false, false, 0);
         }
 
         private FixtureAnalyticsClientRepository(boolean unavailable, boolean trendFails) {
+            this(unavailable, trendFails, 0);
+        }
+
+        private FixtureAnalyticsClientRepository(
+                boolean unavailable, boolean trendFails, long centralTendencyDelayMillis) {
             this.unavailable = unavailable;
             this.trendFails = trendFails;
+            this.centralTendencyDelayMillis = centralTendencyDelayMillis;
         }
 
         @Override
         public CentralTendencyResponse getCentralTendency(Long sectionId) {
+            if (centralTendencyDelayMillis > 0) {
+                try {
+                    Thread.sleep(centralTendencyDelayMillis);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("La prueba fue interrumpida", exception);
+                }
+            }
             return unavailable ? null
                     : new CentralTendencyResponse(4, 75.0, 74.0, List.of(75.0));
         }

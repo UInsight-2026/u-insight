@@ -11,11 +11,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import gt.edu.uinsight.student.entity.StudentRecord;
+import gt.edu.uinsight.student.repository.StudentRecordRepository;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -65,6 +69,9 @@ class SystemEndToEndFlowTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private StudentRecordRepository studentRecordRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -238,7 +245,8 @@ class SystemEndToEndFlowTest {
         // A4 no comprueba la existencia del estudiante en A3.
         // ====================================================
 
-        long studentId = 1001L;
+        long studentId = studentRecordRepository.save(
+                new StudentRecord("E2E-STUDENT-001")).getId();
 
         String enrollmentRequest = """
                 {
@@ -308,52 +316,20 @@ class SystemEndToEndFlowTest {
         assertTrue(evaluationId > 0,
                 "A5 no devolvio evaluationId valido");
 
+        mockMvc.perform(
+                patch("/api/v1/evaluations/{id}/status", evaluationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"ACTIVE"}
+                                """))
+                .andExpect(status().isOk());
+
         System.out.println(
                 "PASO 7 - A5 Evaluacion: PASA (201), ID="
                         + evaluationId);
 
-        // ====================================================
-        // PASO 8 - CALIFICACION (A6)
-        // ====================================================
-        //
-        // A6 necesita registrar manualmente referencias
-        // internas de evaluaciones e inscripciones.
-        // No existe sincronizacion automatica comprobada.
-        // ====================================================
-
-        String evaluationRefRequest = """
-                {
-                  "id": %d,
-                  "sectionId": %d,
-                  "name": "Parcial E2E Semana 5",
-                  "maximumScore": 100
-                }
-                """.formatted(evaluationId, sectionId);
-
-        mockMvc.perform(
-                post("/api/v1/grades/evaluation-refs")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(evaluationRefRequest))
-                .andExpect(status().isCreated());
-
-        System.out.println(
-                "INTEGRACION A5 -> A6: REFERENCIA CREADA (201)");
-
-        String enrollmentRefRequest = """
-                {
-                  "studentId": %d,
-                  "sectionId": %d
-                }
-                """.formatted(studentId, sectionId);
-
-        mockMvc.perform(
-                post("/api/v1/grades/enrollment-refs")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(enrollmentRefRequest))
-                .andExpect(status().isCreated());
-
-        System.out.println(
-                "INTEGRACION A4 -> A6: REFERENCIA CREADA (201)");
+        // A6 validates the evaluation through A5 and the enrollment through A4.
+        // No duplicate reference rows are required.
 
         String gradeRequest = """
                 {
@@ -386,6 +362,61 @@ class SystemEndToEndFlowTest {
                 "PASO 8 - A6 Calificacion: PASA (201), ID="
                         + gradeId);
 
+        long secondStudentId = studentRecordRepository.save(
+                new StudentRecord("E2E-STUDENT-002")).getId();
+        mockMvc.perform(
+                post("/api/v1/sections/{sectionId}/enrollments", sectionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"studentId": %d}
+                                """.formatted(secondStudentId)))
+                .andExpect(status().isCreated());
+
+        String secondEvaluationResponse = mockMvc.perform(
+                post("/api/v1/evaluations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "sectionId": %d,
+                                  "name": "Parcial E2E Semana 5 - 2",
+                                  "type": "EXAM",
+                                  "evaluationDate": "2026-10-20",
+                                  "maximumScore": 100,
+                                  "weight": 30
+                                }
+                                """.formatted(sectionId)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        long secondEvaluationId = objectMapper.readTree(secondEvaluationResponse)
+                .path("id").asLong();
+        mockMvc.perform(
+                patch("/api/v1/evaluations/{id}/status", secondEvaluationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"ACTIVE"}
+                                """))
+                .andExpect(status().isOk());
+
+        for (String[] gradeData : new String[][] {
+                {Long.toString(evaluationId), Long.toString(secondStudentId), "55"},
+                {Long.toString(secondEvaluationId), Long.toString(studentId), "90"},
+                {Long.toString(secondEvaluationId), Long.toString(secondStudentId), "40"}
+        }) {
+            mockMvc.perform(
+                    post("/api/v1/grades")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "evaluationId": %s,
+                                      "studentId": %s,
+                                      "score": %s
+                                    }
+                                    """.formatted(gradeData[0], gradeData[1], gradeData[2])))
+                    .andExpect(status().isCreated());
+        }
+
         // ====================================================
         // PASO 9 - ESTADISTICAS (B1/B2/B3/B5/B6)
         // ====================================================
@@ -397,6 +428,9 @@ class SystemEndToEndFlowTest {
         var summaryResult = mockMvc.perform(
                 get("/api/v1/analytics/sections/{id}/summary",
                         sectionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studentsAtRisk").value(1))
+                .andExpect(jsonPath("$.unavailableComponents").isEmpty())
                 .andReturn();
 
         int summaryStatus =
@@ -405,16 +439,50 @@ class SystemEndToEndFlowTest {
         System.out.println(
                 "PASO 9 - Estadisticas: HTTP " + summaryStatus);
 
+        mockMvc.perform(get("/api/v1/analytics/sections/{id}/central-tendency", sectionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sampleSize").value(4))
+                .andExpect(jsonPath("$.mean").value(67.5));
+
+        mockMvc.perform(get("/api/v1/analytics/sections/{id}/position?percentiles=25,50,75", sectionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sampleSize").value(4))
+                .andExpect(jsonPath("$.percentiles.P50").exists());
+
+        mockMvc.perform(get("/api/v1/analytics/sections/{id}/dispersion", sectionId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/analytics/courses/{id}/central-tendency", courseId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sampleSize").value(4));
+
+        mockMvc.perform(get("/api/v1/analytics/courses/{id}/dispersion", courseId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/analytics/students/{id}/summary", studentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studentAverage").value(87.5));
+
+        mockMvc.perform(get("/api/v1/analytics/students/{id}/comparison", studentId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/analytics/students/{id}/trend", studentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studentCode").value("E2E-STUDENT-001"))
+                .andExpect(jsonPath("$.trend").value("POSITIVE"));
+
         // ====================================================
         // PASO 10 - TENDENCIAS (B4)
         // ====================================================
         //
-        // HTTP observado anteriormente: 404 sin datos.
+        // La tendencia se calcula sobre las fechas reales de A5.
         // ====================================================
 
         var trendsResult = mockMvc.perform(
                 get("/api/v1/analytics/sections/{id}/trends",
                         sectionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.classification").value("NEGATIVE"))
                 .andReturn();
 
         int trendsStatus =

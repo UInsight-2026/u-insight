@@ -2,9 +2,11 @@ package gt.edu.uinsight.imports.service;
 
 import gt.edu.uinsight.grade.dto.BatchGradeResult;
 import gt.edu.uinsight.grade.dto.GradeRequest;
-import gt.edu.uinsight.grade.model.EvaluationRef;
-import gt.edu.uinsight.grade.repository.EnrollmentRefRepository;
 import gt.edu.uinsight.grade.service.GradeService;
+import gt.edu.uinsight.enrollment.service.EnrollmentService;
+import gt.edu.uinsight.evaluation.api.EvaluationQueryService;
+import gt.edu.uinsight.evaluation.api.EvaluationSummary;
+import gt.edu.uinsight.section.service.SectionService;
 import gt.edu.uinsight.imports.config.CsvImportProperties;
 import gt.edu.uinsight.imports.dto.response.ImportErrorDetail;
 import gt.edu.uinsight.imports.dto.response.ImportStatusResponse;
@@ -18,7 +20,6 @@ import gt.edu.uinsight.imports.exception.ImportNotConfirmableException;
 import gt.edu.uinsight.imports.exception.ImportNotFoundException;
 import gt.edu.uinsight.imports.exception.InvalidCsvFileException;
 import gt.edu.uinsight.imports.repository.EstudianteValidoRepository;
-import gt.edu.uinsight.imports.repository.EvaluacionReferenciaRepository;
 import gt.edu.uinsight.imports.repository.ImportacionRepository;
 import gt.edu.uinsight.imports.repository.RegistroImportacionRepository;
 import gt.edu.uinsight.imports.util.ImportLogEvents;
@@ -59,23 +60,26 @@ public class ImportService {
     private final EstudianteValidoRepository estudianteValidoRepository;
     private final CsvImportProperties csvImportProperties;
     private final GradeService gradeService;
-    private final EvaluacionReferenciaRepository evaluacionReferenciaRepository;
-    private final EnrollmentRefRepository enrollmentRefRepository;
+    private final EvaluationQueryService evaluationQueryService;
+    private final SectionService sectionService;
+    private final EnrollmentService enrollmentService;
 
     public ImportService(ImportacionRepository importacionRepository,
                           RegistroImportacionRepository registroImportacionRepository,
                           EstudianteValidoRepository estudianteValidoRepository,
                           CsvImportProperties csvImportProperties,
                           GradeService gradeService,
-                          EvaluacionReferenciaRepository evaluacionReferenciaRepository,
-                          EnrollmentRefRepository enrollmentRefRepository) {
+                          EvaluationQueryService evaluationQueryService,
+                          SectionService sectionService,
+                          EnrollmentService enrollmentService) {
         this.importacionRepository = importacionRepository;
         this.registroImportacionRepository = registroImportacionRepository;
         this.estudianteValidoRepository = estudianteValidoRepository;
         this.csvImportProperties = csvImportProperties;
         this.gradeService = gradeService;
-        this.evaluacionReferenciaRepository = evaluacionReferenciaRepository;
-        this.enrollmentRefRepository = enrollmentRefRepository;
+        this.evaluationQueryService = evaluationQueryService;
+        this.sectionService = sectionService;
+        this.enrollmentService = enrollmentService;
     }
 
     public ImportValidateResponse validar(MultipartFile file, Long usuarioId) {
@@ -210,16 +214,15 @@ public class ImportService {
         if (resolucion.evaluacion() == null) {
             return rechazar(registro, resolucion.campo(), resolucion.motivo());
         }
-        EvaluationRef evaluacion = resolucion.evaluacion();
-
-        BigDecimal maximo = evaluacion.getMaximumScore();
+        EvaluationSummary evaluacion = resolucion.evaluacion();
+        BigDecimal maximo = evaluacion.maximumScore();
         if (score.compareTo(csvImportProperties.getMinScore()) < 0 || score.compareTo(maximo) > 0) {
             return rechazar(registro, "score", "La nota " + score + " está fuera del rango permitido ("
                     + csvImportProperties.getMinScore() + "-" + maximo + ") para la evaluación "
                     + evaluationCode + ".");
         }
 
-        String clave = estudiante.get().getId() + "|" + evaluacion.getId();
+        String clave = estudiante.get().getId() + "|" + evaluacion.id();
         if (!clavesVistas.add(clave)) {
             return rechazar(registro, "studentCode/evaluationCode",
                     "Registro duplicado para el estudiante " + studentCode
@@ -230,21 +233,25 @@ public class ImportService {
     }
 
     /**
-     * Resuelve el evaluationCode del CSV contra grade_evaluation_ref (por nombre) y
-     * se queda con la evaluación de la sección en la que el estudiante está inscrito.
+     * Resuelve el código del CSV contra A5 y selecciona la evaluación de una
+     * sección en la que el estudiante está inscrito según A4.
      */
     private Resolucion resolverEvaluacion(Long studentId, String studentCode, String evaluationCode) {
         if (evaluationCode == null || evaluationCode.isBlank()) {
             return Resolucion.error("evaluationCode", "El código de evaluación está vacío.");
         }
 
-        List<EvaluationRef> candidatas = evaluacionReferenciaRepository.findByNameIgnoreCase(evaluationCode);
+        List<EvaluationSummary> candidatas = sectionService.getAllSections().stream()
+                .map(section -> section.getId())
+                .flatMap(sectionId -> evaluationQueryService.findBySection(sectionId).stream())
+                .filter(evaluation -> evaluation.name().equalsIgnoreCase(evaluationCode))
+                .toList();
         if (candidatas.isEmpty()) {
             return Resolucion.error("evaluationCode", "La evaluación \"" + evaluationCode + "\" no existe.");
         }
 
-        List<EvaluationRef> inscritas = candidatas.stream()
-                .filter(e -> enrollmentRefRepository.existsByStudentIdAndSectionId(studentId, e.getSectionId()))
+        List<EvaluationSummary> inscritas = candidatas.stream()
+                .filter(e -> enrollmentService.isStudentEnrolled(studentId, e.sectionId()))
                 .collect(Collectors.toList());
 
         if (inscritas.isEmpty()) {
@@ -345,7 +352,7 @@ public class ImportService {
 
         GradeRequest request = new GradeRequest();
         request.setStudentId(estudiante.getId());
-        request.setEvaluationId(resolucion.evaluacion().getId());
+        request.setEvaluationId(resolucion.evaluacion().id());
         request.setScore(registro.getScore());
         return request;
     }
@@ -360,8 +367,8 @@ public class ImportService {
                 .map(r -> new ImportErrorDetail(r.getNumeroFila(), r.getCampoError(), r.getMotivoError()));
     }
 
-    private record Resolucion(EvaluationRef evaluacion, String campo, String motivo) {
-        static Resolucion ok(EvaluationRef evaluacion) {
+    private record Resolucion(EvaluationSummary evaluacion, String campo, String motivo) {
+        static Resolucion ok(EvaluationSummary evaluacion) {
             return new Resolucion(evaluacion, null, null);
         }
 

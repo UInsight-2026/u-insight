@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * Respuesta de GET /api/v1/analytics/sections/{id}/position
  *
  * quartiles siempre incluye Q1, Q2 y Q3.
- * percentiles solo se llena si el cliente pidio ?percentiles=25,50,75,90
+ * percentiles es null si el cliente no pidio ?percentiles=...
  */
 @Schema(description = "Medidas de posición de las calificaciones de una sección")
 public class SectionPositionResponse {
@@ -19,7 +19,7 @@ public class SectionPositionResponse {
     @Schema(description = "Cuartiles Q1, Q2 y Q3",
             example = "{\"Q1\": 65.0, \"Q2\": 78.5, \"Q3\": 89.0}")
     private Map<String, Double> quartiles;
-    @Schema(description = "Percentiles adicionales solicitados (1 a 99); vacío si no se solicitó ninguno",
+    @Schema(description = "Percentiles adicionales solicitados (1 a 99); null si no se solicitó ninguno",
             example = "{\"P25\": 65.0, \"P90\": 94.0}")
     private Map<String, Double> percentiles;
 

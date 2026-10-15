@@ -70,6 +70,12 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean existsById(Long id) {
+        return repository.existsById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CourseResponse findByCode(String code) {
         return repository.findByCodeIgnoreCase(code.trim())
                 .map(mapper::toResponse)

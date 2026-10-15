@@ -1,5 +1,8 @@
 package gt.edu.uinsight.grade.service;
 
+import gt.edu.uinsight.enrollment.service.EnrollmentService;
+import gt.edu.uinsight.evaluation.api.EvaluationQueryService;
+import gt.edu.uinsight.evaluation.api.EvaluationSummary;
 import gt.edu.uinsight.grade.dto.GradeRequest;
 import gt.edu.uinsight.grade.dto.GradeResponse;
 import gt.edu.uinsight.grade.exception.DuplicateGradeException;
@@ -7,11 +10,7 @@ import gt.edu.uinsight.grade.exception.InvalidRequestException;
 import gt.edu.uinsight.grade.exception.InvalidScoreException;
 import gt.edu.uinsight.grade.exception.ResourceNotFoundException;
 import gt.edu.uinsight.grade.exception.StudentNotEnrolledException;
-import gt.edu.uinsight.grade.model.EvaluationRef;
 import gt.edu.uinsight.grade.model.Grade;
-import gt.edu.uinsight.grade.model.GradeStatus;
-import gt.edu.uinsight.grade.repository.EnrollmentRefRepository;
-import gt.edu.uinsight.grade.repository.EvaluationRefRepository;
 import gt.edu.uinsight.grade.repository.GradeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +31,14 @@ class GradeRegistrar {
     private static final Logger log = LoggerFactory.getLogger(GradeRegistrar.class);
 
     private final GradeRepository gradeRepository;
-    private final EvaluationRefRepository evaluationRefRepository;
-    private final EnrollmentRefRepository enrollmentRefRepository;
+    private final EvaluationQueryService evaluationQueryService;
+    private final EnrollmentService enrollmentService;
 
-    GradeRegistrar(GradeRepository gradeRepository, EvaluationRefRepository evaluationRefRepository,
-                    EnrollmentRefRepository enrollmentRefRepository) {
+    GradeRegistrar(GradeRepository gradeRepository, EvaluationQueryService evaluationQueryService,
+                   EnrollmentService enrollmentService) {
         this.gradeRepository = gradeRepository;
-        this.evaluationRefRepository = evaluationRefRepository;
-        this.enrollmentRefRepository = enrollmentRefRepository;
+        this.evaluationQueryService = evaluationQueryService;
+        this.enrollmentService = enrollmentService;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -51,15 +50,20 @@ class GradeRegistrar {
             throw new InvalidScoreException("score no puede ser negativo");
         }
 
-        EvaluationRef evaluation = evaluationRefRepository.findById(request.getEvaluationId())
-            .orElseThrow(() -> new ResourceNotFoundException("La evaluacion no existe: " + request.getEvaluationId()));
-
-        if (!enrollmentRefRepository.existsByStudentIdAndSectionId(request.getStudentId(), evaluation.getSectionId())) {
-            throw new StudentNotEnrolledException(
-                "El estudiante " + request.getStudentId() + " no esta inscrito en la seccion " + evaluation.getSectionId());
+        EvaluationSummary evaluation = evaluationQueryService.findSummary(request.getEvaluationId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "La evaluacion no existe: " + request.getEvaluationId()));
+        if (!evaluation.isGradable()) {
+            throw new InvalidRequestException(
+                "No se pueden registrar calificaciones en una evaluacion que no esta ACTIVE");
         }
 
-        validateScoreRange(request.getScore(), evaluation.getMaximumScore());
+        if (!enrollmentService.isStudentEnrolled(request.getStudentId(), evaluation.sectionId())) {
+            throw new StudentNotEnrolledException(
+                "El estudiante " + request.getStudentId() + " no esta inscrito en la seccion " + evaluation.sectionId());
+        }
+
+        validateScoreRange(request.getScore(), evaluation.maximumScore());
 
         if (gradeRepository.existsByEvaluationIdAndStudentId(request.getEvaluationId(), request.getStudentId())) {
             throw new DuplicateGradeException(
@@ -68,7 +72,7 @@ class GradeRegistrar {
         }
 
         Grade grade = new Grade(request.getEvaluationId(), request.getStudentId(), request.getScore(),
-            LocalDateTime.now(), GradeStatus.REGISTERED);
+            LocalDateTime.now());
         grade = gradeRepository.save(grade);
 
         log.info("GRADE_REGISTERED gradeId={} evaluationId={} studentId={} score={}",

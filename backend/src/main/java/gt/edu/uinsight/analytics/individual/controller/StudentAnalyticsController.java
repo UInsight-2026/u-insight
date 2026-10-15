@@ -31,7 +31,7 @@ public class StudentAnalyticsController {
     @GetMapping("/{id}/summary")
     @Operation(
             summary = "Obtener resumen del estudiante",
-            description = "Devuelve promedios y diferencia usando la base de datos. Si el estudiante tiene varias secciones activas, debe enviarse sectionId."
+            description = "Devuelve promedios y diferencia usando la base de datos. Si el estudiante tiene varias inscripciones vigentes, debe enviarse sectionId. Se aceptan secciones cerradas si la inscripción sigue vigente."
     )
     @ApiResponse(
             responseCode = "200",
@@ -52,13 +52,13 @@ public class StudentAnalyticsController {
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID inválido, sectionId no activo o sectionId requerido por tener varias secciones")
+    @ApiResponse(responseCode = "400", description = "ID inválido, el estudiante no está inscrito en sectionId o sectionId requerido por tener varias inscripciones")
     @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
     @ApiResponse(responseCode = "422", description = "El estudiante o la sección no tiene datos analíticos disponibles")
     public StudentSummaryResponse getSummary(
             @Parameter(description = "ID del estudiante", example = "1")
             @PathVariable Long id,
-            @Parameter(description = "Sección activa del estudiante. Obligatoria si tiene varias inscripciones activas.", example = "2")
+            @Parameter(description = "Sección en la que el estudiante tiene inscripción vigente. Obligatoria si tiene varias inscripciones.", example = "2")
             @RequestParam(required = false) Long sectionId) {
         return studentAnalyticsService.getSummary(id, sectionId);
     }
@@ -66,7 +66,7 @@ public class StudentAnalyticsController {
     @GetMapping("/{id}/comparison")
     @Operation(
             summary = "Obtener comparación del estudiante",
-            description = "Devuelve promedios y percentil usando la base de datos. Si el estudiante tiene varias secciones activas, debe enviarse sectionId."
+            description = "Devuelve promedios y percentil usando la base de datos. Si el estudiante tiene varias inscripciones vigentes, debe enviarse sectionId. Se aceptan secciones cerradas si la inscripción sigue vigente."
     )
     @ApiResponse(
             responseCode = "200",
@@ -88,13 +88,13 @@ public class StudentAnalyticsController {
                     )
             )
     )
-    @ApiResponse(responseCode = "400", description = "ID inválido, sectionId no activo o sectionId requerido por tener varias secciones")
+    @ApiResponse(responseCode = "400", description = "ID inválido, el estudiante no está inscrito en sectionId o sectionId requerido por tener varias inscripciones")
     @ApiResponse(responseCode = "404", description = "Estudiante no encontrado")
     @ApiResponse(responseCode = "422", description = "El estudiante o la sección no tiene datos analíticos disponibles")
     public StudentComparisonResponse getComparison(
             @Parameter(description = "ID del estudiante", example = "1")
             @PathVariable Long id,
-            @Parameter(description = "Sección activa del estudiante. Obligatoria si tiene varias inscripciones activas.", example = "2")
+            @Parameter(description = "Sección en la que el estudiante tiene inscripción vigente. Obligatoria si tiene varias inscripciones.", example = "2")
             @RequestParam(required = false) Long sectionId) {
         return studentAnalyticsService.getComparison(id, sectionId);
     }

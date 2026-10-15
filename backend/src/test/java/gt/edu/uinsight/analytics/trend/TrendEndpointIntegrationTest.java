@@ -13,7 +13,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem:trend-integration;DB_CLOSE_DELAY=-1;NON_KEYWORDS=YEAR"
+})
 @AutoConfigureMockMvc
 @Transactional
 class TrendEndpointIntegrationTest {
@@ -123,16 +125,16 @@ class TrendEndpointIntegrationTest {
 
     private void insertStudent(long id) {
         jdbcTemplate.update("""
-                INSERT INTO student (id)
-                VALUES (?)
-                """, id);
+                INSERT INTO student (id, student_code)
+                VALUES (?, ?)
+                """, id, "EST" + id);
     }
 
     private void insertGrade(long id, long evaluationId, long studentId, String score) {
         jdbcTemplate.update("""
                 INSERT INTO grade
-                    (id, evaluation_id, student_id, score, registered_at, updated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    (id, evaluation_id, student_id, score, registered_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
                 """, id, evaluationId, studentId, new java.math.BigDecimal(score));
     }
 }

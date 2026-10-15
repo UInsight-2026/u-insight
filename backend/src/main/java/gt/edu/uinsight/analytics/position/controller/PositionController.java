@@ -45,7 +45,8 @@ public class PositionController {
     @Operation(
             summary = "Calcular cuartiles y percentiles de una sección",
             description = "Devuelve Q1, Q2 y Q3 para las calificaciones de la sección. "
-                    + "Si se solicita, también calcula los percentiles indicados.")
+                    + "Los percentiles adicionales se devuelven como null si se omite el parámetro; "
+                    + "para calcularlos, envíe percentiles=25,50,75.")
     @ApiResponse(responseCode = "200", description = "Medidas de posición calculadas",
             content = @Content(schema = @Schema(implementation = SectionPositionResponse.class)))
     @ApiResponse(responseCode = "400", description = "Uno o más percentiles solicitados están fuera del rango 1 a 99")
@@ -54,7 +55,7 @@ public class PositionController {
     public SectionPositionResponse getSectionPosition(
             @Parameter(description = "Identificador de la sección", example = "10")
             @PathVariable Long id,
-            @Parameter(description = "Percentiles adicionales a calcular (valores entre 1 y 99)",
+            @Parameter(description = "Percentiles adicionales a calcular (valores entre 1 y 99); si se omite, el campo percentiles será null",
                     example = "25,50,75,90")
             @RequestParam(required = false) List<Integer> percentiles) {
         return positionService.getSectionPosition(id, percentiles == null ? Collections.emptyList() : percentiles);

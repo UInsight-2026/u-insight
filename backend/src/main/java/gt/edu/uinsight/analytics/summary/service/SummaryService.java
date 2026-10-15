@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -26,7 +24,6 @@ import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 public class SummaryService {
 
     private static final Logger log = LoggerFactory.getLogger(SummaryService.class);
-    private static final long SUMMARY_TIMEOUT_MILLIS = 500;
     private final AnalyticsClientRepository analyticsClientRepository;
     private final AnalyticsDatabaseRepository databaseRepository;
     private final double studentsAtRiskThreshold;
@@ -50,8 +47,6 @@ public class SummaryService {
         summary.setSectionId(sectionId);
         List<String> unavailableComponents = new ArrayList<>();
 
-        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(SUMMARY_TIMEOUT_MILLIS);
-
         CompletableFuture<CentralTendencyResponse> centralTendencyFuture =
                 getComponent(() -> analyticsClientRepository.getCentralTendency(sectionId));
         CompletableFuture<SectionPositionResponse> positionFuture =
@@ -63,15 +58,15 @@ public class SummaryService {
         CompletableFuture<Integer> studentsAtRiskFuture =
                 getComponent(() -> databaseRepository.countStudentsBelowAverage(sectionId, studentsAtRiskThreshold));
 
-        setComponentOrMarkUnavailable("centralTendency", centralTendencyFuture, deadline, sectionId,
+        setComponentOrMarkUnavailable("centralTendency", centralTendencyFuture, sectionId,
                 unavailableComponents, summary::setCentralTendencyData);
-        setComponentOrMarkUnavailable("position", positionFuture, deadline, sectionId,
+        setComponentOrMarkUnavailable("position", positionFuture, sectionId,
                 unavailableComponents, summary::setPositionData);
-        setComponentOrMarkUnavailable("dispersion", dispersionFuture, deadline, sectionId,
+        setComponentOrMarkUnavailable("dispersion", dispersionFuture, sectionId,
                 unavailableComponents, summary::setDispersionData);
-        setComponentOrMarkUnavailable("trend", trendFuture, deadline, sectionId,
+        setComponentOrMarkUnavailable("trend", trendFuture, sectionId,
                 unavailableComponents, summary::setTrendData);
-        setComponentOrMarkUnavailable("studentsAtRisk", studentsAtRiskFuture, deadline, sectionId,
+        setComponentOrMarkUnavailable("studentsAtRisk", studentsAtRiskFuture, sectionId,
                 unavailableComponents, summary::setStudentsAtRisk);
 
         summary.setUnavailableComponents(unavailableComponents);
@@ -85,11 +80,10 @@ public class SummaryService {
     private <T> void setComponentOrMarkUnavailable(
             String component,
             CompletableFuture<T> future,
-            long deadline,
             Long sectionId,
             List<String> unavailableComponents,
             Consumer<T> setter) {
-        T result = awaitComponent(component, future, deadline, sectionId);
+        T result = awaitComponent(component, future, sectionId);
         if (result == null) {
             unavailableComponents.add(component);
         } else {
@@ -100,17 +94,12 @@ public class SummaryService {
     private <T> T awaitComponent(
             String component,
             CompletableFuture<T> future,
-            long deadline,
             Long sectionId) {
         try {
-            long remainingNanos = Math.max(0, deadline - System.nanoTime());
-            return future.get(remainingNanos, TimeUnit.NANOSECONDS);
+            return future.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionId={} component={} reason=interrupted",
-                    sectionId, component, e);
-        } catch (TimeoutException e) {
-            log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionId={} component={} reason=timeout",
                     sectionId, component, e);
         } catch (ExecutionException e) {
             log.warn("SUMMARY_COMPONENT_UNAVAILABLE sectionId={} component={} reason=service-error",
