@@ -8,7 +8,10 @@ public class CreateAlertRuleRequest {
     private String name;
     @Schema(description = "Descripción funcional de la regla", example = "Detecta promedios inferiores al umbral establecido")
     private String description;
-    @Schema(description = "Expresión condicional evaluada por el motor de riesgo", example = "average < threshold")
+    @Schema(
+            description = "Expresión del motor. Variables numéricas: average, median, dispersion, percentile90, "
+                    + "studentsAtRisk, studentsAtRiskPercentage. La tendencia acepta comparación == con clasificación.",
+            example = "average < 60 && trend == NEGATIVE")
     private String conditionExpression;
     @Schema(description = "Severidad de la regla", allowableValues = {"LOW", "MEDIUM", "HIGH"}, example = "HIGH")
     private String severity;

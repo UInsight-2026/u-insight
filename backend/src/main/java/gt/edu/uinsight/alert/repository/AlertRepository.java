@@ -10,4 +10,10 @@ import java.util.List;
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
     List<Alert> findByStatusNotIn(Collection<AlertStatus> statuses);
+
+    boolean existsBySectionIdAndAlertTypeAndTitleAndStatusNotIn(
+            Integer sectionId,
+            String alertType,
+            String title,
+            Collection<AlertStatus> statuses);
 }

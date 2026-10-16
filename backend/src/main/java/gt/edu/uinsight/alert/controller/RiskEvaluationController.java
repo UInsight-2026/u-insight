@@ -34,6 +34,7 @@ public class RiskEvaluationController {
     @ApiResponse(responseCode = "200", description = "Evaluación completada",
             content = @Content(schema = @Schema(implementation = RiskEvaluationResponse.class)))
     @ApiResponse(responseCode = "400", description = "La sección o los datos usados para la evaluación no son válidos")
+    @ApiResponse(responseCode = "422", description = "No hay reglas evaluables o datos analíticos suficientes")
     @ApiResponse(responseCode = "500", description = "No fue posible completar la evaluación")
     public ResponseEntity<RiskEvaluationResponse> evaluateSectionRisk(
             @Parameter(description = "Identificador de la sección a evaluar", example = "10")
@@ -41,11 +42,8 @@ public class RiskEvaluationController {
         try {
             RiskEvaluationResponse response = riskEvaluationService.evaluateSectionRisk(sectionId);
             return ResponseEntity.ok(response);
-
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
         }
     }
 }

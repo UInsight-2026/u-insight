@@ -3,10 +3,17 @@ package gt.edu.uinsight.alert.service;
 import gt.edu.uinsight.alert.engine.RiskEngine;
 import gt.edu.uinsight.alert.engine.RiskResult;
 import gt.edu.uinsight.alert.model.Alert;
+import gt.edu.uinsight.alert.model.AlertStatus;
 import gt.edu.uinsight.alert.repository.AlertRepository;
 import gt.edu.uinsight.alert.dto.response.RiskEvaluationResponse;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.service.SummaryService;
+import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.EnumSet;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,30 +33,51 @@ public class RiskEvaluationService {
         this.alertRepository = alertRepository;
     }
 
+    @Transactional
     public RiskEvaluationResponse evaluateSectionRisk(Long sectionId) {
 
         SectionSummary summary = summaryService.getSummary(sectionId);
 
         if (summary == null) {
-            throw new RuntimeException("No hay indicadores disponibles para la sección " + sectionId);
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "No hay indicadores disponibles para la sección " + sectionId);
         }
 
         RiskResult result = riskEngine.evaluate(summary);
-
-        Alert alert = new Alert();
-        alert.setSectionId(sectionId.intValue());
-        alert.setRiskLevel(result.getRiskLevel());
-        alert.setRulesEvaluated(result.getRulesEvaluated());
-        alert.setRulesTriggered(result.getRulesTriggered());
-        alert.setAlertsGenerated(result.getAlertsGenerated());
-        alert.setAlertType("RISK_EVALUATION");
-        alert.setSeverity(result.getRiskLevel());
-        alert.setTitle(buildTitle(result, sectionId));
-        if (!result.getActivatedRules().isEmpty()) {
-            alert.setDescription("Reglas activadas: " + String.join(", ", result.getActivatedRules()));
+        if (result.getRulesEvaluated() == 0) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "No hay reglas activas evaluables con los datos disponibles para la sección " + sectionId);
+        }
+        if (sectionId > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("El identificador de sección excede el rango soportado.");
         }
 
-        alertRepository.save(alert);
+        int alertsGenerated = 0;
+        for (String ruleName : result.getActivatedRules()) {
+            String title = buildTitle(ruleName);
+            if (alertRepository.existsBySectionIdAndAlertTypeAndTitleAndStatusNotIn(
+                    sectionId.intValue(),
+                    "RISK_EVALUATION",
+                    title,
+                    EnumSet.of(AlertStatus.RESOLVED, AlertStatus.DISMISSED))) {
+                continue;
+            }
+
+            Alert alert = new Alert();
+            alert.setSectionId(sectionId.intValue());
+            alert.setRiskLevel(result.getRiskLevel());
+            alert.setRulesEvaluated(result.getRulesEvaluated());
+            alert.setRulesTriggered(result.getRulesTriggered());
+            alert.setAlertsGenerated(1);
+            alert.setAlertType("RISK_EVALUATION");
+            alert.setSeverity(result.getRiskLevel());
+            alert.setTitle(title);
+            alert.setDescription("Regla activada: " + ruleName);
+            alertRepository.save(alert);
+            alertsGenerated++;
+        }
+
+        result.setAlertsGenerated(alertsGenerated);
 
         return new RiskEvaluationResponse(
                 sectionId,
@@ -62,7 +90,7 @@ public class RiskEvaluationService {
         );
     }
 
-    private String buildTitle(RiskResult result, Long sectionId) {
-        return "Riesgo " + result.getRiskLevel() + " detectado en la sección " + sectionId;
+    private String buildTitle(String ruleName) {
+        return "Riesgo detectado: " + ruleName;
     }
 }

@@ -19,6 +19,7 @@ import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionClassificatio
 import gt.edu.uinsight.analytics.dispersion.dto.response.DispersionResponse;
 import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository.StudentsAtRiskStats;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendPoint;
@@ -47,6 +48,9 @@ class SummaryServiceTest {
         assertNotNull(result.getTrendData());
         assertEquals(List.of(), result.getUnavailableComponents());
         assertEquals(3, result.getStudentsAtRisk());
+        assertEquals(25.0, result.getStudentsAtRiskPercentage());
+        assertEquals(12, result.getStudentsAssessed());
+        assertEquals(15, result.getStudentsEnrolled());
         assertNull(result.getStudentComparisonData());
     }
 
@@ -67,12 +71,12 @@ class SummaryServiceTest {
     @Test
     @DisplayName("Componentes vacíos o fallidos se reportan sin perder el resumen")
     void getSummary_allComponentsUnavailable_returnsAllUnavailable() {
-        SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository(true, false));
+        SummaryService summaryService = summaryService(new FixtureAnalyticsClientRepository(true, false), true);
 
         SectionSummary result = summaryService.getSummary(SECTION_ID);
 
         assertNotNull(result);
-        assertEquals(List.of("centralTendency", "position", "dispersion", "trend"),
+        assertEquals(List.of("centralTendency", "position", "dispersion", "trend", "studentsAtRisk"),
                 result.getUnavailableComponents());
     }
 
@@ -80,7 +84,7 @@ class SummaryServiceTest {
     @DisplayName("Marca el conteo de riesgo como no disponible si falla la consulta a la base")
     void getSummary_riskCountQueryFails_marksRiskCountUnavailable() {
         AnalyticsDatabaseRepository databaseRepository = mock(AnalyticsDatabaseRepository.class);
-        when(databaseRepository.countStudentsBelowAverage(SECTION_ID, 60.0))
+        when(databaseRepository.calculateStudentsAtRisk(SECTION_ID, 60.0))
                 .thenThrow(new IllegalStateException("database unavailable"));
         SummaryService summaryService = new SummaryService(
                 new FixtureAnalyticsClientRepository(), databaseRepository, 60.0);
@@ -128,16 +132,21 @@ class SummaryServiceTest {
     }
 
     private SummaryService summaryService(AnalyticsClientRepository clientRepository) {
+        return summaryService(clientRepository, false);
+    }
+
+    private SummaryService summaryService(AnalyticsClientRepository clientRepository, boolean riskUnavailable) {
         AnalyticsDatabaseRepository databaseRepository = mock(AnalyticsDatabaseRepository.class);
-        when(databaseRepository.countStudentsBelowAverage(SECTION_ID, 60.0)).thenReturn(3);
+        when(databaseRepository.calculateStudentsAtRisk(SECTION_ID, 60.0))
+                .thenReturn(riskUnavailable ? null : new StudentsAtRiskStats(3, 12, 15, 25.0));
         return new SummaryService(clientRepository, databaseRepository, 60.0);
     }
 
     private AnalyticsDatabaseRepository concurrentRiskRepository() {
         AnalyticsDatabaseRepository databaseRepository = mock(AnalyticsDatabaseRepository.class);
-        when(databaseRepository.countStudentsBelowAverage(SECTION_ID, 60.0)).thenAnswer(invocation -> {
+        when(databaseRepository.calculateStudentsAtRisk(SECTION_ID, 60.0)).thenAnswer(invocation -> {
             ConcurrentAnalyticsClientRepository.awaitOtherCalls();
-            return 3;
+            return new StudentsAtRiskStats(3, 12, 15, 25.0);
         });
         return databaseRepository;
     }
@@ -182,7 +191,7 @@ class SummaryServiceTest {
             return unavailable ? null : new SectionPositionResponse(
                     sectionId, 4,
                     Map.of("Q1", 68.0, "Q2", 74.0, "Q3", 82.0),
-                    Map.of());
+                    Map.of("P90", 90.0));
         }
 
         @Override
@@ -220,7 +229,7 @@ class SummaryServiceTest {
         public SectionPositionResponse getPosition(Long sectionId) {
             awaitOtherCalls();
             return new SectionPositionResponse(sectionId, 4,
-                    Map.of("Q1", 68.0, "Q2", 74.0, "Q3", 82.0), Map.of());
+                    Map.of("Q1", 68.0, "Q2", 74.0, "Q3", 82.0), Map.of("P90", 90.0));
         }
 
         @Override

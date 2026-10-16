@@ -29,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 class AnalyticsDatabaseRepositoryTest {
 
     private SectionService sectionService;
@@ -117,17 +119,32 @@ class AnalyticsDatabaseRepositoryTest {
         assertEquals(0, repository.countStudentsBelowAverage(100L, 80));
     }
 
+    @Test
+    void calculatesRiskPercentageAmongEnrolledStudentsWithGrades() {
+        GradeResponse secondStudentGrade = grade(2L, 1000L, 2L, "90.00");
+        when(enrollmentService.getEnrolledStudentIds(100L)).thenReturn(List.of(1L, 2L, 3L));
+        when(gradeService.getBySection(100L)).thenReturn(List.of(grade(1L, 1000L, 1L, "50.00"),
+                secondStudentGrade));
+
+        var result = repository.calculateStudentsAtRisk(100L, 60);
+
+        assertEquals(1, result.studentsAtRisk());
+        assertEquals(2, result.studentsAssessed());
+        assertEquals(3, result.studentsEnrolled());
+        assertEquals(50.0, result.percentage());
+    }
+
     private EvaluationSummary evaluation(long id, long sectionId) {
         return new EvaluationSummary(id, sectionId, "Examen", new BigDecimal("100.00"),
                 BigDecimal.ONE, "ACTIVE", LocalDate.parse("2026-01-10"));
     }
 
     private GradeResponse grade(long id, long evaluationId, long studentId, String score) {
-        GradeResponse response = mock(GradeResponse.class);
-        when(response.getId()).thenReturn(id);
-        when(response.getEvaluationId()).thenReturn(evaluationId);
-        when(response.getStudentId()).thenReturn(studentId);
-        when(response.getScore()).thenReturn(new BigDecimal(score));
+        GradeResponse response = new GradeResponse();
+        ReflectionTestUtils.setField(response, "id", id);
+        ReflectionTestUtils.setField(response, "evaluationId", evaluationId);
+        ReflectionTestUtils.setField(response, "studentId", studentId);
+        ReflectionTestUtils.setField(response, "score", new BigDecimal(score));
         return response;
     }
 }

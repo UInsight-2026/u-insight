@@ -19,6 +19,9 @@ public class SectionSummary {
     private TrendResponse trend;
     private StudentComparisonResponse studentComparison;
     private Integer studentsAtRisk;
+    private Double studentsAtRiskPercentage;
+    private Integer studentsAssessed;
+    private Integer studentsEnrolled;
     private List<String> unavailableComponents;
 
     @Schema(description = "Identificador de la sección", example = "10")
@@ -48,6 +51,18 @@ public class SectionSummary {
     @Schema(description = "Estudiantes activos con promedio de calificaciones normalizado menor al umbral de bajo rendimiento (60 por defecto)", example = "3")
     public Integer getStudentsAtRisk() { return studentsAtRisk; }
     public void setStudentsAtRisk(Integer sar) { this.studentsAtRisk = sar; }
+
+    @Schema(description = "Porcentaje en riesgo entre estudiantes activos con al menos una calificación", example = "25.0")
+    public Double getStudentsAtRiskPercentage() { return studentsAtRiskPercentage; }
+    public void setStudentsAtRiskPercentage(Double percentage) { this.studentsAtRiskPercentage = percentage; }
+
+    @Schema(description = "Estudiantes activos con al menos una calificación", example = "8")
+    public Integer getStudentsAssessed() { return studentsAssessed; }
+    public void setStudentsAssessed(Integer studentsAssessed) { this.studentsAssessed = studentsAssessed; }
+
+    @Schema(description = "Total de estudiantes con matrícula activa en la sección", example = "10")
+    public Integer getStudentsEnrolled() { return studentsEnrolled; }
+    public void setStudentsEnrolled(Integer studentsEnrolled) { this.studentsEnrolled = studentsEnrolled; }
 
     @Schema(description = "Nombres de los componentes que no pudieron obtenerse; vacío cuando el resumen está completo",
             example = "[\"dispersion\"]")
