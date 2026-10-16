@@ -38,7 +38,7 @@ public class AnalyticsClientRepositoryImpl implements AnalyticsClientRepository 
 
     @Override
     public SectionPositionResponse getPosition(Long sectionId) {
-        return positionService.getSectionPosition(sectionId, java.util.List.of());
+        return positionService.getSectionPosition(sectionId, java.util.List.of(90));
     }
 
     @Override

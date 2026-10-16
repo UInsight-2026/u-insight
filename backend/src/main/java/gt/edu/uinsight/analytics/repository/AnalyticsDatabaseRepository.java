@@ -18,6 +18,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Analytics adapter that composes the owning A services instead of reading
@@ -151,20 +154,33 @@ public class AnalyticsDatabaseRepository {
     }
 
     public int countStudentsBelowAverage(Long sectionId, double threshold) {
+        return calculateStudentsAtRisk(sectionId, threshold).studentsAtRisk();
+    }
+
+    public StudentsAtRiskStats calculateStudentsAtRisk(Long sectionId, double threshold) {
         requireSection(sectionId);
-        java.util.Set<Long> enrolledStudentIds = new java.util.HashSet<>(
+        Set<Long> enrolledStudentIds = new java.util.HashSet<>(
                 enrollmentService.getEnrolledStudentIds(sectionId));
-        java.util.Map<Long, List<AnalyticsGrade>> gradesByStudent =
+        Map<Long, List<AnalyticsGrade>> gradesByStudent =
                 findGradesBySection(sectionId).stream()
-                        .collect(java.util.stream.Collectors.groupingBy(AnalyticsGrade::studentId));
+                        .collect(Collectors.groupingBy(AnalyticsGrade::studentId));
         int count = 0;
-        for (var entry : gradesByStudent.entrySet()) {
-            if (enrolledStudentIds.contains(entry.getKey())
-                    && averageNormalizedScore(entry.getValue()).doubleValue() < threshold) {
+        int assessed = 0;
+        for (Long studentId : enrolledStudentIds) {
+            List<AnalyticsGrade> studentGrades = gradesByStudent.get(studentId);
+            if (studentGrades == null || studentGrades.isEmpty()) {
+                continue;
+            }
+            assessed++;
+            if (averageNormalizedScore(studentGrades).doubleValue() < threshold) {
                 count++;
             }
         }
-        return count;
+        Double percentage = assessed == 0 ? null : BigDecimal.valueOf(count)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(assessed), 2, RoundingMode.HALF_UP)
+                .doubleValue();
+        return new StudentsAtRiskStats(count, assessed, enrolledStudentIds.size(), percentage);
     }
 
     private AnalyticsGrade toAnalyticsGrade(GradeResponse grade) {
@@ -234,5 +250,12 @@ public class AnalyticsDatabaseRepository {
         public GradeData toGradeData() {
             return new GradeData(id, evaluationId, studentId, sectionId, courseId, score);
         }
+    }
+
+    public record StudentsAtRiskStats(
+            int studentsAtRisk,
+            int studentsAssessed,
+            int studentsEnrolled,
+            Double percentage) {
     }
 }

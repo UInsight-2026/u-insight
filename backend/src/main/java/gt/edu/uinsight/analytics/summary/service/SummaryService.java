@@ -18,6 +18,7 @@ import gt.edu.uinsight.analytics.position.dto.response.SectionPositionResponse;
 import gt.edu.uinsight.analytics.summary.entity.SectionSummary;
 import gt.edu.uinsight.analytics.summary.repository.AnalyticsClientRepository;
 import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository;
+import gt.edu.uinsight.analytics.repository.AnalyticsDatabaseRepository.StudentsAtRiskStats;
 import gt.edu.uinsight.analytics.trend.dto.response.TrendResponse;
 
 @Service
@@ -55,8 +56,8 @@ public class SummaryService {
                 getComponent(() -> analyticsClientRepository.getDispersion(sectionId));
         CompletableFuture<TrendResponse> trendFuture =
                 getComponent(() -> analyticsClientRepository.getTrend(sectionId));
-        CompletableFuture<Integer> studentsAtRiskFuture =
-                getComponent(() -> databaseRepository.countStudentsBelowAverage(sectionId, studentsAtRiskThreshold));
+        CompletableFuture<StudentsAtRiskStats> studentsAtRiskFuture =
+                getComponent(() -> databaseRepository.calculateStudentsAtRisk(sectionId, studentsAtRiskThreshold));
 
         setComponentOrMarkUnavailable("centralTendency", centralTendencyFuture, sectionId,
                 unavailableComponents, summary::setCentralTendencyData);
@@ -66,8 +67,15 @@ public class SummaryService {
                 unavailableComponents, summary::setDispersionData);
         setComponentOrMarkUnavailable("trend", trendFuture, sectionId,
                 unavailableComponents, summary::setTrendData);
-        setComponentOrMarkUnavailable("studentsAtRisk", studentsAtRiskFuture, sectionId,
-                unavailableComponents, summary::setStudentsAtRisk);
+        StudentsAtRiskStats riskStats = awaitComponent("studentsAtRisk", studentsAtRiskFuture, sectionId);
+        if (riskStats == null || riskStats.percentage() == null) {
+            unavailableComponents.add("studentsAtRisk");
+        } else {
+            summary.setStudentsAtRisk(riskStats.studentsAtRisk());
+            summary.setStudentsAtRiskPercentage(riskStats.percentage());
+            summary.setStudentsAssessed(riskStats.studentsAssessed());
+            summary.setStudentsEnrolled(riskStats.studentsEnrolled());
+        }
 
         summary.setUnavailableComponents(unavailableComponents);
         return summary;

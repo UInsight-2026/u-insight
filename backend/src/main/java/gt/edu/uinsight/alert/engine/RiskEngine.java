@@ -1,4 +1,3 @@
-
 package gt.edu.uinsight.alert.engine;
 
 import java.util.ArrayList;
@@ -22,6 +21,9 @@ public class RiskEngine {
     }
 
     public RiskResult evaluate(SectionSummary summary) {
+        if (summary == null) {
+            throw new IllegalArgumentException("El resumen analítico de la sección es obligatorio.");
+        }
 
         List<AlertRule> rules = alertRuleService.getActiveRules();
         List<String> activatedRules = new ArrayList<>();
@@ -29,204 +31,204 @@ public class RiskEngine {
         int rulesEvaluated = 0;
         int rulesTriggered = 0;
         double score = 0;
+        boolean highSeverityTriggered = false;
 
-        Map<String, Object> ct = convert(summary.getCentralTendencyData());
-        Map<String, Object> pos = convert(summary.getPositionData());
-        Map<String, Object> disp = convert(summary.getDispersionData());
+        Map<String, Object> centralTendency = convert(summary.getCentralTendencyData());
+        Map<String, Object> position = convert(summary.getPositionData());
+        Map<String, Object> dispersion = convert(summary.getDispersionData());
         Map<String, Object> trend = convert(summary.getTrendData());
 
-        Double media = getDouble(ct, "mean");
-        Double mediana = getDouble(ct, "median");
-        Double desviacion = getDouble(disp, "standardDeviation");
-
-        String tendencia = getString(trend, "value");
-        Double percentil90 = getDouble(pos, "percentile90");
-
-        Integer studentsAtRisk = summary.getStudentsAtRisk();
+        Double mean = getDouble(centralTendency, "mean");
+        Double median = getDouble(centralTendency, "median");
+        Double standardDeviation = getDouble(dispersion, "standardDeviation");
+        String trendClassification = firstString(trend, "classification", "value");
+        Double percentile90 = getPercentile90(position);
+        Integer studentsAtRisk = positiveSampleSize(centralTendency)
+                ? summary.getStudentsAtRisk()
+                : null;
+        Double studentsAtRiskPercentage = positiveSampleSize(centralTendency)
+                ? summary.getStudentsAtRiskPercentage()
+                : null;
 
         for (AlertRule rule : rules) {
-
             if (!Boolean.TRUE.equals(rule.getActive())) {
                 continue;
             }
 
-            rulesEvaluated++;
-
-            boolean triggered = evaluateRule(
+            Boolean triggered = evaluateRule(
                     rule.getConditionExpression(),
-                    media,
-                    mediana,
-                    desviacion,
-                    tendencia,
-                    percentil90,
-                    studentsAtRisk
-            );
+                    mean,
+                    median,
+                    standardDeviation,
+                    trendClassification,
+                    percentile90,
+                    studentsAtRisk,
+                    studentsAtRiskPercentage);
+            if (triggered == null) {
+                continue;
+            }
 
+            rulesEvaluated++;
             if (triggered) {
                 activatedRules.add(rule.getName());
                 rulesTriggered++;
                 score += getSeverityWeight(rule.getSeverity());
+                highSeverityTriggered |= "HIGH".equalsIgnoreCase(rule.getSeverity());
             }
         }
 
-        String riskLevel = calculateRiskLevel(score);
-
+        String riskLevel = calculateRiskLevel(score, highSeverityTriggered);
         return new RiskResult(
                 riskLevel,
                 score,
                 rulesEvaluated,
                 rulesTriggered,
-                rulesTriggered,
-                activatedRules
-        );
+                0,
+                activatedRules);
     }
 
     private Map<String, Object> convert(Object obj) {
         if (obj == null) {
             return null;
         }
+        return objectMapper.convertValue(obj, new TypeReference<>() {});
+    }
 
-        return objectMapper.convertValue(
-                obj,
-                new TypeReference<Map<String, Object>>() {}
-        );
+    private boolean positiveSampleSize(Map<String, Object> centralTendency) {
+        Double sampleSize = getDouble(centralTendency, "sampleSize");
+        return sampleSize != null && sampleSize > 0;
     }
 
     private Double getDouble(Map<String, Object> map, String key) {
         if (map == null) {
             return null;
         }
-
-        Object val = map.get(key);
-
-        if (val instanceof Number) {
-            return ((Number) val).doubleValue();
-        }
-
-        return null;
+        Object value = map.get(key);
+        return value instanceof Number number ? number.doubleValue() : null;
     }
 
-    private String getString(Map<String, Object> map, String key) {
+    private String firstString(Map<String, Object> map, String... keys) {
         if (map == null) {
             return null;
         }
-
-        Object val = map.get(key);
-
-        return val != null ? val.toString() : null;
+        for (String key : keys) {
+            Object value = map.get(key);
+            if (value != null) {
+                return value.toString();
+            }
+        }
+        return null;
     }
 
-    private boolean evaluateRule(
-            String expr,
-            Double media,
-            Double mediana,
-            Double desviacion,
-            String tendencia,
-            Double percentil90,
-            Integer studentsAtRisk) {
+    private Double getPercentile90(Map<String, Object> position) {
+        if (position == null || !(position.get("percentiles") instanceof Map<?, ?> percentiles)) {
+            return null;
+        }
+        Object value = percentiles.get("P90");
+        if (value == null) {
+            value = percentiles.get("percentile90");
+        }
+        return value instanceof Number number ? number.doubleValue() : null;
+    }
 
-        if (expr == null || expr.isBlank()) {
+    private Boolean evaluateRule(
+            String expression,
+            Double mean,
+            Double median,
+            Double standardDeviation,
+            String trend,
+            Double percentile90,
+            Integer studentsAtRisk,
+            Double studentsAtRiskPercentage) {
+        if (expression == null || expression.isBlank()) {
             return false;
         }
 
-        String[] parts = expr.split("&&");
-
-        for (String part : parts) {
-            part = part.trim();
-
-            if (!evaluateSingleCondition(
-                    part,
-                    media,
-                    mediana,
-                    desviacion,
-                    tendencia,
-                    percentil90,
-                    studentsAtRisk
-            )) {
+        boolean hasUnavailableValue = false;
+        for (String condition : expression.split("&&")) {
+            Boolean result = evaluateCondition(
+                    condition.trim(),
+                    mean,
+                    median,
+                    standardDeviation,
+                    trend,
+                    percentile90,
+                    studentsAtRisk,
+                    studentsAtRiskPercentage);
+            if (Boolean.FALSE.equals(result)) {
                 return false;
             }
+            if (result == null) {
+                hasUnavailableValue = true;
+            }
         }
-
-        return true;
+        return hasUnavailableValue ? null : true;
     }
 
-    private boolean evaluateSingleCondition(
+    private Boolean evaluateCondition(
             String condition,
-            Double media,
-            Double mediana,
-            Double desviacion,
-            String tendencia,
-            Double percentil90,
-            Integer studentsAtRisk) {
-
-        String[] operators = {"<=", ">=", "==", "<", ">"};
+            Double mean,
+            Double median,
+            Double standardDeviation,
+            String trend,
+            Double percentile90,
+            Integer studentsAtRisk,
+            Double studentsAtRiskPercentage) {
         String operator = null;
-
-        for (String op : operators) {
-            if (condition.contains(op)) {
-                operator = op;
+        for (String candidate : new String[] {"<=", ">=", "==", "<", ">"}) {
+            if (condition.contains(candidate)) {
+                operator = candidate;
                 break;
             }
         }
-
         if (operator == null) {
             return false;
         }
 
-        String[] tokens = condition.split(
-                java.util.regex.Pattern.quote(operator),
-                2
-        );
-
+        String[] tokens = condition.split(java.util.regex.Pattern.quote(operator), 2);
         if (tokens.length != 2) {
             return false;
         }
 
         String left = tokens[0].trim();
         String right = tokens[1].trim();
-
         Object leftValue = switch (left) {
-            case "media" -> media;
-            case "mediana" -> mediana;
-            case "desviacion" -> desviacion;
-            case "tendencia" -> tendencia;
-            case "percentil90" -> percentil90;
+            case "media", "mean", "average" -> mean;
+            case "mediana", "median" -> median;
+            case "desviacion", "standardDeviation", "dispersion" -> standardDeviation;
+            case "tendencia", "trend", "classification" -> trend;
+            case "percentil90", "percentile90" -> percentile90;
             case "studentsAtRisk" -> studentsAtRisk;
+            case "studentsAtRiskPercentage", "percentageStudentsAtRisk",
+                    "failing_rate", "failingRate", "failure_rate" ->
+                    studentsAtRiskPercentage;
             default -> null;
         };
-
         if (leftValue == null) {
-            return false;
+            return null;
         }
 
-        if (leftValue instanceof Number) {
-            double leftNum = ((Number) leftValue).doubleValue();
-            double rightNum;
-
+        if (leftValue instanceof Number number) {
+            final double rightValue;
             try {
-                rightNum = Double.parseDouble(right);
-            } catch (NumberFormatException ex) {
+                rightValue = Double.parseDouble(right);
+            } catch (NumberFormatException exception) {
                 return false;
             }
-
+            double leftNumber = number.doubleValue();
             return switch (operator) {
-                case "<" -> leftNum < rightNum;
-                case ">" -> leftNum > rightNum;
-                case "<=" -> leftNum <= rightNum;
-                case ">=" -> leftNum >= rightNum;
-                case "==" -> leftNum == rightNum;
+                case "<" -> leftNumber < rightValue;
+                case ">" -> leftNumber > rightValue;
+                case "<=" -> leftNumber <= rightValue;
+                case ">=" -> leftNumber >= rightValue;
+                case "==" -> Double.compare(leftNumber, rightValue) == 0;
                 default -> false;
             };
         }
 
-        if (leftValue instanceof String) {
-            if (!"==".equals(operator)) {
-                return false;
-            }
-
-            return leftValue.toString().equalsIgnoreCase(right);
+        if (leftValue instanceof String value && "==".equals(operator)) {
+            return value.equalsIgnoreCase(right);
         }
-
         return false;
     }
 
@@ -234,7 +236,6 @@ public class RiskEngine {
         if (severity == null) {
             return 0;
         }
-
         return switch (severity.toUpperCase()) {
             case "HIGH" -> 30;
             case "MEDIUM" -> 15;
@@ -243,15 +244,13 @@ public class RiskEngine {
         };
     }
 
-    private String calculateRiskLevel(double score) {
-        if (score >= 60) {
+    private String calculateRiskLevel(double score, boolean highSeverityTriggered) {
+        if (highSeverityTriggered || score >= 60) {
             return "HIGH";
         }
-
         if (score >= 30) {
             return "MEDIUM";
         }
-
         return "LOW";
     }
 }
