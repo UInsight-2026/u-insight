@@ -1,14 +1,13 @@
 // Logica de la vista Detalle de seccion (Semana 4: conexion a la API real)
 // GET {API_BASE}/analytics/sections/{id}/summary (celula de analytics) reemplaza
-// a detalle-seccion.mock.json. Las alertas de la seccion se siguen tomando de
-// alertas.mock.json (eso no fue parte de este cambio).
+// a detalle-seccion.mock.json. Las alertas de la seccion ahora tambien vienen de
+// la API real de C5 (GET /reports/alerts), igual que en alertas.js.
 // Usa los componentes compartidos tarjeta.js (crearTarjeta / crearTarjetaAlerta),
 // tabla.js (crearTablaResultados) y utils/formatters.js (valorODisponible,
 // formatearModa, formatearDispersion, formatearTendencia — Semana 5: se movieron
 // ahí para poder probarlas con Vitest sin depender del DOM).
 
-const API_BASE = "http://localhost:8080/api/v1";
-const RUTA_MOCK_ALERTAS = "src/data/alertas.mock.json";
+const API_BASE = "/api/v1";
 
 // TODO: todavia no existe un endpoint de catalogo de secciones para poblar
 // el selector. Mientras tanto se deja este listado minimo (mismos ids que
@@ -43,11 +42,14 @@ async function inicializar() {
 
 async function cargarAlertas() {
   try {
-    const respuesta = await fetch(RUTA_MOCK_ALERTAS);
+    // size=100: el endpoint pagina (default 20); igual que en alertas.js,
+    // para esta vista todavia no implementamos controles de pagina en el UI.
+    const respuesta = await fetch(`${API_BASE}/reports/alerts?size=100`);
     if (!respuesta.ok) {
       throw new Error(`No se pudo cargar el listado de alertas (HTTP ${respuesta.status})`);
     }
-    alertas = await respuesta.json();
+    const datos = await respuesta.json();
+    alertas = datos.alerts || [];
   } catch (error) {
     console.error("DETALLE_SECCION_ALERTAS_ERROR", error);
     alertas = [];
