@@ -1,5 +1,4 @@
 Dockerfile
 .dockerignore
-nginx.conf
 node_modules
 *.test.js
