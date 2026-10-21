@@ -2,7 +2,7 @@
 // GET {API_BASE}/reports/overview (celula C5) reemplaza a inicio.mock.json.
 // Usa crearTarjeta() del componente compartido tarjeta.js.
 
-const API_BASE = "http://localhost:8080/api/v1";
+const API_BASE = "/api/v1";
 
 const TENDENCIA_ETIQUETA = {
   POSITIVE: "Positiva",
