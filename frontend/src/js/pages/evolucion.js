@@ -4,7 +4,7 @@
 // selector de seccion + catalogo fijo mientras no exista un endpoint de
 // catalogo de secciones.
 
-const API_BASE = "http://localhost:8080/api/v1";
+const API_BASE = "/api/v1";
 
 // TODO: igual que en detalle-seccion.js, reemplazar por un GET de
 // secciones real cuando ese catalogo exista. Se usa la misma lista para

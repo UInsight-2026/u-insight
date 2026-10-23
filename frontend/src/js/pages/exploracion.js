@@ -11,7 +11,7 @@
 // (solo tiene .gitkeep), asi que siguen sin existir las columnas de
 // estudiante/carnet/nota del mock original.
 
-const API_BASE = "http://localhost:8080/api/v1";
+const API_BASE = "/api/v1";
 
 const elementos = {
   contador: document.getElementById("contador-resultados"),
