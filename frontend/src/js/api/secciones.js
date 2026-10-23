@@ -40,7 +40,7 @@ function armarCatalogoSecciones(secciones, cursos) {
  */
 function mensajeErrorHttp(status, recurso) {
   if (status === 404) {
-    return `Sección sin datos de ${recurso}.`;
+    return `No hay datos de ${recurso} para esta sección.`;
   }
   if (status >= 500) {
     return `El servidor falló al calcular ${recurso} (HTTP ${status}). Intenta de nuevo más tarde.`;

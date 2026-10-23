@@ -34,23 +34,46 @@ async function cargarResumen() {
   }
 }
 
+const TENDENCIA_VARIANTE = {
+  POSITIVE: "bajo",
+  STABLE: "medio",
+  NEGATIVE: "alto",
+};
+
+/** Clasifica un conteo en bajo/medio/alto para colorear la tarjeta. */
+function nivelPorConteo(valor, limiteMedio, limiteAlto) {
+  if (typeof valor !== "number") {
+    return "neutral";
+  }
+  if (valor >= limiteAlto) {
+    return "alto";
+  }
+  if (valor >= limiteMedio) {
+    return "medio";
+  }
+  return "bajo";
+}
+
 function renderizarResumen(datos) {
   const tendenciaTexto = TENDENCIA_ETIQUETA[datos.overallTrend] || datos.overallTrend || "No disponible";
 
   elementos.contenedor.innerHTML = `
     <div class="card-container">
-      ${crearTarjeta("Alertas activas", datos.activeAlerts ?? "No disponible")}
-      ${crearTarjeta("Secciones en riesgo", datos.highRiskSections ?? "No disponible")}
-      ${crearTarjeta("Estudiantes en riesgo", datos.studentsAtRisk ?? "No disponible")}
-      ${crearTarjeta("Tendencia general", tendenciaTexto)}
+      ${crearTarjeta("Alertas activas", datos.activeAlerts ?? "No disponible", nivelPorConteo(datos.activeAlerts, 1, 3))}
+      ${crearTarjeta("Secciones en riesgo", datos.highRiskSections ?? "No disponible", nivelPorConteo(datos.highRiskSections, 1, 3))}
+      ${crearTarjeta("Estudiantes en riesgo", datos.studentsAtRisk ?? "No disponible", nivelPorConteo(datos.studentsAtRisk, 1, 6))}
+      ${crearTarjeta("Tendencia general", tendenciaTexto, TENDENCIA_VARIANTE[datos.overallTrend] || "neutral")}
     </div>
   `;
 
+  // No se le muestra al usuario final qué célula/módulo interno falló (eso es
+  // un detalle de implementación); solo que el resumen puede estar incompleto.
   const fuentesNoDisponibles = datos.unavailableSources || [];
   if (fuentesNoDisponibles.length) {
+    console.warn("INICIO_FUENTES_NO_DISPONIBLES", fuentesNoDisponibles);
     elementos.contenedor.innerHTML += `
       <p class="mensaje-estado">
-        Algunos componentes no estuvieron disponibles al calcular este resumen: ${fuentesNoDisponibles.join(", ")}.
+        Algunos indicadores podrían no reflejar la información más reciente.
       </p>
     `;
   }

@@ -21,6 +21,33 @@ const CLASIFICACION_TENDENCIA = {
 };
 
 /**
+ * Estados de sección/curso/período que llegan en inglés desde la API
+ * (son nombres de enum de Java) y deben verse en español en la UI.
+ *
+ * Nota: el nombre no puede ser ESTADO_ETIQUETA a secas — tarjeta.js ya
+ * declara una global con ese nombre (estados de alerta) y, al cargarse
+ * ambos archivos como <script> clásicos, comparten el mismo scope global:
+ * una redeclaración de "const" con el mismo nombre rompe con SyntaxError
+ * TODO el archivo que se declara segundo (formatters.js quedaba sin
+ * definir nada, ni siquiera valorODisponible).
+ */
+const ESTADO_ENTIDAD_ETIQUETA = {
+  ACTIVE: "Activa",
+  INACTIVE: "Inactiva",
+  DRAFT: "Borrador",
+  CLOSED: "Cerrada",
+  PLANNED: "Planificada",
+};
+
+/** Traduce un estado de enum (ACTIVE, DRAFT, ...) a su etiqueta en español. */
+function formatearEstado(estado) {
+  if (!estado) {
+    return "—";
+  }
+  return ESTADO_ENTIDAD_ETIQUETA[estado] || estado;
+}
+
+/**
  * Vista legible de un valor que puede venir null/undefined desde la API
  * (componente de analítica no disponible). Usado por varias vistas.
  */
@@ -67,9 +94,11 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     CLASIFICACION_DISPERSION,
     CLASIFICACION_TENDENCIA,
+    ESTADO_ENTIDAD_ETIQUETA,
     valorODisponible,
     formatearModa,
     formatearDispersion,
     formatearTendencia,
+    formatearEstado,
   };
 }

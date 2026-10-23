@@ -61,6 +61,7 @@ async function cargarDatos() {
         docente: docente ? docente.teacherName : `Docente #${seccion.teacherId}`,
         seccion: seccion.sectionCode,
         estado: seccion.status,
+        estadoTexto: formatearEstado(seccion.status),
       };
     });
 
@@ -119,7 +120,7 @@ function renderizarTabla(lista) {
           <td>${registro.curso}</td>
           <td>${registro.docente}</td>
           <td>${registro.seccion}</td>
-          <td>${registro.estado}</td>
+          <td><span class="estado-badge estado-badge--${registro.estado.toLowerCase()}">${registro.estadoTexto}</span></td>
         </tr>`;
     })
     .join("");

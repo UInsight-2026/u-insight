@@ -5,10 +5,16 @@
 /**
  * Arma el HTML de una tarjeta simple de indicador (título + valor).
  * Reemplaza la función local que cada vista repetía por su cuenta.
+ *
+ * @param {string} titulo
+ * @param {string|number} valor
+ * @param {"neutral"|"bajo"|"medio"|"alto"} variante Color de acento según
+ *   nivel de riesgo. "neutral" (por defecto) usa el dorado de marca; se usa
+ *   en vistas sin semántica de riesgo (Detalle de sección, Intervenciones).
  */
-function crearTarjeta(titulo, valor) {
+function crearTarjeta(titulo, valor, variante = "neutral") {
   return `
-    <div class="card">
+    <div class="card stat-card stat-card--${variante}">
       <h3>${titulo}</h3>
       <p>${valor}</p>
     </div>
@@ -43,14 +49,18 @@ function crearTarjetaAlerta(alerta) {
   const severidadTexto = SEVERIDAD_ETIQUETA[alerta.riskLevel] || alerta.riskLevel;
   const estadoTexto = ESTADO_ETIQUETA[alerta.status] || alerta.status;
 
+  const encabezadoSeccion = alerta.courseCode
+    ? `${alerta.courseCode} · Sección ${alerta.sectionId ?? "—"}`
+    : `Sección ${alerta.sectionId ?? "—"}`;
+
   return `
     <div class="card card-alerta">
       <div class="card-alerta__encabezado">
         <span class="badge ${severidadClase}">${severidadTexto}</span>
         <span class="badge ${estadoClase}">${estadoTexto}</span>
       </div>
-      <h3>${alerta.courseCode || ""} · Sección ${alerta.sectionId ?? ""}</h3>
-      <p>${alerta.title || ""}</p>
+      <h3>${encabezadoSeccion}</h3>
+      <p>${alerta.title || "Sin descripción"}</p>
     </div>
   `;
 }

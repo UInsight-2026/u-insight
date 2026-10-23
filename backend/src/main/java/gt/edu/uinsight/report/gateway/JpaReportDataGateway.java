@@ -4,6 +4,7 @@ import gt.edu.uinsight.academicperiod.entity.AcademicPeriod;
 import gt.edu.uinsight.academicperiod.repository.AcademicPeriodRepository;
 import gt.edu.uinsight.enrollment.repository.EnrollmentRepository;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
+import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
 import gt.edu.uinsight.report.mock.model.MockAlert;
 import gt.edu.uinsight.report.mock.model.MockCourse;
 import gt.edu.uinsight.report.mock.model.MockSection;
@@ -38,6 +39,7 @@ public class JpaReportDataGateway implements ReportDataGateway {
     private final TeacherRepository teacherRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final RiskGateway riskGateway;
+    private final AnalyticsGateway analyticsGateway;
     private final AlertQueryPort alertQueryPort;
 
     public JpaReportDataGateway(SectionRepository sectionRepository,
@@ -45,12 +47,14 @@ public class JpaReportDataGateway implements ReportDataGateway {
                                 TeacherRepository teacherRepository,
                                 EnrollmentRepository enrollmentRepository,
                                 RiskGateway riskGateway,
+                                AnalyticsGateway analyticsGateway,
                                 @Nullable AlertQueryPort alertQueryPort) {
         this.sectionRepository = sectionRepository;
         this.periodRepository = periodRepository;
         this.teacherRepository = teacherRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.riskGateway = riskGateway;
+        this.analyticsGateway = analyticsGateway;
         this.alertQueryPort = alertQueryPort;
     }
 
@@ -98,9 +102,15 @@ public class JpaReportDataGateway implements ReportDataGateway {
                 : read("A1", () -> periodRepository.findById(section.getAcademicPeriodId()), Optional.<AcademicPeriod>empty())
                         .map(this::periodCode).orElse(null);
         var risk = read("B7", () -> riskGateway.getSectionRisk(section.getId()), null);
+        // B6 ya calcula studentsAtRisk por seccion (lo usa B7 para su regla
+        // STUDENTS_AT_RISK); antes se dejaba fijo en 0 aqui y eso hacia que
+        // OverviewService creyera siempre que A3 no estaba disponible.
+        AnalyticsSnapshot analytics = analyticsGateway.getSectionAnalytics(section.getId());
+        int studentsAtRisk = analytics.isAvailable() && analytics.getStudentsAtRisk() != null
+                ? analytics.getStudentsAtRisk() : 0;
         return new MockSection(section.getId(), section.getSectionCode(), section.getCourseId(),
                 null, teacherCode, period,
-                risk != null && risk.isAvailable() ? risk.getRiskLevel() : null, 0);
+                risk != null && risk.isAvailable() ? risk.getRiskLevel() : null, studentsAtRisk);
     }
 
     private boolean matchesSection(MockSection section, ReportFilter filter) {

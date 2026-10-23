@@ -2,9 +2,9 @@
 .panel-indicadores,
 .panel-evaluaciones,
 .panel-alertas {
-  background-color: var(--color-surface);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)), var(--color-surface-solid);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: var(--spacing-md) var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
 }
@@ -25,47 +25,15 @@
 
 .panel-selector label {
   font-weight: 600;
-}
-
-#selector-seccion {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background-color: var(--color-surface);
+  color: var(--color-text-muted);
 }
 
 .aviso-evaluaciones {
-  font-size: 0.8rem;
-  color: #92400e;
-  background-color: #fef3c7;
-  border: 1px solid #fde68a;
-  border-radius: 6px;
+  font-size: 0.82rem;
+  color: var(--color-riesgo-medio);
+  background-color: var(--color-riesgo-medio-soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   padding: 0.5rem 0.75rem;
   margin-bottom: var(--spacing-md);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-thead th {
-  text-align: left;
-  padding: 0.6rem 0.7rem;
-  border-bottom: 2px solid var(--color-border);
-  background-color: var(--color-bg);
-}
-
-tbody td {
-  padding: 0.6rem 0.7rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.mensaje-estado {
-  padding: 1rem;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
 }

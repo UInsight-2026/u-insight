@@ -18,7 +18,8 @@ class ReportDataGatewayConfigurationTest {
             .withBean(AcademicPeriodRepository.class, () -> mock(AcademicPeriodRepository.class))
             .withBean(TeacherRepository.class, () -> mock(TeacherRepository.class))
             .withBean(EnrollmentRepository.class, () -> mock(EnrollmentRepository.class))
-            .withBean(RiskGateway.class, () -> mock(RiskGateway.class));
+            .withBean(RiskGateway.class, () -> mock(RiskGateway.class))
+            .withBean(AnalyticsGateway.class, () -> mock(AnalyticsGateway.class));
 
     @Test
     void sinPropiedadSoloSeInyectaElGatewaySimulado() {

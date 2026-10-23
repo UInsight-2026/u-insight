@@ -69,7 +69,7 @@ public class OverviewService {
                 .filter(MockAlert::isActive)
                 .count();
 
-        List<String> unavailableSources = declararOrigenesFaltantes(sections, studentsAtRisk);
+        List<String> unavailableSources = declararOrigenesFaltantes(sections);
         String overallTrend;
         String trendSource;
 
@@ -110,7 +110,7 @@ public class OverviewService {
      * reporta el estado de cada fuente. Mientras no lo haga, esta es la lectura
      * mas fiel que se puede dar al consumidor.
      */
-    private List<String> declararOrigenesFaltantes(List<MockSection> sections, int studentsAtRisk) {
+    private List<String> declararOrigenesFaltantes(List<MockSection> sections) {
         List<String> faltantes = new ArrayList<>();
         if (sections.isEmpty()) {
             return faltantes;
@@ -124,11 +124,13 @@ public class OverviewService {
         if (sections.stream().anyMatch(s -> s.getRiskLevel() == null)) {
             faltantes.add("B7");
         }
-        // studentsAtRisk necesita los estudiantes de A3 y sus notas; sin eso no
-        // se puede calcular y queda en cero.
-        if (studentsAtRisk == 0) {
-            faltantes.add("A3");
-        }
+        // studentsAtRisk ahora viene del resumen de B6 (igual que el riesgo de
+        // B7). Antes esta regla asumia que 0 siempre significaba "A3 no
+        // disponible", pero 0 es un valor real valido (nadie en riesgo) la
+        // mayoria de las veces: declarar A3 con ese criterio era incorrecto y
+        // no hay forma de distinguir "0 real" de "no se pudo calcular" con un
+        // int. Si en el futuro se necesita esa distincion, hay que exponerla
+        // explicitamente desde JpaReportDataGateway en vez de inferirla aqui.
         return faltantes;
     }
 

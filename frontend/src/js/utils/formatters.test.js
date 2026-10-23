@@ -7,6 +7,7 @@ import {
   formatearModa,
   formatearDispersion,
   formatearTendencia,
+  formatearEstado,
 } from "./formatters.js";
 
 describe("valorODisponible", () => {
@@ -83,5 +84,25 @@ describe("formatearTendencia", () => {
       averageChange: null,
     });
     expect(resultado).toBe("Datos insuficientes");
+  });
+});
+
+describe("formatearEstado", () => {
+  it("traduce los estados conocidos al español", () => {
+    expect(formatearEstado("ACTIVE")).toBe("Activa");
+    expect(formatearEstado("INACTIVE")).toBe("Inactiva");
+    expect(formatearEstado("DRAFT")).toBe("Borrador");
+    expect(formatearEstado("CLOSED")).toBe("Cerrada");
+    expect(formatearEstado("PLANNED")).toBe("Planificada");
+  });
+
+  it("si el estado no está en el catálogo, lo muestra tal cual (no lo esconde)", () => {
+    expect(formatearEstado("ALGO_NUEVO")).toBe("ALGO_NUEVO");
+  });
+
+  it("devuelve un guion cuando no hay estado", () => {
+    expect(formatearEstado(null)).toBe("—");
+    expect(formatearEstado(undefined)).toBe("—");
+    expect(formatearEstado("")).toBe("—");
   });
 });
