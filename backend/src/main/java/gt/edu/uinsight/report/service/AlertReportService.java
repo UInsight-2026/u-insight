@@ -77,10 +77,12 @@ public class AlertReportService {
     /**
      * generatedAt viene en formato ISO (2026-09-11T10:05:00), así que el
      * orden alfabético coincide con el orden cronológico y no hace falta
-     * convertir a fecha.
+     * convertir a fecha. Una alerta sin fecha (generated_at NULL en la BD) va
+     * al final del orden cronológico en lugar de romper el ordenamiento.
      */
     private Comparator<MockAlert> comparadorDe(String sort) {
-        Comparator<MockAlert> porFecha = Comparator.comparing(MockAlert::getGeneratedAt);
+        Comparator<MockAlert> porFecha = Comparator.comparing(
+                MockAlert::getGeneratedAt, Comparator.nullsFirst(Comparator.naturalOrder()));
         return switch (sort) {
             case "OLDEST" -> porFecha;
             case "RISK" -> Comparator

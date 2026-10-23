@@ -2,7 +2,7 @@
 -- SOLO DESARROLLO LOCAL, sobre un esquema de pruebas vacio creado por Hibernate.
 -- No es un script oficial de A1, A2, A4 o C3. Ejecutar una sola vez.
 -- No combinar con stub_alert_for_c4_testing.sql: ese stub no tiene section_id
--- ni created_at. Usar un esquema separado; este script no altera tablas ajenas.
+-- ni generated_at. Usar un esquema separado; este script no altera tablas ajenas.
 
 INSERT INTO academic_period (id, name, year, start_date, end_date, status)
 VALUES (1, '2026-1', 2026, '2026-01-15', '2026-06-30', 'ACTIVE');
@@ -27,10 +27,12 @@ CREATE TABLE IF NOT EXISTS alert (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     section_id BIGINT,
     status VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP
+    alert_type VARCHAR(50),
+    title VARCHAR(150),
+    generated_at TIMESTAMP
 );
 
-INSERT INTO alert (id, section_id, status, created_at)
+INSERT INTO alert (id, section_id, status, generated_at)
 VALUES (1, 10, 'NEW', '2026-09-28 10:00:00'),
        (2, 10, 'IN_PROGRESS', '2026-09-29 09:30:00'),
        (3, 11, 'RESOLVED', '2026-09-20 15:00:00');

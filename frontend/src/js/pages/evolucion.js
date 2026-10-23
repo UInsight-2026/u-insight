@@ -1,19 +1,11 @@
 // Logica de la vista Evolucion (Semana 4: conexion a la API real)
 // GET {API_BASE}/analytics/sections/{id}/trends (celula B4) reemplaza a
-// evolucion.mock.json. Sigue el mismo patron que detalle-seccion.js:
-// selector de seccion + catalogo fijo mientras no exista un endpoint de
-// catalogo de secciones.
+// evolucion.mock.json. El selector de seccion se llena con el catalogo real
+// (api/secciones.js: GET /sections + GET /courses), igual que detalle-seccion.js.
 
 const API_BASE = "/api/v1";
 
-// TODO: igual que en detalle-seccion.js, reemplazar por un GET de
-// secciones real cuando ese catalogo exista. Se usa la misma lista para
-// que las dos vistas muestren las mismas secciones.
-const CATALOGO_SECCIONES = [
-  { sectionId: 10, courseName: "Programación II", sectionCode: "A" },
-  { sectionId: 15, courseName: "Cálculo II", sectionCode: "B" },
-  { sectionId: 22, courseName: "Estadística", sectionCode: "A" },
-];
+let catalogoSecciones = [];
 
 const CLASIFICACION_ETIQUETA = {
   POSITIVE: "Ascendente",
@@ -43,17 +35,19 @@ async function cargarYRenderizarSeccion(sectionId) {
   try {
     const respuesta = await fetch(`${API_BASE}/analytics/sections/${sectionId}/trends`);
     if (!respuesta.ok) {
-      throw new Error(`La API respondió un error (HTTP ${respuesta.status})`);
+      console.error("EVOLUCION_CARGA_ERROR", sectionId, `HTTP ${respuesta.status}`);
+      mostrarEstadoError(mensajeErrorHttp(respuesta.status, "evolución"));
+      return;
     }
 
     const tendencia = await respuesta.json();
     console.info("EVOLUCION_CARGA_EXITOSA", sectionId, tendencia);
 
-    const seccion = CATALOGO_SECCIONES.find((s) => s.sectionId === Number(sectionId));
+    const seccion = catalogoSecciones.find((s) => s.sectionId === Number(sectionId));
     renderizarEvolucion(seccion, tendencia);
   } catch (error) {
     console.error("EVOLUCION_CARGA_ERROR", error);
-    mostrarEstadoError();
+    mostrarEstadoError(mensajeErrorHttp(null, "evolución"));
   }
 }
 
@@ -80,23 +74,30 @@ function mostrarEstadoCarga() {
   elementos.contenedor.innerHTML = `<p class="mensaje-estado">Cargando evolución...</p>`;
 }
 
-function mostrarEstadoError() {
-  elementos.contenedor.innerHTML = `
-    <p class="mensaje-estado">
-      No se pudo cargar la evolución de esta sección. Verifica que el backend
-      esté corriendo en ${API_BASE} y que no esté bloqueando la petición por
-      CORS (revisa la consola del navegador).
-    </p>`;
+function mostrarEstadoError(mensaje) {
+  elementos.contenedor.innerHTML = `<p class="mensaje-estado">${mensaje}</p>`;
 }
 
-function inicializar() {
-  poblarSelectorSecciones(CATALOGO_SECCIONES);
-
-  if (CATALOGO_SECCIONES.length) {
-    const primeraSeccion = CATALOGO_SECCIONES[0].sectionId;
-    elementos.selectorSeccion.value = primeraSeccion;
-    cargarYRenderizarSeccion(primeraSeccion);
+async function inicializar() {
+  mostrarEstadoCarga();
+  try {
+    catalogoSecciones = await cargarCatalogoSecciones(API_BASE);
+  } catch (error) {
+    console.error("EVOLUCION_CATALOGO_ERROR", error);
+    mostrarEstadoError("No se pudo cargar el listado de secciones. Intenta de nuevo más tarde.");
+    return;
   }
+
+  poblarSelectorSecciones(catalogoSecciones);
+
+  if (!catalogoSecciones.length) {
+    mostrarEstadoError("No hay secciones registradas.");
+    return;
+  }
+
+  const primeraSeccion = catalogoSecciones[0].sectionId;
+  elementos.selectorSeccion.value = primeraSeccion;
+  cargarYRenderizarSeccion(primeraSeccion);
 }
 
 elementos.selectorSeccion.addEventListener("change", (evento) => {
