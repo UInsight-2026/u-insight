@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class RiskEngineTest {
 
     @Test
-    void readsTrendClassificationAndUsesHighSeverityAsHighRisk() {
+    void readsTrendClassificationAndClassifiesSingleHighSeverityRuleAsMediumRisk() {
         RiskResult result = evaluate(
                 "media < 60 && tendencia == NEGATIVE",
                 "HIGH",
@@ -30,7 +30,7 @@ class RiskEngineTest {
 
         assertEquals(1, result.getRulesEvaluated());
         assertEquals(1, result.getRulesTriggered());
-        assertEquals("HIGH", result.getRiskLevel());
+        assertEquals("MEDIUM", result.getRiskLevel());
         assertEquals(List.of("Promedio bajo con tendencia negativa"), result.getActivatedRules());
     }
 
