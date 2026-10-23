@@ -56,7 +56,8 @@ public class B6AnalyticsGateway implements AnalyticsGateway {
                     trend != null && trend.averageChange() != null
                             ? trend.averageChange().doubleValue() : null,
                     dispersion != null ? ORIGEN_DISPERSION : AnalyticsSnapshot.DISPERSION_NO_DISPONIBLE,
-                    true);
+                    true,
+                    summary.getStudentsAtRisk());
             // available indica que hay al menos un componente; no garantiza
             // que la tendencia u otro indicador concreto este disponible.
             if (central == null || dispersion == null || trend == null) {

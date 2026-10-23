@@ -24,10 +24,20 @@ public class AnalyticsSnapshot {
      */
     private final String dispersionSource;
     private final boolean available;
+    /** Null cuando B6 no pudo calcularlo para esta seccion (no es lo mismo que 0 reales). */
+    private final Integer studentsAtRisk;
 
     public AnalyticsSnapshot(Long sectionId, Double mean, Double median, Integer sampleSize,
                              Double standardDeviation, String trendClassification,
                              Double averageChange, String dispersionSource, boolean available) {
+        this(sectionId, mean, median, sampleSize, standardDeviation, trendClassification,
+                averageChange, dispersionSource, available, null);
+    }
+
+    public AnalyticsSnapshot(Long sectionId, Double mean, Double median, Integer sampleSize,
+                             Double standardDeviation, String trendClassification,
+                             Double averageChange, String dispersionSource, boolean available,
+                             Integer studentsAtRisk) {
         this.sectionId = sectionId;
         this.mean = mean;
         this.median = median;
@@ -37,6 +47,7 @@ public class AnalyticsSnapshot {
         this.averageChange = averageChange;
         this.dispersionSource = dispersionSource;
         this.available = available;
+        this.studentsAtRisk = studentsAtRisk;
     }
 
     public static AnalyticsSnapshot unavailable(Long sectionId) {
@@ -53,4 +64,5 @@ public class AnalyticsSnapshot {
     public Double getAverageChange() { return averageChange; }
     public String getDispersionSource() { return dispersionSource; }
     public boolean isAvailable() { return available; }
+    public Integer getStudentsAtRisk() { return studentsAtRisk; }
 }

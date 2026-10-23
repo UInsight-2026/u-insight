@@ -114,9 +114,13 @@ function renderizarIndicadores(resumen) {
 function renderizarEvaluaciones(tendencia) {
   const columnas = [
     { campo: "label", titulo: "Evaluación" },
-    { campo: "evaluationDate", titulo: "Fecha" },
+    { campo: "evaluationDate", titulo: "Fecha", formatear: (valor) => valor || "—" },
     { campo: "value", titulo: "Nota", formatear: (valor) => valorODisponible(valor) },
-    { campo: "present", titulo: "Presente", formatear: (valor) => (valor ? "Sí" : "No") },
+    {
+      campo: "present",
+      titulo: "Presente",
+      formatear: (valor) => (valor === null || valor === undefined ? "—" : valor ? "Sí" : "No"),
+    },
   ];
 
   const puntos = tendencia?.points || [];
@@ -144,11 +148,14 @@ function renderizarAlertas(sectionId) {
 
 function mostrarEstadoCarga() {
   elementos.contenedorIndicadores.innerHTML = `<p class="mensaje-estado">Cargando indicadores...</p>`;
+  elementos.tablaEvaluaciones.innerHTML = `<tr><td class="mensaje-estado">Cargando evaluaciones...</td></tr>`;
   elementos.contenedorAlertas.innerHTML = `<p class="mensaje-estado">Cargando alertas...</p>`;
 }
 
 function mostrarEstadoError(mensaje) {
   elementos.contenedorIndicadores.innerHTML = `<p class="mensaje-estado">${mensaje}</p>`;
+  elementos.tablaEvaluaciones.innerHTML = "";
+  elementos.avisoEvaluaciones.hidden = true;
   elementos.contenedorAlertas.innerHTML = "";
 }
 

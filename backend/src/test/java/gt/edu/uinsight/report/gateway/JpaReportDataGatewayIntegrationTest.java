@@ -6,6 +6,7 @@ import gt.edu.uinsight.academicperiod.repository.AcademicPeriodRepository;
 import gt.edu.uinsight.enrollment.entity.Enrollment;
 import gt.edu.uinsight.enrollment.repository.EnrollmentRepository;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
+import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
 import gt.edu.uinsight.report.dto.response.RiskSnapshot;
 import gt.edu.uinsight.section.entity.Section;
 import gt.edu.uinsight.section.repository.SectionRepository;
@@ -64,7 +65,7 @@ class JpaReportDataGatewayIntegrationTest {
     @BeforeEach
     void init() {
         gateway = new JpaReportDataGateway(sections, periods, teachers, enrollments,
-                id -> RiskSnapshot.unavailable(), null);
+                id -> RiskSnapshot.unavailable(), AnalyticsSnapshot::unavailable, null);
     }
 
     @Test

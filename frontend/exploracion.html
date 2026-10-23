@@ -7,11 +7,13 @@
   <link rel="stylesheet" href="src/styles/global.css" />
   <link rel="stylesheet" href="src/styles/layout.css" />
   <link rel="stylesheet" href="src/styles/components.css" />
-  <link rel="stylesheet" href="src/css/exploracion.css" />
 </head>
 <body>
   <header class="site-header">
-    <div class="site-header__brand">U-Insight</div>
+    <div class="site-header__brand">
+      <span class="brand-mark" aria-hidden="true">U</span>
+      <span class="brand-name">U-Insight</span>
+    </div>
     <nav class="nav" aria-label="Navegación principal">
       <ul class="nav__list">
         <li><a class="nav__link" href="index.html">Inicio</a></li>
@@ -30,12 +32,6 @@
 
     <section class="panel-filtros">
       <h2>Filtros</h2>
-
-      <p class="nota-mock">
-        Datos reales de secciones (A4), cursos (A1), docentes (A2) y períodos (A1). Las columnas
-        de estudiante, carnet y nota todavía no están disponibles: el módulo de estudiante (A3)
-        aún no expone API.
-      </p>
 
       <div class="grid-filtros">
         <div class="campo-filtro">
@@ -96,6 +92,7 @@
     </section>
   </main>
 
+  <script src="src/js/utils/formatters.js"></script>
   <script src="src/js/pages/exploracion.js"></script>
 </body>
 </html>

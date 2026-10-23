@@ -43,8 +43,8 @@ describe("armarCatalogoSecciones", () => {
 });
 
 describe("mensajeErrorHttp", () => {
-  it("indica 'Sección sin datos' para un 404", () => {
-    expect(mensajeErrorHttp(404, "evolución")).toBe("Sección sin datos de evolución.");
+  it("indica que no hay datos para esta sección en un 404", () => {
+    expect(mensajeErrorHttp(404, "evolución")).toBe("No hay datos de evolución para esta sección.");
   });
 
   it("muestra el código HTTP real en errores del servidor", () => {

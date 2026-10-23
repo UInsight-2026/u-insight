@@ -18,6 +18,7 @@ import gt.edu.uinsight.report.mock.model.MockSection;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -147,7 +148,7 @@ class OverviewServiceTest {
                 null,    // teacherCode: A2 no respondio
                 null,    // period: A1 no respondio
                 null,    // riskLevel: B7 no respondio
-                0);      // studentsAtRisk: necesita A3
+                0);      // studentsAtRisk: viene de B6; 0 es un valor real valido, no una fuente caida
     }
 
     private OverviewService servicioCon(ReportDataGateway datos) {
@@ -166,7 +167,24 @@ class OverviewServiceTest {
         assertTrue(response.getUnavailableSources().contains("A1"), "falta declarar el periodo");
         assertTrue(response.getUnavailableSources().contains("A2"), "falta declarar el docente");
         assertTrue(response.getUnavailableSources().contains("B7"), "falta declarar el riesgo");
-        assertTrue(response.getUnavailableSources().contains("A3"), "falta declarar los estudiantes");
+    }
+
+    @Test
+    void noDeberiaDeclararA3SoloPorqueStudentsAtRiskSeaCero() {
+        // studentsAtRisk viene de B6 desde esta semana; 0 significa "nadie en
+        // riesgo" la mayoria de las veces, no "A3 no respondio". Antes esta
+        // regla se disparaba siempre porque el gateway dejaba el valor fijo
+        // en 0, haciendo que el aviso de A3 apareciera incluso con datos
+        // reales y correctos.
+        ReportDataGateway gatewayConDatosCompletos = mock(ReportDataGateway.class);
+        when(gatewayConDatosCompletos.findSections(any())).thenReturn(List.of(
+                new MockSection(10L, "A", 5L, null, "DOC-01", "2026-1", "LOW", 0)));
+        when(gatewayConDatosCompletos.findAlerts(any())).thenReturn(List.of());
+
+        OverviewResponse response =
+                servicioCon(gatewayConDatosCompletos).getOverview(filtroDePeriodo(null));
+
+        assertFalse(response.getUnavailableSources().contains("A3"));
     }
 
     @Test

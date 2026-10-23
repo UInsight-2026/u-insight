@@ -6,6 +6,7 @@ import gt.edu.uinsight.academicperiod.repository.AcademicPeriodRepository;
 import gt.edu.uinsight.enrollment.entity.Enrollment;
 import gt.edu.uinsight.enrollment.repository.EnrollmentRepository;
 import gt.edu.uinsight.report.dto.filter.ReportFilter;
+import gt.edu.uinsight.report.dto.response.AnalyticsSnapshot;
 import gt.edu.uinsight.report.dto.response.RiskSnapshot;
 import gt.edu.uinsight.report.mock.model.MockAlert;
 import gt.edu.uinsight.report.mock.model.MockSection;
@@ -29,9 +30,10 @@ class JpaReportDataGatewayTest {
     private final TeacherRepository teachers = mock(TeacherRepository.class);
     private final EnrollmentRepository enrollments = mock(EnrollmentRepository.class);
     private final RiskGateway risk = mock(RiskGateway.class);
+    private final AnalyticsGateway analytics = mock(AnalyticsGateway.class);
     private final AlertQueryPort alerts = mock(AlertQueryPort.class);
     private final JpaReportDataGateway gateway = new JpaReportDataGateway(
-            sections, periods, teachers, enrollments, risk, alerts);
+            sections, periods, teachers, enrollments, risk, analytics, alerts);
 
     @BeforeEach
     void catalogos() {
@@ -39,6 +41,9 @@ class JpaReportDataGatewayTest {
         when(teachers.findById(7L)).thenReturn(Optional.of(teacher(7L, "DOC-01")));
         when(periods.findById(3L)).thenReturn(Optional.of(period("2026-1", 1)));
         when(risk.getSectionRisk(10L)).thenReturn(new RiskSnapshot("HIGH", "B7", true));
+        // Contrato de AnalyticsGateway: nunca devuelve null. Las pruebas que
+        // necesiten un valor real de studentsAtRisk lo sobrescriben.
+        when(analytics.getSectionAnalytics(anyLong())).thenAnswer(inv -> AnalyticsSnapshot.unavailable(inv.getArgument(0)));
     }
 
     @Test
@@ -52,6 +57,20 @@ class JpaReportDataGatewayTest {
         assertEquals("HIGH", result.getRiskLevel());
         assertNull(result.getCourseCode());
         assertEquals(0, result.getStudentsAtRisk());
+    }
+
+    @Test
+    void leeStudentsAtRiskDelResumenDeB6PorSeccion() {
+        when(analytics.getSectionAnalytics(10L)).thenReturn(
+                new AnalyticsSnapshot(10L, 75.0, 76.0, 9, 5.0, "STABLE", 0.0, "B3", true, 4));
+        assertEquals(4, gateway.findSectionById(10L).orElseThrow().getStudentsAtRisk());
+    }
+
+    @Test
+    void siB6NoTieneElDatoStudentsAtRiskQuedaEnCeroSinRomper() {
+        when(analytics.getSectionAnalytics(10L)).thenReturn(
+                new AnalyticsSnapshot(10L, 75.0, 76.0, 9, 5.0, "STABLE", 0.0, "B3", true, null));
+        assertEquals(0, gateway.findSectionById(10L).orElseThrow().getStudentsAtRisk());
     }
 
     @Test
@@ -173,7 +192,7 @@ class JpaReportDataGatewayTest {
         when(alerts.findBySectionId(10L)).thenThrow(new IllegalStateException("C3 caida"));
         assertTrue(gateway.findAlerts(null).isEmpty());
         assertTrue(gateway.findAlertsBySectionId(10L).isEmpty());
-        var noPort = new JpaReportDataGateway(sections, periods, teachers, enrollments, risk, null);
+        var noPort = new JpaReportDataGateway(sections, periods, teachers, enrollments, risk, analytics, null);
         assertTrue(noPort.findAlerts(null).isEmpty());
         assertTrue(noPort.findAlertsBySectionId(10L).isEmpty());
     }
