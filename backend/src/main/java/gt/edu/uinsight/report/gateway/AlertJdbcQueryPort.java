@@ -15,15 +15,15 @@ import java.util.List;
  * Lectura de alertas para los reportes de C5.
  *
  * TEMPORAL semana 4 — reemplazar por la API de C3 cuando exista. Mientras tanto se
- * consulta la tabla `alert` con JdbcTemplate, con las mismas columnas que usa la
- * célula C4 en AlertValidationJdbcAdapter: id, section_id, status y created_at.
+ * consulta la tabla `alert` con JdbcTemplate, con las columnas de alert/model/Alert.java
+ * (la fecha de la alerta se llama generated_at, no created_at).
  */
 @Component
 @ConditionalOnProperty(name = "c5.alert-source", havingValue = "jdbc")
 public class AlertJdbcQueryPort implements AlertQueryPort {
 
     private static final Logger log = LoggerFactory.getLogger(AlertJdbcQueryPort.class);
-    private static final String COLUMNAS = "id, section_id, status, created_at";
+    private static final String COLUMNAS = "id, section_id, alert_type, status, title, generated_at";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -64,7 +64,7 @@ public class AlertJdbcQueryPort implements AlertQueryPort {
     }
 
     private MockAlert aAlerta(ResultSet rs, int fila) throws SQLException {
-        var creadaEn = rs.getTimestamp("created_at");
+        var creadaEn = rs.getTimestamp("generated_at");
         return new MockAlert(
                 rs.getLong("id"),
                 rs.getLong("section_id"),
@@ -73,10 +73,10 @@ public class AlertJdbcQueryPort implements AlertQueryPort {
                 null, // courseCode
                 null, // teacherCode
                 null, // period
-                null, // type
+                rs.getString("alert_type"),
                 null, // riskLevel: lo calcula B7 por sección
                 rs.getString("status"),
-                null, // title
+                rs.getString("title"),
                 creadaEn == null ? null : creadaEn.toInstant().toString());
     }
 }

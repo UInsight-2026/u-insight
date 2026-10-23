@@ -9,15 +9,9 @@
 
 const API_BASE = "/api/v1";
 
-// TODO: todavia no existe un endpoint de catalogo de secciones para poblar
-// el selector. Mientras tanto se deja este listado minimo (mismos ids que
-// ya se usaban en detalle-seccion.mock.json). Reemplazar cuando haya un
-// GET de secciones disponible.
-const CATALOGO_SECCIONES = [
-  { sectionId: 10, courseName: "Programación II", sectionCode: "A" },
-  { sectionId: 15, courseName: "Cálculo II", sectionCode: "B" },
-  { sectionId: 22, courseName: "Estadística", sectionCode: "A" },
-];
+// El selector se llena con el catalogo real (api/secciones.js: GET /sections
+// + GET /courses), igual que evolucion.js.
+let catalogoSecciones = [];
 
 const elementos = {
   selectorSeccion: document.getElementById("selector-seccion"),
@@ -30,14 +24,25 @@ const elementos = {
 let alertas = [];
 
 async function inicializar() {
-  poblarSelectorSecciones(CATALOGO_SECCIONES);
-  await cargarAlertas();
-
-  if (CATALOGO_SECCIONES.length) {
-    const primeraSeccion = CATALOGO_SECCIONES[0].sectionId;
-    elementos.selectorSeccion.value = primeraSeccion;
-    await cargarYRenderizarSeccion(primeraSeccion);
+  mostrarEstadoCarga();
+  try {
+    [catalogoSecciones] = await Promise.all([cargarCatalogoSecciones(API_BASE), cargarAlertas()]);
+  } catch (error) {
+    console.error("DETALLE_SECCION_CATALOGO_ERROR", error);
+    mostrarEstadoError("No se pudo cargar el listado de secciones. Intenta de nuevo más tarde.");
+    return;
   }
+
+  poblarSelectorSecciones(catalogoSecciones);
+
+  if (!catalogoSecciones.length) {
+    mostrarEstadoError("No hay secciones registradas.");
+    return;
+  }
+
+  const primeraSeccion = catalogoSecciones[0].sectionId;
+  elementos.selectorSeccion.value = primeraSeccion;
+  await cargarYRenderizarSeccion(primeraSeccion);
 }
 
 async function cargarAlertas() {
@@ -72,7 +77,9 @@ async function cargarYRenderizarSeccion(sectionId) {
   try {
     const respuesta = await fetch(`${API_BASE}/analytics/sections/${sectionId}/summary`);
     if (!respuesta.ok) {
-      throw new Error(`La API respondió un error (HTTP ${respuesta.status})`);
+      console.error("DETALLE_SECCION_CARGA_ERROR", sectionId, `HTTP ${respuesta.status}`);
+      mostrarEstadoError(mensajeErrorHttp(respuesta.status, "indicadores"));
+      return;
     }
 
     const resumen = await respuesta.json();
@@ -83,7 +90,7 @@ async function cargarYRenderizarSeccion(sectionId) {
     renderizarAlertas(sectionId);
   } catch (error) {
     console.error("DETALLE_SECCION_CARGA_ERROR", error);
-    mostrarEstadoError();
+    mostrarEstadoError(mensajeErrorHttp(null, "indicadores"));
   }
 }
 
@@ -140,8 +147,7 @@ function mostrarEstadoCarga() {
   elementos.contenedorAlertas.innerHTML = `<p class="mensaje-estado">Cargando alertas...</p>`;
 }
 
-function mostrarEstadoError() {
-  const mensaje = `No se pudieron cargar los indicadores de la sección. Verifica que el backend esté corriendo en ${API_BASE} y que no esté bloqueando la petición por CORS (revisa la consola del navegador).`;
+function mostrarEstadoError(mensaje) {
   elementos.contenedorIndicadores.innerHTML = `<p class="mensaje-estado">${mensaje}</p>`;
   elementos.contenedorAlertas.innerHTML = "";
 }

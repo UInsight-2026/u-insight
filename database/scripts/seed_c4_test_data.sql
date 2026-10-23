@@ -24,9 +24,9 @@ INSERT INTO section (id, course_id, teacher_id, academic_period_id, name)
 VALUES (1, 1, 1, 1, 'Sección A');
 
 -- Alerta activa: debe permitir crear intervenciones (201).
-INSERT INTO alert (id, section_id, status, created_at)
+INSERT INTO alert (id, section_id, status, generated_at)
 VALUES (10, 1, 'NEW', NOW());
 
 -- Alerta ya resuelta: debe rechazar intervenciones con 409 ALERT_NOT_ACTIVE.
-INSERT INTO alert (id, section_id, status, created_at)
+INSERT INTO alert (id, section_id, status, generated_at)
 VALUES (11, 1, 'RESOLVED', NOW());
