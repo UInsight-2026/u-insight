@@ -31,7 +31,6 @@ public class RiskEngine {
         int rulesEvaluated = 0;
         int rulesTriggered = 0;
         double score = 0;
-        boolean highSeverityTriggered = false;
 
         Map<String, Object> centralTendency = convert(summary.getCentralTendencyData());
         Map<String, Object> position = convert(summary.getPositionData());
@@ -73,11 +72,10 @@ public class RiskEngine {
                 activatedRules.add(rule.getName());
                 rulesTriggered++;
                 score += getSeverityWeight(rule.getSeverity());
-                highSeverityTriggered |= "HIGH".equalsIgnoreCase(rule.getSeverity());
             }
         }
 
-        String riskLevel = calculateRiskLevel(score, highSeverityTriggered);
+        String riskLevel = calculateRiskLevel(score);
         return new RiskResult(
                 riskLevel,
                 score,
@@ -244,8 +242,8 @@ public class RiskEngine {
         };
     }
 
-    private String calculateRiskLevel(double score, boolean highSeverityTriggered) {
-        if (highSeverityTriggered || score >= 60) {
+    private String calculateRiskLevel(double score) {
+        if (score >= 60) {
             return "HIGH";
         }
         if (score >= 30) {
