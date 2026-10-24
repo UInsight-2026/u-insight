@@ -1,0 +1,49 @@
+<!-- Pega esto dentro del contenido de intervenciones.html y ajusta clases al CSS del proyecto.
+     No edites global.css, layout.css ni components.css sin avisar al equipo. -->
+
+<section>
+  <h2>Crear intervención</h2>
+  <form id="form-intervencion">
+    <label>Alerta
+      <select name="alertId" required></select>
+    </label>
+
+    <label>Tipo
+      <select name="type" required></select>
+    </label>
+
+    <label>Descripción
+      <textarea name="description" required></textarea>
+    </label>
+
+    <label>Responsable
+      <input type="text" name="responsible" required />
+    </label>
+
+    <label>Fecha de inicio
+      <input type="date" name="startDate" required />
+    </label>
+
+    <button type="submit">Guardar intervención</button>
+    <p id="mensaje-estado" role="status"></p>
+  </form>
+</section>
+
+<section>
+  <h2>Historial</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Alerta</th>
+        <th>Tipo</th>
+        <th>Descripción</th>
+        <th>Responsable</th>
+        <th>Inicio</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody id="historial-body"></tbody>
+  </table>
+</section>
+
+<script src="src/js/pages/intervenciones.js"></script>

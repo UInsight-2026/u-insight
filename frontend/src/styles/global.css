@@ -1,0 +1,134 @@
+/* Estilos generales: reset, tipografía y variables de color compartidas por las 6 vistas.
+   Tema: dark luxury minimalista (carbón/obsidiano + acentos champán/teal). */
+
+:root {
+  --color-bg: #0e0e10;
+  --color-bg-soft: #16161a;
+  --color-surface: rgba(255, 255, 255, 0.045);
+  --color-surface-solid: #1a1a1e;
+  --color-border: rgba(255, 255, 255, 0.09);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
+  --color-text: #f3f1ec;
+  --color-text-muted: #9b9ba3;
+
+  --color-primary: #d9b56c;
+  --color-primary-soft: rgba(217, 181, 108, 0.16);
+  --color-primary-dark: #b8924a;
+  --color-accent: #2fe3c4;
+  --color-accent-soft: rgba(47, 227, 196, 0.16);
+
+  --color-riesgo-alto: #ef5767;
+  --color-riesgo-alto-soft: rgba(239, 87, 103, 0.16);
+  --color-riesgo-medio: #f0b429;
+  --color-riesgo-medio-soft: rgba(240, 180, 41, 0.16);
+  --color-riesgo-bajo: #34d399;
+  --color-riesgo-bajo-soft: rgba(52, 211, 153, 0.16);
+  --color-neutro: #9b9ba3;
+
+  --color-severidad-alta: var(--color-riesgo-alto);
+  --color-severidad-media: var(--color-riesgo-medio);
+  --color-severidad-baja: var(--color-riesgo-bajo);
+
+  --font-family-base: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --shadow-card: 0 10px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow-gold: 0 0 0 1px rgba(217, 181, 108, 0.3), 0 0 28px rgba(217, 181, 108, 0.14);
+  --shadow-glow-teal: 0 0 0 1px rgba(47, 227, 196, 0.3), 0 0 28px rgba(47, 227, 196, 0.12);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family-base);
+  background:
+    radial-gradient(1100px 760px at 12% -8%, rgba(217, 181, 108, 0.07), transparent 60%),
+    radial-gradient(900px 680px at 112% 8%, rgba(47, 227, 196, 0.06), transparent 55%),
+    var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin-top: 0;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+p {
+  color: var(--color-text-muted);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+}
+
+select,
+input,
+textarea {
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface-solid);
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-text);
+}
+
+/* Mensajes de estado genéricos (carga, vacío, error) usados por todas las vistas */
+.mensaje-estado {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.mensaje-estado--error {
+  color: var(--color-riesgo-alto);
+  font-weight: 600;
+}

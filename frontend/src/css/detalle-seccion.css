@@ -1,0 +1,39 @@
+.panel-selector,
+.panel-indicadores,
+.panel-evaluaciones,
+.panel-alertas {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)), var(--color-surface-solid);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.panel-indicadores h2,
+.panel-evaluaciones h2,
+.panel-alertas h2 {
+  margin: 0 0 var(--spacing-md);
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.panel-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.panel-selector label {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.aviso-evaluaciones {
+  font-size: 0.82rem;
+  color: var(--color-riesgo-medio);
+  background-color: var(--color-riesgo-medio-soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: var(--spacing-md);
+}

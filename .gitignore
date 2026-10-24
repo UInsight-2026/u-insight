@@ -1,0 +1,8 @@
+### VS Code ###
+.vscode/
+
+### Entorno y credenciales (seccion 12.5 del documento oficial) ###
+.env
+*.log
+target/
+node_modules/

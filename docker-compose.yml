@@ -1,0 +1,34 @@
+name: uinsight
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: uinsight-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: ${DB_HOST_DOCKER:-host.docker.internal}
+      DB_PORT: ${DB_PORT_DOCKER:-3307}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: uinsight-frontend
+    restart: unless-stopped
+    environment:
+      # Host visto DESDE DENTRO del contenedor del frontend hacia el backend;
+      # por defecto el nombre del servicio de arriba, resuelto por la red
+      # interna de docker-compose. Sobreescribible si el backend corre en
+      # otro host/puerto.
+      BACKEND_URL: ${FRONTEND_BACKEND_URL:-http://backend:8080}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

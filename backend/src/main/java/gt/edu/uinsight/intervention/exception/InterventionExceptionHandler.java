@@ -41,6 +41,12 @@ public class InterventionExceptionHandler {
         return build(HttpStatus.CONFLICT, "ALERT_NOT_ACTIVE", ex.getMessage(), null, request);
     }
 
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidStatusTransition(InvalidStatusTransitionException ex,
+                                                                         HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "INVALID_STATUS_TRANSITION", ex.getMessage(), null, request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
                                                             HttpServletRequest request) {
